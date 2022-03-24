@@ -39,8 +39,6 @@ enum class BODY_JOINTS {
 
 class CBodyTrackDriver
 {
-	bool trackingActive;
-	bool stabilization;
 	bool image_loaded;
 
 	int input_image_width, input_image_height, input_image_pitch;
@@ -57,22 +55,32 @@ class CBodyTrackDriver
 	std::vector<NvAR_Rect> output_bbox_data;
 	std::vector<float> output_bbox_conf_data;
 	NvAR_BBoxes output_bboxes{};
-	bool useCudaGraph;
-	float focalLength;
-	bool nvARMode;
-	int batchSize;
 	int _batchSize;
-
-	void KeyInfoUpdated();
 
 public:
 	void Initialize();
-	void Initialize(int w, int h, int batch_size);
+	void Initialize(int w, int h, int batch_size=1);
 	void ResizeImage(int w, int h);
 	void Cleanup();
-	void SetBatchSize(int b) { batchSize = b; KeyInfoUpdated(); }
-	void SetUseCudaGraph(bool b) { useCudaGraph = b; KeyInfoUpdated(); }
-	void SetFocalLength(float focal) { focalLength = focal; KeyInfoUpdated(); }
+	void KeyInfoUpdated();
+
+	bool useCudaGraph;
+	float focalLength;
+	bool stabilization;
+	int nvARMode;
+	int batchSize;
+	bool trackingActive;
+
+	glm::mat4x4 camMatrix;
+	inline void SetCamera(glm::vec3 pos, glm::quat rot) { camMatrix = glm::mat4_cast(rot); camMatrix += pos; }
+	inline void RotateCamera(glm::quat rot) { camMatrix *= rot; }
+	inline void MoveCamera(glm::vec3 pos) { camMatrix += pos; }
+	inline glm::vec3 GetCameraPos() { return glm::vec3(camMatrix[3][0], camMatrix[3][1], camMatrix[3][2]); }
+	inline glm::quat GetCameraRot() { return glm::quat_cast(camMatrix); }
+
+	inline int ImageWidth() { return input_image_width; }
+	inline int ImageHeight() { return input_image_height; }
+
 	CBodyTrackDriver();
 	~CBodyTrackDriver();
 };

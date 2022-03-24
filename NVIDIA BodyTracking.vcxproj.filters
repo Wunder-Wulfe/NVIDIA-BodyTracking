@@ -47,5 +47,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="driver.vrdrivermanifest" />
+    <None Include="settings.ini" />
   </ItemGroup>
 </Project>
