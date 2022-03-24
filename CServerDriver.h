@@ -85,6 +85,7 @@ public:
     CServerDriver();
     ~CServerDriver();
 
+    void AttachConfig(bool update=true);
     bool UpdateConfig();
     bool SaveConfig(bool update=false);
     bool SaveConfig(const char* alt);

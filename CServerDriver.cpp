@@ -87,6 +87,13 @@ void CServerDriver::Initialize()
 {
 	LoadConfig();
 
+	AttachConfig(false);
+
+	driver->Initialize();
+}
+
+void CServerDriver::AttachConfig(bool update=true)
+{
 	driver->batchSize = GetConfigInteger(SECTION_SDKSET, KEY_BATCH_SZ, 1);
 	driver->focalLength = GetConfigFloat(SECTION_CAMSET, KEY_FOCAL, 800.0f);
 	driver->stabilization = GetConfigBoolean(SECTION_SDKSET, KEY_STABLE, true);
@@ -102,7 +109,8 @@ void CServerDriver::Initialize()
 		GetConfigQuaternion(SECTION_ROT)
 	);
 
-	driver->Initialize();
+	if (update)
+		driver->KeyInfoUpdated();
 }
 
 vr::EVRInitError CServerDriver::Init(vr::IVRDriverContext* pDriverContext)
