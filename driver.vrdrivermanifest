@@ -1,0 +1,6 @@
+{
+	"alwaysActivate": true,
+	"name" : "nvidiaBodytracking",
+	"directory" : "",
+	"resourceOnly" : false
+}
