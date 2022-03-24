@@ -8,6 +8,10 @@ For now, most of the code is based on the [AR SDK examples](https://github.com/N
 [Discord Server](https://discord.gg/XjkyuwRW6Z)
 
 
+In order to use any of the executables, you are required to download and install the [NVIDIA Broadcast AR SDK](https://www.nvidia.com/en-us/geforce/broadcasting/broadcast-sdk/resources/).
+*(Note: As of right now, it works only on RTX 20 and 30 series cards. Other cards are untested)*
+
+
 Additional libraries:
 
 1. [OpenCV](https://github.com/opencv/opencv) for image/video capture
