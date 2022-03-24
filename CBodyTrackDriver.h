@@ -58,17 +58,21 @@ class CBodyTrackDriver
 	std::vector<float> output_bbox_conf_data;
 	NvAR_BBoxes output_bboxes{};
 	bool useCudaGraph;
+	float focalLength;
+	bool nvARMode;
 	int batchSize;
+	int _batchSize;
 
-	void BatchSizeUpdated();
+	void KeyInfoUpdated();
 
 public:
 	void Initialize();
-	void Initialize(int w, int h);
+	void Initialize(int w, int h, int batch_size);
 	void ResizeImage(int w, int h);
 	void Cleanup();
-	void SetBatchSize(int b) { batchSize = b; }
-	void SetUseCudaGraph(bool b) { useCudaGraph = b; }
+	void SetBatchSize(int b) { batchSize = b; KeyInfoUpdated(); }
+	void SetUseCudaGraph(bool b) { useCudaGraph = b; KeyInfoUpdated(); }
+	void SetFocalLength(float focal) { focalLength = focal; KeyInfoUpdated(); }
 	CBodyTrackDriver();
 	~CBodyTrackDriver();
 };
