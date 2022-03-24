@@ -43,9 +43,9 @@ class CBodyTrackDriver
 	bool stabilization;
 	bool image_loaded;
 
-	int input_image_width, input_image_height;
+	int input_image_width, input_image_height, input_image_pitch;
 
-	NvAR_FeatureHandle bodyDetectHandle{};
+	NvAR_FeatureHandle bodyDetectHandle{}, keyPointDetectHandle{};
 	CUstream stream{};
 	NvCVImage inputImageBuffer{}, tmpImage{};
 	std::vector<NvAR_Point2f> keypoints;
@@ -54,12 +54,17 @@ class CBodyTrackDriver
 	std::vector<NvAR_Quaternion> jointAngles;
 	unsigned int numKeyPoints;
 	std::vector<NvAR_Point3f> referencePose;
-	NvAR_FeatureHandle keyPointDetectHandle{};
+	std::vector<NvAR_Rect> output_bbox_data;
+	std::vector<float> output_bbox_conf_data;
+	NvAR_BBoxes output_bboxes{};
 	bool useCudaGraph;
 	int batchSize;
 
+	void BatchSizeUpdated();
+
 public:
 	void Initialize();
+	void Initialize(int w, int h);
 	void ResizeImage(int w, int h);
 	void Cleanup();
 	void SetBatchSize(int b) { batchSize = b; }
