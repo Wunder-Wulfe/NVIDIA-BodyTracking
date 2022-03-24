@@ -12,7 +12,7 @@ In order to use any of the executables, you are required to download and install
 *(Note: As of right now, it works only on RTX 20 and 30 series cards. Other cards are untested)*
 
 
-Additional libraries:
+Additional libraries used:
 
 1. [OpenCV](https://github.com/opencv/opencv) for image/video capture
 2. [SimpleIni](https://github.com/brofield/simpleini) for the configuration file
