@@ -88,8 +88,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="CBodyTrackDriver.h" />
-    <ClInclude Include="Common.h" />
+    <ClInclude Include="CNvBodyTracker.h" />
+    <ClInclude Include="CCommon.h" />
     <ClInclude Include="CServerDriver.h" />
     <ClInclude Include="CVirtualBaseStation.h" />
     <ClInclude Include="CVirtualBodyTracker.h" />
@@ -97,8 +97,8 @@
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="CBodyTrackDriver.cpp" />
-    <ClCompile Include="Common.cpp" />
+    <ClCompile Include="CNvBodyTracker.cpp" />
+    <ClCompile Include="CCommon.cpp" />
     <ClCompile Include="CServerDriver.cpp" />
     <ClCompile Include="CVirtualBaseStation.cpp" />
     <ClCompile Include="CVirtualBodyTracker.cpp" />

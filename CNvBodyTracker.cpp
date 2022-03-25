@@ -1,10 +1,10 @@
 #include "pch.h"
-#include "CBodyTrackDriver.h"
-#include "Common.h"
+#include "CNvBodyTracker.h"
+#include "CCommon.h"
 
 char* g_nvARSDKPath = NULL;
 
-CBodyTrackDriver::CBodyTrackDriver()
+CNvBodyTracker::CNvBodyTracker()
 {
 	trackingActive = false;
 	stabilization = true;
@@ -16,7 +16,7 @@ CBodyTrackDriver::CBodyTrackDriver()
 	_batchSize = 1;
 }
 
-void CBodyTrackDriver::KeyInfoUpdated()
+void CNvBodyTracker::KeyInfoUpdated()
 {
 	int _nkp = numKeyPoints;
 
@@ -66,7 +66,7 @@ void CBodyTrackDriver::KeyInfoUpdated()
 	}
 }
 
-void CBodyTrackDriver::Initialize()
+void CNvBodyTracker::Initialize()
 {
 	if (stream != NULL)
 		Cleanup();
@@ -90,14 +90,14 @@ void CBodyTrackDriver::Initialize()
 	NvAR_SetObject(keyPointDetectHandle, NvAR_Parameter_Output(BoundingBoxes), &output_bboxes, sizeof(NvAR_BBoxes));
 }
 
-void CBodyTrackDriver::Initialize(int w, int h, int batch_size)
+void CNvBodyTracker::Initialize(int w, int h, int batch_size)
 {
 	batchSize = batch_size;
 	ResizeImage(w, h);
 	Initialize();
 }
 
-void CBodyTrackDriver::ResizeImage(int w, int h)
+void CNvBodyTracker::ResizeImage(int w, int h)
 {
 	input_image_width = w;
 	input_image_height = h;
@@ -111,12 +111,12 @@ void CBodyTrackDriver::ResizeImage(int w, int h)
 	image_loaded = true;
 }
 
-CBodyTrackDriver::~CBodyTrackDriver()
+CNvBodyTracker::~CNvBodyTracker()
 {
 	Cleanup();
 }
 
-void CBodyTrackDriver::Cleanup()
+void CNvBodyTracker::Cleanup()
 {
 	if (keyPointDetectHandle != nullptr)
 	{
@@ -137,7 +137,7 @@ void CBodyTrackDriver::Cleanup()
 		NvCVImage_Dealloc(&inputImageBuffer);
 }
 
-void CBodyTrackDriver::FillBatched(std::vector<NvAR_Quaternion>& from, std::vector<glm::quat>& to)
+void CNvBodyTracker::FillBatched(std::vector<NvAR_Quaternion>& from, std::vector<glm::quat>& to)
 {
 	int index, batch;
 	for (index = 0; index < (int)numKeyPoints; index++)
@@ -154,7 +154,7 @@ void CBodyTrackDriver::FillBatched(std::vector<NvAR_Quaternion>& from, std::vect
 	}
 }
 
-void CBodyTrackDriver::FillBatched(std::vector<NvAR_Point3f>& from, std::vector<glm::vec3>& to)
+void CNvBodyTracker::FillBatched(std::vector<NvAR_Point3f>& from, std::vector<glm::vec3>& to)
 {
 	int index, batch;
 	for (index = 0; index < (int)numKeyPoints; index++)
@@ -171,7 +171,7 @@ void CBodyTrackDriver::FillBatched(std::vector<NvAR_Point3f>& from, std::vector<
 	}
 }
 
-void CBodyTrackDriver::ComputeAvgConfidence()
+void CNvBodyTracker::ComputeAvgConfidence()
 {
 	float avg = 0.0;
 	int batch, index;
@@ -185,13 +185,13 @@ void CBodyTrackDriver::ComputeAvgConfidence()
 	confidence = avg / (batchSize + numKeyPoints);
 }
 
-void CBodyTrackDriver::EmptyKeypoints()
+void CNvBodyTracker::EmptyKeypoints()
 {
 	real_keypoints3D.assign(numKeyPoints, { 0.f, 0.f, 0.f });
 	real_jointAngles.assign(numKeyPoints, { 0.f, 0.f, 0.f, 0.f });
 }
 
-void CBodyTrackDriver::RunFrame()
+void CNvBodyTracker::RunFrame()
 {
 	if (trackingActive)
 	{

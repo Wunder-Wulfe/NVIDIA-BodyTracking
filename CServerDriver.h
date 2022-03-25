@@ -46,7 +46,7 @@
 // Zero
 #define C_0 "0"
 
-class CBodyTrackDriver;
+class CNvBodyTracker;
 class CVirtualBodyTracker;
 class CVirtualBaseStation;
 
@@ -65,7 +65,7 @@ class CServerDriver final : public vr::IServerTrackedDeviceProvider
     bool standby;
     bool trackingEnabled;
 
-    CBodyTrackDriver* driver;
+    CNvBodyTracker* driver;
 
     CServerDriver(const CServerDriver& that) = delete;
     CServerDriver& operator=(const CServerDriver& that) = delete;

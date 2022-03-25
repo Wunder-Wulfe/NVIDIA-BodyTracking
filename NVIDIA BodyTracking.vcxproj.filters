@@ -9,13 +9,13 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="CBodyTrackDriver.h" />
-    <ClInclude Include="Common.h" />
+    <ClInclude Include="CCommon.h" />
     <ClInclude Include="CServerDriver.h" />
     <ClInclude Include="CVirtualBaseStation.h" />
     <ClInclude Include="CVirtualBodyTracker.h" />
     <ClInclude Include="CVirtualDevice.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="CNvBodyTracker.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="nvar\src\nvARProxy.cpp">
@@ -24,13 +24,13 @@
     <ClCompile Include="nvar\src\nvCVImageProxy.cpp">
       <Filter>vendor\nvar</Filter>
     </ClCompile>
-    <ClCompile Include="CBodyTrackDriver.cpp" />
-    <ClCompile Include="Common.cpp" />
+    <ClCompile Include="CCommon.cpp" />
     <ClCompile Include="CServerDriver.cpp" />
     <ClCompile Include="CVirtualBaseStation.cpp" />
     <ClCompile Include="CVirtualBodyTracker.cpp" />
     <ClCompile Include="CVirtualDevice.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="pch.cpp" />
+    <ClCompile Include="CNvBodyTracker.cpp" />
   </ItemGroup>
 </Project>

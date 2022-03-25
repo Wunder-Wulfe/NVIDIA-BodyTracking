@@ -11,7 +11,7 @@ struct Proportions
 		chestOffset;
 };
 
-class CBodyTrackDriver
+class CNvBodyTracker
 {
 	bool image_loaded;
 
@@ -82,7 +82,7 @@ public:
 
 	void RunFrame();
 
-	CBodyTrackDriver();
-	~CBodyTrackDriver();
+	CNvBodyTracker();
+	~CNvBodyTracker();
 };
 
