@@ -72,6 +72,7 @@ class CVirtualBodyTracker;
 class CVirtualBaseStation;
 class CCameraDriver;
 enum class TRACKING_FLAG;
+enum class TRACKER_ROLE;
 
 class CServerDriver final : public vr::IServerTrackedDeviceProvider
 {
@@ -122,6 +123,9 @@ class CServerDriver final : public vr::IServerTrackedDeviceProvider
 
     TRACKING_FLAG GetConfigTrackingFlag(const char* section, const char* key, TRACKING_FLAG expected, TRACKING_FLAG def);
     TRACKING_FLAG GetConfigTrackingMode(const char* section, TRACKING_FLAG def);
+
+    void SetupTracker(const char* name, TRACKING_FLAG flag, TRACKER_ROLE role);
+    void SetupTracker(const char* name, TRACKING_FLAG flag, TRACKER_ROLE role, TRACKER_ROLE secondary);
 public:
     CServerDriver();
     ~CServerDriver();

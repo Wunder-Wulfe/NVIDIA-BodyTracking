@@ -55,8 +55,7 @@ void CCameraDriver::ChangeCamera(int up)
         currentCamera.set(cv::CAP_PROP_FRAME_WIDTH, (int)(cinfo->width * resScale));
         currentCamera.set(cv::CAP_PROP_FRAME_HEIGHT, (int)(cinfo->height * resScale));
 
-        sprintf_s(logging_buffer, LOG_BUFFER_SIZE, "Switching to camera of index %d\n", cinfo->id);
-        vr::VRDriverLog()->Log(logging_buffer);
+        vr_log("Switching to camera of index %d (%dx%d)\n", cinfo->id, cinfo->width, cinfo->height);
     }
     else
     {

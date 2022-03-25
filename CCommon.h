@@ -2,6 +2,8 @@
 
 #define LOG_BUFFER_SIZE 1000
 
+#define vr_log(fmt, ...) sprintf_s(logging_buffer, LOG_BUFFER_SIZE, fmt, __VA_ARGS__); vr::VRDriverLog()->Log(logging_buffer)
+
 char logging_buffer[];
 
 enum class BODY_JOINT
@@ -77,3 +79,4 @@ enum class TRACKING_FLAG
 };
 
 inline TRACKING_FLAG operator|(const TRACKING_FLAG& a, const TRACKING_FLAG& b) { return (TRACKING_FLAG)((int)a | (int)b); }
+inline TRACKING_FLAG operator&(const TRACKING_FLAG& a, const TRACKING_FLAG& b) { return (TRACKING_FLAG)((int)a & (int)b); }

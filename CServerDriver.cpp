@@ -2,6 +2,7 @@
 
 #include "CServerDriver.h"
 #include "CNvBodyTracker.h"
+#include "CVirtualBodyTracker.h"
 #include "CVirtualBaseStation.h"
 #include "CCameraDriver.h"
 #include "CCommon.h"
@@ -165,6 +166,27 @@ void CServerDriver::AttachConfig(bool update)
 		driver->KeyInfoUpdated();
 }
 
+void CServerDriver::SetupTracker(const char* name, TRACKING_FLAG flag, TRACKER_ROLE role)
+{
+	bool enabled = (trackingMode & flag) != TRACKING_FLAG::NONE;
+	vr_log("\tTracking for %s %s\n", name, enabled ? "enabled" : "disabled");
+	if (enabled)
+	{
+		trackers.push_back(new CVirtualBodyTracker(this, trackers.size(), role));
+	}
+}
+
+void CServerDriver::SetupTracker(const char* name, TRACKING_FLAG flag, TRACKER_ROLE role, TRACKER_ROLE secondary)
+{
+	bool enabled = (trackingMode & flag) != TRACKING_FLAG::NONE;
+	vr_log("\tTracking for %s %s\n", name, enabled ? "enabled" : "disabled");
+	if (enabled)
+	{
+		trackers.push_back(new CVirtualBodyTracker(this, trackers.size(), role));
+		trackers.push_back(new CVirtualBodyTracker(this, trackers.size(), secondary));
+	}
+}
+
 vr::EVRInitError CServerDriver::Init(vr::IVRDriverContext* pDriverContext)
 {
 	VR_INIT_SERVER_DRIVER_CONTEXT(pDriverContext);
@@ -172,6 +194,28 @@ vr::EVRInitError CServerDriver::Init(vr::IVRDriverContext* pDriverContext)
 	Initialize();
 
 	station->AddTracker();
+
+	vr_log("Tracking enabled: %s\n", driver->trackingActive ? "true" : "false");
+
+	vr_log("Current tracking modes:\n");
+	
+	SetupTracker(KEY_HIP_ON, TRACKING_FLAG::HIP, TRACKER_ROLE::HIPS);
+
+	SetupTracker(KEY_FEET_ON, TRACKING_FLAG::FEET, TRACKER_ROLE::LEFT_FOOT, TRACKER_ROLE::RIGHT_FOOT);
+
+	SetupTracker(KEY_ELBOW_ON, TRACKING_FLAG::ELBOW, TRACKER_ROLE::LEFT_ELBOW, TRACKER_ROLE::RIGHT_ELBOW);
+
+	SetupTracker(KEY_KNEE_ON, TRACKING_FLAG::KNEE, TRACKER_ROLE::LEFT_KNEE, TRACKER_ROLE::RIGHT_KNEE);
+
+	SetupTracker(KEY_CHEST_ON, TRACKING_FLAG::CHEST, TRACKER_ROLE::CHEST);
+
+	SetupTracker(KEY_SHOULDER_ON, TRACKING_FLAG::SHOULDER, TRACKER_ROLE::LEFT_SHOULDER, TRACKER_ROLE::RIGHT_SHOULDER);
+
+	SetupTracker(KEY_TOE_ON, TRACKING_FLAG::TOE, TRACKER_ROLE::LEFT_TOE, TRACKER_ROLE::RIGHT_TOE);
+
+	SetupTracker(KEY_HEAD_ON, TRACKING_FLAG::HEAD, TRACKER_ROLE::HEAD);
+
+	SetupTracker(KEY_HAND_ON, TRACKING_FLAG::HAND, TRACKER_ROLE::LEFT_HAND, TRACKER_ROLE::RIGHT_HAND);
 
 	return vr::VRInitError_None;
 }
@@ -182,6 +226,10 @@ void CServerDriver::Cleanup()
 	delptr(camDriver);
 	delptr(station);
 
+	for (CVirtualBodyTracker*& tracker : trackers)
+		delptr(tracker);
+	trackers.clear();
+
 	vr::CleanupDriverContext();
 }
 
@@ -190,8 +238,14 @@ void CServerDriver::RunFrame()
 	driver->trackingActive = trackingEnabled && !standby;
 	camDriver->RunFrame();
 	driver->RunFrame();
-	station->SetConnected(driver->trackingActive && driver->GetConfidenceAcceptable());
 	station->RunFrame();
+	station->SetConnected(driver->trackingActive && driver->GetConfidenceAcceptable());
+
+	for (CVirtualBodyTracker* tracker : trackers)
+	{
+		tracker->RunFrame();
+		tracker->SetConnected(driver->trackingActive && driver->GetConfidenceAcceptable());
+	}
 }
 
 void CServerDriver::EnterStandby()
