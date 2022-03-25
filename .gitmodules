@@ -7,3 +7,6 @@
 [submodule "vendor/MAXINE-AR-SDK"]
 	path = vendor/MAXINE-AR-SDK
 	url = https://github.com/NVIDIA/MAXINE-AR-SDK.git
+[submodule "vendor/openvr"]
+	path = vendor/openvr
+	url = https://github.com/ValveSoftware/openvr.git
