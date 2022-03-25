@@ -18,10 +18,10 @@
     <ClInclude Include="CNvBodyTracker.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="nvar\src\nvARProxy.cpp">
+    <ClCompile Include="vendor\nvar\src\nvARProxy.cpp">
       <Filter>vendor\nvar</Filter>
     </ClCompile>
-    <ClCompile Include="nvar\src\nvCVImageProxy.cpp">
+    <ClCompile Include="vendor\nvar\src\nvCVImageProxy.cpp">
       <Filter>vendor\nvar</Filter>
     </ClCompile>
     <ClCompile Include="CCommon.cpp" />

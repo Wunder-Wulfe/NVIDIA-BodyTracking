@@ -58,7 +58,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>.\simpleini-4.19;.\;.\opencv\include\opencv;.\opencv\include\opencv2;.\openvr\headers;.\glm\include\glm;.\nvar\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./;./vendor/openvr/headers;./vendor/nvar/include;./vendor/opencv/include/opencv;./vendor/opencv/include/opencv2;./vendor/glm/include/glm;./vendor/simpleini;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ModuleOutputFile>$(IntDir)</ModuleOutputFile>
     </ClCompile>
     <Link>
@@ -77,7 +77,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>.\simpleini-4.19;.\;.\opencv\include\opencv;.\opencv\include\opencv2;.\openvr\headers;.\glm\include\glm;.\nvar\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./;./vendor/openvr/headers;./vendor/nvar/include;./vendor/opencv/include/opencv;./vendor/opencv/include/opencv2;./vendor/glm/include/glm;./vendor/simpleini;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -104,11 +104,11 @@
     <ClCompile Include="CVirtualBodyTracker.cpp" />
     <ClCompile Include="CVirtualDevice.cpp" />
     <ClCompile Include="dllmain.cpp" />
-    <ClCompile Include="nvar\src\nvARProxy.cpp">
+    <ClCompile Include="vendor\nvar\src\nvARProxy.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="nvar\src\nvCVImageProxy.cpp">
+    <ClCompile Include="vendor\nvar\src\nvCVImageProxy.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
