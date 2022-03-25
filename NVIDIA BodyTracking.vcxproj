@@ -127,6 +127,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <AdditionalIncludeDirectories>.\simpleini-4.19;.\;.\opencv\include\opencv;.\opencv\include\opencv2;.\openvr\headers;.\glm\include\glm;.\nvar\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ModuleOutputFile>$(IntDir)</ModuleOutputFile>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

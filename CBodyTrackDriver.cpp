@@ -47,6 +47,8 @@ void CBodyTrackDriver::KeyInfoUpdated()
 		keypoints_confidence.assign(batchSize * numKeyPoints, 0.f);
 		referencePose.assign(numKeyPoints, { 0.f, 0.f, 0.f });
 
+		EmptyKeypoints();
+
 		const void* pReferencePose;
 		NvAR_GetObject(keyPointDetectHandle, NvAR_Parameter_Config(ReferencePose), &pReferencePose,
 			sizeof(NvAR_Point3f));
@@ -77,7 +79,6 @@ void CBodyTrackDriver::Initialize()
 	NvAR_Load(bodyDetectHandle);
 
 	KeyInfoUpdated();
-	 
 
 	output_bbox_size = batchSize;
 	if (!stabilization) output_bbox_size = 25;
@@ -88,7 +89,7 @@ void CBodyTrackDriver::Initialize()
 	NvAR_SetObject(keyPointDetectHandle, NvAR_Parameter_Output(BoundingBoxes), &output_bboxes, sizeof(NvAR_BBoxes));
 }
 
-void CBodyTrackDriver::Initialize(int w, int h, int batch_size = 1)
+void CBodyTrackDriver::Initialize(int w, int h, int batch_size)
 {
 	batchSize = batch_size;
 	ResizeImage(w, h);
@@ -133,4 +134,76 @@ void CBodyTrackDriver::Cleanup()
 	}
 	if (image_loaded)
 		NvCVImage_Dealloc(&inputImageBuffer);
+}
+
+void CBodyTrackDriver::FillBatched(std::vector<NvAR_Quaternion>& from, std::vector<glm::quat>& to)
+{
+	int index, batch;
+	for (index = 0; index < (int)numKeyPoints; index++)
+	{
+		to[index] = CastQuaternion(from[index]) / (float)batchSize;
+	}
+
+	for (batch = 1; batch < batchSize; batch++)
+	{
+		for (index = 0; index < (int)numKeyPoints; index++)
+		{
+			to[index] += CastQuaternion(TableIndex(from, index, batch)) / (float)batchSize;
+		}
+	}
+}
+
+void CBodyTrackDriver::FillBatched(std::vector<NvAR_Point3f>& from, std::vector<glm::vec3>& to)
+{
+	int index, batch;
+	for (index = 0; index < (int)numKeyPoints; index++)
+	{
+		to[index] = CastPoint(from[index]) / (float)batchSize;
+	}
+
+	for (batch = 1; batch < batchSize; batch++)
+	{
+		for (index = 0; index < (int)numKeyPoints; index++)
+		{
+			to[index] += CastPoint(TableIndex(from, index, batch)) / (float)batchSize;
+		}
+	}
+}
+
+void CBodyTrackDriver::ComputeAvgConfidence()
+{
+	float avg = 0.0;
+	int batch, index;
+	for (batch = 0; batch < batchSize; batch++)
+	{
+		for (index = 0; index < (int)numKeyPoints; index++)
+		{
+			avg += TableIndex(keypoints_confidence, index, batch);
+		}
+	}
+	confidence = avg / (batchSize + numKeyPoints);
+}
+
+void CBodyTrackDriver::EmptyKeypoints()
+{
+	real_keypoints3D.assign(numKeyPoints, { 0.f, 0.f, 0.f });
+	real_jointAngles.assign(numKeyPoints, { 0.f, 0.f, 0.f, 0.f });
+}
+
+void CBodyTrackDriver::RunFrame()
+{
+	if (trackingActive)
+	{
+		NvAR_Run(keyPointDetectHandle);
+		ComputeAvgConfidence();
+		if (confidence >= confidenceRequirement)
+		{
+			FillBatched(keypoints3D, real_keypoints3D);
+			FillBatched(jointAngles, real_jointAngles);
+		}
+		else
+			EmptyKeypoints();
+	}
+	else
+		EmptyKeypoints();
 }

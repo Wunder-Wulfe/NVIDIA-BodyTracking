@@ -13,6 +13,8 @@ const char* const CServerDriver::msInterfaces[]
 CServerDriver::CServerDriver()
 {
 	driver = new CBodyTrackDriver();
+	standby = false;
+	trackingEnabled = false;
 }
 
 CServerDriver::~CServerDriver()
@@ -30,10 +32,12 @@ bool CServerDriver::UpdateConfig()
 		&& SetConfigInteger(SECTION_SDKSET, KEY_BATCH_SZ, driver->batchSize)
 		&& SetConfigInteger(SECTION_SDKSET, KEY_NVAR, driver->nvARMode)
 		&& SetConfigInteger(SECTION_SDKSET, KEY_IMAGE_W, driver->ImageWidth())
-		&& SetConfigInteger(SECTION_SDKSET, KEY_IMAGE_H, driver->ImageHeight());
+		&& SetConfigInteger(SECTION_SDKSET, KEY_IMAGE_H, driver->ImageHeight())
+		&& SetConfigFloat(SECTION_SDKSET, KEY_CONF, driver->confidenceRequirement)
+		&& SetConfigBoolean(SECTION_SDKSET, KEY_TRACKING, trackingEnabled);
 }
 
-bool CServerDriver::SaveConfig(bool update=false)
+bool CServerDriver::SaveConfig(bool update)
 {
 	if (update)
 		UpdateConfig();
@@ -77,10 +81,10 @@ bool CServerDriver::SetConfigVector(const char* section, const glm::vec3 value)
 
 bool CServerDriver::SetConfigQuaternion(const char* section, const glm::quat value)
 {
-	return SetConfigFloat(section, C_X, value.x)
+	return SetConfigFloat(section, C_W, value.w)
+		&& SetConfigFloat(section, C_X, value.x)
 		&& SetConfigFloat(section, C_Y, value.y)
-		&& SetConfigFloat(section, C_Z, value.z)
-		&& SetConfigFloat(section, C_W, value.w);
+		&& SetConfigFloat(section, C_Z, value.z);
 }
 
 void CServerDriver::Initialize()
@@ -92,7 +96,7 @@ void CServerDriver::Initialize()
 	driver->Initialize();
 }
 
-void CServerDriver::AttachConfig(bool update=true)
+void CServerDriver::AttachConfig(bool update)
 {
 	driver->batchSize = GetConfigInteger(SECTION_SDKSET, KEY_BATCH_SZ, 1);
 	driver->focalLength = GetConfigFloat(SECTION_CAMSET, KEY_FOCAL, 800.0f);
@@ -108,6 +112,9 @@ void CServerDriver::AttachConfig(bool update=true)
 		GetConfigVector(SECTION_POS),
 		GetConfigQuaternion(SECTION_ROT)
 	);
+	driver->confidenceRequirement = GetConfigFloat(SECTION_SDKSET, KEY_CONF, 0.0);
+
+	driver->trackingActive = GetConfigBoolean(SECTION_SDKSET, KEY_TRACKING, false);
 
 	if (update)
 		driver->KeyInfoUpdated();
@@ -131,14 +138,18 @@ void CServerDriver::Cleanup()
 
 void CServerDriver::RunFrame()
 {
+	driver->trackingActive = trackingEnabled && !standby;
+	driver->RunFrame();
 }
 
 void CServerDriver::EnterStandby()
 {
+	standby = true;
 }
 
 void CServerDriver::LeaveStandby()
 {
+	standby = false;
 }
 
 bool CServerDriver::ShouldBlockStandbyMode()

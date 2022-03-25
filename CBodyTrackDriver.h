@@ -56,6 +56,25 @@ class CBodyTrackDriver
 	std::vector<float> output_bbox_conf_data;
 	NvAR_BBoxes output_bboxes{};
 	int _batchSize;
+	float confidence;
+
+	std::vector<glm::vec3> real_keypoints3D;
+	std::vector<glm::quat> real_jointAngles;
+
+	void FillBatched(std::vector<NvAR_Point3f> &from, std::vector<glm::vec3> &to);
+	void FillBatched(std::vector<NvAR_Quaternion>& from, std::vector<glm::quat>& to);
+
+	void EmptyKeypoints();
+
+	void ComputeAvgConfidence();
+			
+	template<class T>
+	inline T& TableIndex(T* table, int index, int batch) { return table[batch * numKeyPoints + index]; }
+	template<class T>
+	inline T& TableIndex(std::vector<T> &vector, int index, int batch) { return vector[batch * numKeyPoints + index]; }
+
+	inline glm::vec3 CastPoint(NvAR_Point3f point) { return glm::vec3(point.x, point.y, point.z); }
+	inline glm::quat CastQuaternion(NvAR_Quaternion quat) { return glm::quat(quat.w, quat.x, quat.y, quat.z); }
 
 public:
 	void Initialize();
@@ -70,16 +89,21 @@ public:
 	int nvARMode;
 	int batchSize;
 	bool trackingActive;
+	float confidenceRequirement;
+
+	inline float GetConfidence() { return confidence; };
 
 	glm::mat4x4 camMatrix;
-	inline void SetCamera(glm::vec3 pos, glm::quat rot) { camMatrix = glm::mat4_cast(rot); camMatrix += pos; }
-	inline void RotateCamera(glm::quat rot) { camMatrix *= rot; }
-	inline void MoveCamera(glm::vec3 pos) { camMatrix += pos; }
+	inline void SetCamera(glm::vec3 pos, glm::quat rot) { camMatrix = glm::translate(glm::mat4_cast(rot), pos); }
+	inline void RotateCamera(glm::quat rot) { camMatrix *= glm::mat4_cast(rot); }
+	inline void MoveCamera(glm::vec3 pos) { camMatrix = glm::translate(camMatrix, pos); }
 	inline glm::vec3 GetCameraPos() { return glm::vec3(camMatrix[3][0], camMatrix[3][1], camMatrix[3][2]); }
 	inline glm::quat GetCameraRot() { return glm::quat_cast(camMatrix); }
 
 	inline int ImageWidth() { return input_image_width; }
 	inline int ImageHeight() { return input_image_height; }
+
+	void RunFrame();
 
 	CBodyTrackDriver();
 	~CBodyTrackDriver();

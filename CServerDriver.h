@@ -29,6 +29,10 @@
 
 // SDK settings section
 #define SECTION_SDKSET "SDKSettings"
+// Whether or not tracking is enabled
+#define KEY_TRACKING "TrackingEnabled"
+// The minimum confidence interval
+#define KEY_CONF "ConfidenceMin"
 // Use CUDA graphs
 #define KEY_USE_CUDA "UseCudaGraph"
 // Stabilization
@@ -57,6 +61,9 @@ class CServerDriver final : public vr::IServerTrackedDeviceProvider
     void EnterStandby();
     void LeaveStandby();
 
+    bool standby;
+    bool trackingEnabled;
+
     CBodyTrackDriver* driver;
 
     CServerDriver(const CServerDriver& that) = delete;
@@ -64,7 +71,7 @@ class CServerDriver final : public vr::IServerTrackedDeviceProvider
 
     CSimpleIniA iniFile;
 
-    char tbuffer[BUFFER_SIZE];
+    char tbuffer[BUFFER_SIZE] = { NULL };
 
     void Initialize();
 
@@ -75,7 +82,7 @@ class CServerDriver final : public vr::IServerTrackedDeviceProvider
     inline bool GetConfigBoolean(const char* section, const char* key, bool def = false) { return iniFile.GetBoolValue(section, key, def); }
     inline const char* GetConfigString(const char* section, const char* key, const char* def = "") { return iniFile.GetValue(section, key, def); }
 
-    inline bool SetConfigInteger(const char* section, const char* key, int value) { return 0 < iniFile.SetValue(section, key, itoa(value, tbuffer, BUFFER_SIZE)); }
+    inline bool SetConfigInteger(const char* section, const char* key, int value) { _itoa_s(value, tbuffer, BUFFER_SIZE); return 0 < iniFile.SetValue(section, key, tbuffer); }
     inline bool SetConfigFloat(const char* section, const char* key, float value) { return 0 < iniFile.SetDoubleValue(section, key, (double)value); }
     bool SetConfigVector(const char* section, const glm::vec3 value);
     bool SetConfigQuaternion(const char* section, const glm::quat value);
