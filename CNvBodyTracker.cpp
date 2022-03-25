@@ -16,11 +16,11 @@ CNvBodyTracker::CNvBodyTracker()
 	_batchSize = 1;
 }
 
-void CNvBodyTracker::KeyInfoUpdated()
+void CNvBodyTracker::KeyInfoUpdated(bool overrided)
 {
 	int _nkp = numKeyPoints;
 
-	if (batchSize != _batchSize)
+	if (batchSize != _batchSize || overrided)
 	{
 		_batchSize = batchSize;
 		if (keyPointDetectHandle != nullptr)
@@ -79,7 +79,7 @@ void CNvBodyTracker::Initialize()
 	NvAR_SetU32(bodyDetectHandle, NvAR_Parameter_Config(Temporal), stabilization);
 	NvAR_Load(bodyDetectHandle);
 
-	KeyInfoUpdated();
+	KeyInfoUpdated(true);
 
 	output_bbox_size = batchSize;
 	if (!stabilization) output_bbox_size = 25;
