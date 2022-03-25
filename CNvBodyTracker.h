@@ -58,11 +58,8 @@ public:
 	void Initialize(int w, int h, int batch_size=1);
 	void ResizeImage(int w, int h);
 	void Cleanup();
-<<<<<<< HEAD
+
 	void KeyInfoUpdated(bool override = false);
-=======
-	void KeyInfoUpdated(bool overrided = false);
->>>>>>> 3253c59aaa53099d1ef4ddd21c0963a269ebb92f
 
 	bool useCudaGraph;
 	float focalLength;
