@@ -17,6 +17,8 @@ CServerDriver::CServerDriver()
 	station = new CVirtualBaseStation(this);
 	standby = false;
 	trackingEnabled = false;
+
+	station->AddTracker();
 }
 
 CServerDriver::~CServerDriver()

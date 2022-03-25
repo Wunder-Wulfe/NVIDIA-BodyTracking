@@ -1,4 +1,7 @@
 #pragma once
+
+class CServerDriver;
+
 class CVirtualDevice : public vr::ITrackedDeviceServerDriver
 {
     vr::DriverPose_t m_pose;
@@ -16,7 +19,9 @@ class CVirtualDevice : public vr::ITrackedDeviceServerDriver
     void DebugRequest(const char* pchRequest, char* pchResponseBuffer, uint32_t unResponseBufferSize);
     vr::DriverPose_t GetPose();
 public:
-    CVirtualDevice();
+    CServerDriver* m_serverDriver;
+
+    CVirtualDevice(CServerDriver* driv);
     virtual ~CVirtualDevice();
 
     const std::string& GetSerial() const;
@@ -34,12 +39,14 @@ public:
     bool tracking;
 
     void RunFrame();
-protected:
+public:
     vr::PropertyContainerHandle_t m_propertyHandle;
     uint32_t m_trackedDevice;
 
     std::string m_serial;
+    vr::ETrackedDeviceClass cls;
 
     virtual void SetupProperties();
+    void AddTracker();
 };
 

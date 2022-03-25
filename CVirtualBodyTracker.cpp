@@ -1,8 +1,9 @@
 #include "pch.h"
 #include "CVirtualBodyTracker.h"
 #include "Common.h"
+#include "CServerDriver.h"
 
-CVirtualBodyTracker::CVirtualBodyTracker(size_t p_index, TRACKER_ROLE rle)
+CVirtualBodyTracker::CVirtualBodyTracker(CServerDriver* driv, size_t p_index, TRACKER_ROLE rle) : CVirtualDevice(driv)
 {
     m_serial.assign(TrackerRoleName[(int)rle]);
     m_index = p_index;

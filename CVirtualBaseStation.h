@@ -6,8 +6,6 @@ class CServerDriver;
 
 class CVirtualBaseStation : public CVirtualDevice
 {
-    CServerDriver *m_serverDriver;
-
     CVirtualBaseStation(const CVirtualBaseStation& that) = delete;
     CVirtualBaseStation& operator=(const CVirtualBaseStation& that) = delete;
 

@@ -3,6 +3,7 @@
 #include "CVirtualDevice.h"
 
 enum class TRACKER_ROLE;
+class CServerDriver;
 
 class CVirtualBodyTracker : public CVirtualDevice
 {
@@ -16,7 +17,7 @@ class CVirtualBodyTracker : public CVirtualDevice
 public:
     TRACKER_ROLE role;
 
-    explicit CVirtualBodyTracker(size_t p_index, TRACKER_ROLE rle);
+    explicit CVirtualBodyTracker(CServerDriver *driv, size_t p_index, TRACKER_ROLE rle);
     ~CVirtualBodyTracker();
 };
 

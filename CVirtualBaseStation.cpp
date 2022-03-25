@@ -1,10 +1,11 @@
 #include "pch.h"
 #include "CVirtualBaseStation.h"
+#include "CServerDriver.h"
 
-CVirtualBaseStation::CVirtualBaseStation(CServerDriver* p_server)
+CVirtualBaseStation::CVirtualBaseStation(CServerDriver* p_server) : CVirtualDevice(p_server)
 {
-    m_serverDriver = p_server;
     m_serial.assign("RTX-30");
+    cls = vr::ETrackedDeviceClass::TrackedDeviceClass_TrackingReference;
 }
 
 CVirtualBaseStation::~CVirtualBaseStation()

@@ -1,8 +1,10 @@
 #include "pch.h"
 #include "CVirtualDevice.h"
+#include "CServerDriver.h"
 
-CVirtualDevice::CVirtualDevice()
+CVirtualDevice::CVirtualDevice(CServerDriver *driv)
 {
+    cls = vr::ETrackedDeviceClass::TrackedDeviceClass_GenericTracker;
     m_connected = false;
     m_forcedConnected = true;
     tracking = false;
@@ -28,6 +30,7 @@ CVirtualDevice::CVirtualDevice()
 
     m_propertyHandle = vr::k_ulInvalidPropertyContainer;
     m_trackedDevice = vr::k_unTrackedDeviceIndexInvalid;
+    m_serverDriver = driv;
 }
 
 CVirtualDevice::~CVirtualDevice()
@@ -148,4 +151,9 @@ void CVirtualDevice::RunFrame()
     }
     else
         SetConnected(false);
+}
+
+void CVirtualDevice::AddTracker()
+{
+    vr::VRServerDriverHost()->TrackedDeviceAdded(GetSerial().c_str(), cls, this);
 }
