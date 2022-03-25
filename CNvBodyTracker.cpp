@@ -29,7 +29,7 @@ void CNvBodyTracker::KeyInfoUpdated()
 			keyPointDetectHandle = nullptr;
 		}
 		NvAR_Create(NvAR_Feature_BodyPoseEstimation, &keyPointDetectHandle);
-		NvAR_SetString(keyPointDetectHandle, NvAR_Parameter_Config(ModelDir), nullptr);
+		NvAR_SetString(keyPointDetectHandle, NvAR_Parameter_Config(ModelDir), "");
 		NvAR_SetCudaStream(keyPointDetectHandle, NvAR_Parameter_Config(CUDAStream), stream);
 		NvAR_SetU32(keyPointDetectHandle, NvAR_Parameter_Config(BatchSize), batchSize);
 	}
@@ -74,7 +74,7 @@ void CNvBodyTracker::Initialize()
 	unsigned int output_bbox_size;
 	NvAR_CudaStreamCreate(&stream);
 	NvAR_Create(NvAR_Feature_BodyDetection, &bodyDetectHandle);
-	NvAR_SetString(bodyDetectHandle, NvAR_Parameter_Config(ModelDir), nullptr);
+	NvAR_SetString(bodyDetectHandle, NvAR_Parameter_Config(ModelDir), "");
 	NvAR_SetCudaStream(bodyDetectHandle, NvAR_Parameter_Config(CUDAStream), stream);
 	NvAR_SetU32(bodyDetectHandle, NvAR_Parameter_Config(Temporal), stabilization);
 	NvAR_Load(bodyDetectHandle);
