@@ -1,7 +1,5 @@
 #pragma once
 
-#include "CBodyTrackDriver.h"
-
 #define BUFFER_SIZE 20
 
 // X Coordinate of a vector/quaternion
@@ -48,6 +46,7 @@
 // Zero
 #define C_0 "0"
 
+class CBodyTrackDriver;
 class CVirtualBodyTracker;
 class CVirtualBaseStation;
 
