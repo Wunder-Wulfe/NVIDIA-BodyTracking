@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "CVirtualBodyTracker.h"
-#include "Common.h"
+#include "CCommon.h"
 #include "CServerDriver.h"
 
 CVirtualBodyTracker::CVirtualBodyTracker(CServerDriver* driv, size_t p_index, TRACKER_ROLE rle) : CVirtualDevice(driv)

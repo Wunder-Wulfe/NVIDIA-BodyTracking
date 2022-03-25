@@ -1,7 +1,7 @@
 #include "pch.h"
 
 #include "CServerDriver.h"
-#include "CBodyTrackDriver.h"
+#include "CNvBodyTracker.h"
 #include "CVirtualBaseStation.h"
 
 const char* const CServerDriver::msInterfaces[]
@@ -13,7 +13,7 @@ const char* const CServerDriver::msInterfaces[]
 
 CServerDriver::CServerDriver()
 {
-	driver = new CBodyTrackDriver();
+	driver = new CNvBodyTracker();
 	station = new CVirtualBaseStation(this);
 	standby = false;
 	trackingEnabled = false;

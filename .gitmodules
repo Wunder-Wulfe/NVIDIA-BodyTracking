@@ -1,0 +1,12 @@
+[submodule "vendor/glm"]
+	path = vendor/glm
+	url = https://github.com/g-truc/glm.git
+[submodule "vendor/simpleini"]
+	path = vendor/simpleini
+	url = https://github.com/brofield/simpleini.git
+[submodule "vendor/MAXINE-AR-SDK"]
+	path = vendor/MAXINE-AR-SDK
+	url = https://github.com/NVIDIA/MAXINE-AR-SDK.git
+[submodule "vendor/openvr"]
+	path = vendor/openvr
+	url = https://github.com/ValveSoftware/openvr.git
