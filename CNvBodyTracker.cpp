@@ -2,7 +2,7 @@
 #include "CNvBodyTracker.h"
 #include "CCommon.h"
 
-char* g_nvARSDKPath = NULL;
+char* g_nvARSDKPath = nullptr;
 
 CNvBodyTracker::CNvBodyTracker()
 {
@@ -29,7 +29,7 @@ void CNvBodyTracker::KeyInfoUpdated()
 			keyPointDetectHandle = nullptr;
 		}
 		NvAR_Create(NvAR_Feature_BodyPoseEstimation, &keyPointDetectHandle);
-		NvAR_SetString(keyPointDetectHandle, NvAR_Parameter_Config(ModelDir), NULL);
+		NvAR_SetString(keyPointDetectHandle, NvAR_Parameter_Config(ModelDir), nullptr);
 		NvAR_SetCudaStream(keyPointDetectHandle, NvAR_Parameter_Config(CUDAStream), stream);
 		NvAR_SetU32(keyPointDetectHandle, NvAR_Parameter_Config(BatchSize), batchSize);
 	}
@@ -68,13 +68,13 @@ void CNvBodyTracker::KeyInfoUpdated()
 
 void CNvBodyTracker::Initialize()
 {
-	if (stream != NULL)
+	if (stream != nullptr)
 		Cleanup();
 
 	unsigned int output_bbox_size;
 	NvAR_CudaStreamCreate(&stream);
 	NvAR_Create(NvAR_Feature_BodyDetection, &bodyDetectHandle);
-	NvAR_SetString(bodyDetectHandle, NvAR_Parameter_Config(ModelDir), NULL);
+	NvAR_SetString(bodyDetectHandle, NvAR_Parameter_Config(ModelDir), nullptr);
 	NvAR_SetCudaStream(bodyDetectHandle, NvAR_Parameter_Config(CUDAStream), stream);
 	NvAR_SetU32(bodyDetectHandle, NvAR_Parameter_Config(Temporal), stabilization);
 	NvAR_Load(bodyDetectHandle);
@@ -128,10 +128,10 @@ void CNvBodyTracker::Cleanup()
 		NvAR_Destroy(bodyDetectHandle);
 		bodyDetectHandle = nullptr;
 	}
-	if (stream != NULL)
+	if (stream != nullptr)
 	{
 		NvAR_CudaStreamDestroy(stream);
-		stream = NULL;
+		stream = nullptr;
 	}
 	if (image_loaded)
 		NvCVImage_Dealloc(&inputImageBuffer);
