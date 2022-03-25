@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "CCommon.h"
 
+char logging_buffer[LOG_BUFFER_SIZE] = { NULL };
+
 const char* TrackerRoleName[] = {
    "RTX-Hips",
    "RTX-LeftFoot",

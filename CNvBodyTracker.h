@@ -77,6 +77,7 @@ public:
 	inline void MoveCamera(glm::vec3 pos) { camMatrix = glm::translate(camMatrix, pos); }
 	inline glm::vec3 GetCameraPos() { return glm::vec3(camMatrix[3][0], camMatrix[3][1], camMatrix[3][2]); }
 	inline glm::quat GetCameraRot() { return glm::quat_cast(camMatrix); }
+	inline bool GetConfidenceAcceptable() { return confidence >= confidenceRequirement; }
 
 	inline int GetImageWidth() const { return input_image_width; }
 	inline int GetImageHeight() const { return input_image_height; }

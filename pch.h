@@ -14,8 +14,10 @@
 #include <limits>
 #include <algorithm>
 #include <functional>
+#include <future>
 
 #include "openvr_driver.h"
+#include "opencv2/opencv.hpp"
 #include "glm/gtc/quaternion.hpp"
 #include "glm/gtx/transform.hpp"
 #include "SimpleIni.h"

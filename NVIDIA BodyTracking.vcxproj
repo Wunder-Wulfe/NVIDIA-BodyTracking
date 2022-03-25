@@ -58,13 +58,15 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>./;./vendor/openvr/headers;./vendor/MAXINE-AR-SDK/nvar/include;./vendor/opencv/include/opencv;./vendor/opencv/include/opencv2;./vendor/glm;./vendor/simpleini;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./;./vendor/MAXINE-AR-SDK/samples/external/opencv/include;./vendor/openvr/headers;./vendor/MAXINE-AR-SDK/nvar/include;./vendor/opencv/include/opencv;./vendor/opencv/include/opencv2;./vendor/glm;./vendor/simpleini;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ModuleOutputFile>$(IntDir)</ModuleOutputFile>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
+      <AdditionalDependencies>opencv_world346.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>.\vendor\MAXINE-AR-SDK\samples\external\opencv\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -77,7 +79,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>./;./vendor/openvr/headers;./vendor/MAXINE-AR-SDK/nvar/include;./vendor/opencv/include/opencv;./vendor/opencv/include/opencv2;./vendor/glm;./vendor/simpleini;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./;./vendor/MAXINE-AR-SDK/samples/external/opencv/include;./vendor/openvr/headers;./vendor/MAXINE-AR-SDK/nvar/include;./vendor/opencv/include/opencv;./vendor/opencv/include/opencv2;./vendor/glm;./vendor/simpleini;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -85,9 +87,12 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
+      <AdditionalDependencies>opencv_world346.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>.\vendor\MAXINE-AR-SDK\samples\external\opencv\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="CCameraDriver.h" />
     <ClInclude Include="CNvBodyTracker.h" />
     <ClInclude Include="CCommon.h" />
     <ClInclude Include="CServerDriver.h" />
@@ -97,6 +102,7 @@
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="CCameraDriver.cpp" />
     <ClCompile Include="CNvBodyTracker.cpp" />
     <ClCompile Include="CCommon.cpp" />
     <ClCompile Include="CServerDriver.cpp" />

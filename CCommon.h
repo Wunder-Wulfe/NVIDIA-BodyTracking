@@ -1,5 +1,9 @@
 #pragma once
 
+#define LOG_BUFFER_SIZE 1000
+
+char logging_buffer[];
+
 enum class BODY_JOINT
 {
 	PELVIS,

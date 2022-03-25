@@ -16,6 +16,7 @@
     <ClInclude Include="CVirtualDevice.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="CNvBodyTracker.h" />
+    <ClInclude Include="CCameraDriver.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="vendor\MAXINE-AR-SDK\nvar\src\nvARProxy.cpp">
@@ -32,5 +33,6 @@
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="pch.cpp" />
     <ClCompile Include="CNvBodyTracker.cpp" />
+    <ClCompile Include="CCameraDriver.cpp" />
   </ItemGroup>
 </Project>

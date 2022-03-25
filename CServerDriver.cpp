@@ -3,7 +3,14 @@
 #include "CServerDriver.h"
 #include "CNvBodyTracker.h"
 #include "CVirtualBaseStation.h"
+#include "CCameraDriver.h"
 #include "CCommon.h"
+
+template<class T>
+inline void delptr(T& ptr) {
+	delete ptr;
+	ptr = nullptr;
+}
 
 extern char g_modulePath[];
 
@@ -17,6 +24,7 @@ const char* const CServerDriver::msInterfaces[]
 CServerDriver::CServerDriver()
 {
 	driver = nullptr;
+	camDriver = nullptr;
 	station = nullptr;
 	standby = false;
 	trackingEnabled = false;
@@ -123,12 +131,16 @@ void CServerDriver::Initialize()
 {
 	driver = new CNvBodyTracker();
 	station = new CVirtualBaseStation(this);
+	camDriver = new CCameraDriver(GetConfigFloat(SECTION_CAMSET, KEY_RES_SCALE, 1.0));
+	camDriver->show = GetConfigBoolean(SECTION_CAMSET, KEY_CAM_VIS, true);
 
 	trackingMode = GetConfigTrackingMode(SECTION_TRACK_MODE);
 
 	LoadConfig();
 
 	AttachConfig(false);
+
+	camDriver->LoadCameras();
 
 	driver->Initialize();
 }
@@ -166,15 +178,19 @@ vr::EVRInitError CServerDriver::Init(vr::IVRDriverContext* pDriverContext)
 
 void CServerDriver::Cleanup()
 {
-	delete driver;
-	driver = nullptr;
+	delptr(driver);
+	delptr(camDriver);
+	delptr(station);
+
 	vr::CleanupDriverContext();
 }
 
 void CServerDriver::RunFrame()
 {
 	driver->trackingActive = trackingEnabled && !standby;
+	camDriver->RunFrame();
 	driver->RunFrame();
+	station->SetConnected(driver->trackingActive && driver->GetConfidenceAcceptable());
 	station->RunFrame();
 }
 

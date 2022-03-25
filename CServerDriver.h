@@ -25,6 +25,8 @@
 #define KEY_FOCAL "FocalLength"
 // Resolution scale (float)
 #define KEY_RES_SCALE "ResolutionScale"
+// Whether or not to make the camera visible (bool)
+#define KEY_CAM_VIS "Visible"
 
 // SDK settings section
 #define SECTION_SDKSET "SDKSettings"
@@ -68,6 +70,7 @@
 class CNvBodyTracker;
 class CVirtualBodyTracker;
 class CVirtualBaseStation;
+class CCameraDriver;
 enum class TRACKING_FLAG;
 
 class CServerDriver final : public vr::IServerTrackedDeviceProvider
@@ -96,6 +99,7 @@ class CServerDriver final : public vr::IServerTrackedDeviceProvider
 
     std::vector<CVirtualBodyTracker*> trackers;
     CVirtualBaseStation* station;
+    CCameraDriver* camDriver;
 
 
     void Initialize();
