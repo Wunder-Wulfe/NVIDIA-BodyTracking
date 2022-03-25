@@ -5,6 +5,8 @@
 #include "CVirtualBaseStation.h"
 #include "CCommon.h"
 
+extern char g_modulePath[];
+
 const char* const CServerDriver::msInterfaces[]
 {
 	vr::ITrackedDeviceServerDriver_Version,
@@ -18,8 +20,6 @@ CServerDriver::CServerDriver()
 	station = nullptr;
 	standby = false;
 	trackingEnabled = false;
-
-	station->AddTracker();
 }
 
 CServerDriver::~CServerDriver()
@@ -58,7 +58,10 @@ bool CServerDriver::SaveConfig(const char* alt)
 
 bool CServerDriver::LoadConfig()
 {
-	return 0 < iniFile.LoadFile(C_SETTINGS);
+	std::string l_path(g_modulePath);
+	l_path.erase(l_path.begin() + l_path.rfind('\\'), l_path.end());
+	l_path.append(C_SETTINGS);
+	return 0 < iniFile.LoadFile(l_path.c_str());
 }
 
 glm::vec3 CServerDriver::GetConfigVector(const char* section)
@@ -155,6 +158,8 @@ vr::EVRInitError CServerDriver::Init(vr::IVRDriverContext* pDriverContext)
 	VR_INIT_SERVER_DRIVER_CONTEXT(pDriverContext);
 
 	Initialize();
+
+	station->AddTracker();
 
 	return vr::VRInitError_None;
 }

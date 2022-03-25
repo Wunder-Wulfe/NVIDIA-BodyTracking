@@ -17,11 +17,19 @@ CNvBodyTracker::CNvBodyTracker()
 	keyPointDetectHandle = bodyDetectHandle = nullptr;
 }
 
+<<<<<<< HEAD
 void CNvBodyTracker::KeyInfoUpdated(bool override)
 {
 	int _nkp = numKeyPoints;
 
 	if (batchSize != _batchSize || override)
+=======
+void CNvBodyTracker::KeyInfoUpdated(bool overrided)
+{
+	int _nkp = numKeyPoints;
+
+	if (batchSize != _batchSize || overrided)
+>>>>>>> 3253c59aaa53099d1ef4ddd21c0963a269ebb92f
 	{
 		if (keyPointDetectHandle != nullptr)
 		{

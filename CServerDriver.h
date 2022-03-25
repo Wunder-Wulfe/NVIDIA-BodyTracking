@@ -12,7 +12,7 @@
 #define C_W "W"
 
 // Settings file path
-#define C_SETTINGS "./settings.ini"
+#define C_SETTINGS "\\settings.ini"
 
 // Camera position section (glm::vec3)
 #define SECTION_POS "CameraPosition"

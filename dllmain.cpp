@@ -3,6 +3,8 @@
 
 #include "CServerDriver.h"
 
+extern "C" __declspec(dllexport) unsigned long NvOptimusEnablement = 1;
+
 char g_modulePath[2048U];
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID /* lpReserved */)
