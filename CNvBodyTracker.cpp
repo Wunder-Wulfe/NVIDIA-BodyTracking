@@ -13,7 +13,7 @@ CNvBodyTracker::CNvBodyTracker()
 	nvARMode = 1;
 	focalLength = 800.0f;
 	batchSize = 1;
-	_batchSize = 1;
+	_batchSize = -1;
 }
 
 void CNvBodyTracker::KeyInfoUpdated(bool overrided)
@@ -22,7 +22,6 @@ void CNvBodyTracker::KeyInfoUpdated(bool overrided)
 
 	if (batchSize != _batchSize || overrided)
 	{
-		_batchSize = batchSize;
 		if (keyPointDetectHandle != nullptr)
 		{
 			NvAR_Destroy(keyPointDetectHandle);
@@ -64,6 +63,8 @@ void CNvBodyTracker::KeyInfoUpdated(bool overrided)
 		NvAR_SetF32Array(keyPointDetectHandle, NvAR_Parameter_Output(KeyPointsConfidence),
 			keypoints_confidence.data(), batchSize * numKeyPoints);
 	}
+
+	_batchSize = batchSize;
 }
 
 void CNvBodyTracker::Initialize()

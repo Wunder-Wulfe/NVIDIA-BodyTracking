@@ -3,6 +3,7 @@
 #include "CServerDriver.h"
 #include "CNvBodyTracker.h"
 #include "CVirtualBaseStation.h"
+#include "CCommon.h"
 
 extern char g_modulePath[];
 
@@ -15,8 +16,8 @@ const char* const CServerDriver::msInterfaces[]
 
 CServerDriver::CServerDriver()
 {
-	driver = new CNvBodyTracker();
-	station = new CVirtualBaseStation(this);
+	driver = nullptr;
+	station = nullptr;
 	standby = false;
 	trackingEnabled = false;
 }
@@ -96,8 +97,35 @@ bool CServerDriver::SetConfigQuaternion(const char* section, const glm::quat val
 		&& SetConfigFloat(section, C_Z, value.z);
 }
 
+TRACKING_FLAG CServerDriver::GetConfigTrackingFlag(const char* section, const char* key, TRACKING_FLAG expected, TRACKING_FLAG def = TRACKING_FLAG::NONE)
+{
+	return GetConfigBoolean(section, key, false) ? expected : def;
+}
+
+TRACKING_FLAG CServerDriver::GetConfigTrackingMode(const char* section, TRACKING_FLAG def = TRACKING_FLAG::NONE)
+{
+	TRACKING_FLAG flags = GetConfigTrackingFlag(section, KEY_HIP_ON, TRACKING_FLAG::HIP)
+		| GetConfigTrackingFlag(section, KEY_FEET_ON, TRACKING_FLAG::FEET)
+		| GetConfigTrackingFlag(section, KEY_ELBOW_ON, TRACKING_FLAG::ELBOW)
+		| GetConfigTrackingFlag(section, KEY_KNEE_ON, TRACKING_FLAG::KNEE)
+		| GetConfigTrackingFlag(section, KEY_CHEST_ON, TRACKING_FLAG::CHEST)
+		| GetConfigTrackingFlag(section, KEY_SHOULDER_ON, TRACKING_FLAG::SHOULDER)
+		| GetConfigTrackingFlag(section, KEY_TOE_ON, TRACKING_FLAG::TOE)
+		| GetConfigTrackingFlag(section, KEY_HEAD_ON, TRACKING_FLAG::HEAD)
+		| GetConfigTrackingFlag(section, KEY_HAND_ON, TRACKING_FLAG::HAND);
+	if (flags == TRACKING_FLAG::NONE)
+		return def;
+	else
+		return flags;
+}
+
 void CServerDriver::Initialize()
 {
+	driver = new CNvBodyTracker();
+	station = new CVirtualBaseStation(this);
+
+	trackingMode = GetConfigTrackingMode(SECTION_TRACK_MODE);
+
 	LoadConfig();
 
 	AttachConfig(false);

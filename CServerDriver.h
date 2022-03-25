@@ -2,46 +2,65 @@
 
 #define BUFFER_SIZE 20
 
-// X Coordinate of a vector/quaternion
+// X Coordinate of a vector/quaternion (float)
 #define C_X "X"
-// Y Coordinate of a vector/quaternion
+// Y Coordinate of a vector/quaternion (float)
 #define C_Y "Y"
-// Z Coordinate of a vector/quaternion
+// Z Coordinate of a vector/quaternion (float)
 #define C_Z "Z"
-// W Coordinate of a quaternion
+// W Coordinate of a quaternion (float)
 #define C_W "W"
 
 // Settings file path
 #define C_SETTINGS "\\settings.ini"
 
-// Camera position section
+// Camera position section (glm::vec3)
 #define SECTION_POS "CameraPosition"
-// Camera rotation section
+// Camera rotation section (glm::quat)
 #define SECTION_ROT "CameraRotation"
 
 // Camera settings section
 #define SECTION_CAMSET "CameraSettings"
-// Camera focal length
+// Camera focal length (float)
 #define KEY_FOCAL "FocalLength"
+// Resolution scale (float)
+#define KEY_RES_SCALE "ResolutionScale"
 
 // SDK settings section
 #define SECTION_SDKSET "SDKSettings"
-// Whether or not tracking is enabled
+// Whether or not tracking is enabled (bool)
 #define KEY_TRACKING "TrackingEnabled"
-// The minimum confidence interval
+// The minimum confidence interval (float)
 #define KEY_CONF "ConfidenceMin"
-// Use CUDA graphs
+// Use CUDA graphs (bool)
 #define KEY_USE_CUDA "UseCudaGraph"
-// Stabilization
+// Stabilization (bool)
 #define KEY_STABLE "Stabilization"
-// Batch size
+// Batch size (int)
 #define KEY_BATCH_SZ "BatchSize"
-// NV AR mode
+// NV AR mode (int)
 #define KEY_NVAR "NVARMode"
-// Image width dimensions
-#define KEY_IMAGE_W "ImageWidth"
-// Image height dimensions
-#define KEY_IMAGE_H "ImageHeight"
+
+// Which trackers are enabled currently
+#define SECTION_TRACK_MODE "EnabledTrackers"
+// Hip tracking enabled (bool)
+#define KEY_HIP_ON "Hips"
+// Foot tracking enabled (bool)
+#define KEY_FEET_ON "Feet"
+// Elbow tracking enabled (bool)
+#define KEY_ELBOW_ON "Elbows"
+// Knee tracking enabled (bool)
+#define KEY_KNEE_ON "Knees"
+// Chest tracking enabled (bool)
+#define KEY_CHEST_ON "Chest"
+// Shoulder tracking enabled (bool)
+#define KEY_SHOULDER_ON "Shoulders"
+// Toe tracking enabled (bool)
+#define KEY_TOE_ON "Toes"
+// Head tracking enabled (bool)
+#define KEY_HEAD_ON "Head"
+// Hand tracking enabled (bool)
+#define KEY_HAND_ON "Hand"
 
 // Zero
 #define C_0 "0"
@@ -49,6 +68,7 @@
 class CNvBodyTracker;
 class CVirtualBodyTracker;
 class CVirtualBaseStation;
+enum class TRACKING_FLAG;
 
 class CServerDriver final : public vr::IServerTrackedDeviceProvider
 {
@@ -93,6 +113,11 @@ class CServerDriver final : public vr::IServerTrackedDeviceProvider
     bool SetConfigQuaternion(const char* section, const glm::quat value);
     inline bool SetConfigBoolean(const char* section, const char* key, bool value) { return 0 < iniFile.SetBoolValue(section, key, value); }
     inline bool SetConfigString(const char* section, const char* key, const char* value) { return 0 < iniFile.SetValue(section, key, value); }
+
+    TRACKING_FLAG trackingMode;
+
+    TRACKING_FLAG GetConfigTrackingFlag(const char* section, const char* key, TRACKING_FLAG expected, TRACKING_FLAG def);
+    TRACKING_FLAG GetConfigTrackingMode(const char* section, TRACKING_FLAG def);
 public:
     CServerDriver();
     ~CServerDriver();

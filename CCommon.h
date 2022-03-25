@@ -60,13 +60,16 @@ const char* TrackerRoleName[];
 
 enum class TRACKING_FLAG
 {
-	HIPS = 0b1,
+	NONE = 0b0,
+	HIP = 0b1,
 	FEET = 0b10,
-	ELBOWS = 0b100,
-	KNEES = 0b1000,
+	ELBOW = 0b100,
+	KNEE = 0b1000,
 	CHEST = 0b10000,
 	SHOULDER = 0b100000,
 	TOE = 0b1000000,
 	HEAD = 0b10000000,
 	HAND = 0b100000000
 };
+
+inline TRACKING_FLAG operator|(const TRACKING_FLAG& a, const TRACKING_FLAG& b) { return (TRACKING_FLAG)((int)a | (int)b); }
