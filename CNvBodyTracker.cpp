@@ -13,7 +13,7 @@ CNvBodyTracker::CNvBodyTracker()
 	nvARMode = 1;
 	focalLength = 800.0f;
 	batchSize = 1;
-	_batchSize = 1;
+	_batchSize = -1;
 }
 
 void CNvBodyTracker::KeyInfoUpdated()
@@ -22,14 +22,13 @@ void CNvBodyTracker::KeyInfoUpdated()
 
 	if (batchSize != _batchSize)
 	{
-		_batchSize = batchSize;
 		if (keyPointDetectHandle != nullptr)
 		{
 			NvAR_Destroy(keyPointDetectHandle);
 			keyPointDetectHandle = nullptr;
 		}
 		NvAR_Create(NvAR_Feature_BodyPoseEstimation, &keyPointDetectHandle);
-		NvAR_SetString(keyPointDetectHandle, NvAR_Parameter_Config(ModelDir), nullptr);
+		NvAR_SetString(keyPointDetectHandle, NvAR_Parameter_Config(ModelDir), "");
 		NvAR_SetCudaStream(keyPointDetectHandle, NvAR_Parameter_Config(CUDAStream), stream);
 		NvAR_SetU32(keyPointDetectHandle, NvAR_Parameter_Config(BatchSize), batchSize);
 	}
@@ -64,6 +63,8 @@ void CNvBodyTracker::KeyInfoUpdated()
 		NvAR_SetF32Array(keyPointDetectHandle, NvAR_Parameter_Output(KeyPointsConfidence),
 			keypoints_confidence.data(), batchSize * numKeyPoints);
 	}
+
+	_batchSize = batchSize;
 }
 
 void CNvBodyTracker::Initialize()
@@ -74,7 +75,7 @@ void CNvBodyTracker::Initialize()
 	unsigned int output_bbox_size;
 	NvAR_CudaStreamCreate(&stream);
 	NvAR_Create(NvAR_Feature_BodyDetection, &bodyDetectHandle);
-	NvAR_SetString(bodyDetectHandle, NvAR_Parameter_Config(ModelDir), nullptr);
+	NvAR_SetString(bodyDetectHandle, NvAR_Parameter_Config(ModelDir), "");
 	NvAR_SetCudaStream(bodyDetectHandle, NvAR_Parameter_Config(CUDAStream), stream);
 	NvAR_SetU32(bodyDetectHandle, NvAR_Parameter_Config(Temporal), stabilization);
 	NvAR_Load(bodyDetectHandle);
