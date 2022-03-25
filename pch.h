@@ -18,6 +18,7 @@
 #include "openvr_driver.h"
 #include "gtc/quaternion.hpp"
 #include "gtx/transform.hpp"
+#include "SimpleIni.h"
 
 #include "nvAR.h"
 #include "nvAR_defs.h"

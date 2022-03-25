@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "CBodyTrackDriver.h"
+#include "Common.h"
 
 char* g_nvARSDKPath = NULL;
 

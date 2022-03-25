@@ -1,7 +1,6 @@
 #pragma once
 
 #include "CBodyTrackDriver.h"
-#include "SimpleIni.h"
 
 #define BUFFER_SIZE 20
 
@@ -49,6 +48,9 @@
 // Zero
 #define C_0 "0"
 
+class CVirtualBodyTracker;
+class CVirtualBaseStation;
+
 class CServerDriver final : public vr::IServerTrackedDeviceProvider
 {
     static const char* const msInterfaces[];  
@@ -72,6 +74,10 @@ class CServerDriver final : public vr::IServerTrackedDeviceProvider
     CSimpleIniA iniFile;
 
     char tbuffer[BUFFER_SIZE] = { NULL };
+
+    std::vector<CVirtualBodyTracker*> trackers;
+    CVirtualBaseStation* station;
+
 
     void Initialize();
 

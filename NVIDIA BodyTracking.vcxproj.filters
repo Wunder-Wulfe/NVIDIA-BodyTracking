@@ -24,6 +24,18 @@
     <ClInclude Include="CBodyTrackDriver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="CVirtualDevice.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CVirtualBodyTracker.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CVirtualBaseStation.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Common.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -38,29 +50,27 @@
     <ClCompile Include="CBodyTrackDriver.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="nvar\src\nvCVImageProxy.cpp">
+    <ClCompile Include="CVirtualDevice.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CVirtualBodyTracker.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CVirtualBaseStation.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Common.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="nvar\src\nvARProxy.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="nvar\src\nvCVImageProxy.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="driver.vrdrivermanifest" />
     <None Include="settings.ini" />
-  </ItemGroup>
-  <ItemGroup>
-    <Image Include="resources\base_status_error%402x.png">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="resources\base_status_off%402x.png">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="resources\base_status_ready%402x.png">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="resources\base_status_standby%402x.png">
-      <Filter>Resource Files</Filter>
-    </Image>
   </ItemGroup>
 </Project>

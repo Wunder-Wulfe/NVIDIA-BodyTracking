@@ -157,12 +157,20 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="CBodyTrackDriver.h" />
+    <ClInclude Include="Common.h" />
     <ClInclude Include="CServerDriver.h" />
+    <ClInclude Include="CVirtualBaseStation.h" />
+    <ClInclude Include="CVirtualBodyTracker.h" />
+    <ClInclude Include="CVirtualDevice.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CBodyTrackDriver.cpp" />
+    <ClCompile Include="Common.cpp" />
     <ClCompile Include="CServerDriver.cpp" />
+    <ClCompile Include="CVirtualBaseStation.cpp" />
+    <ClCompile Include="CVirtualBodyTracker.cpp" />
+    <ClCompile Include="CVirtualDevice.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="nvar\src\nvARProxy.cpp" />
     <ClCompile Include="nvar\src\nvCVImageProxy.cpp" />
@@ -176,12 +184,6 @@
   <ItemGroup>
     <None Include="driver.vrdrivermanifest" />
     <None Include="settings.ini" />
-  </ItemGroup>
-  <ItemGroup>
-    <Image Include="resources\base_status_error%402x.png" />
-    <Image Include="resources\base_status_off%402x.png" />
-    <Image Include="resources\base_status_ready%402x.png" />
-    <Image Include="resources\base_status_standby%402x.png" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

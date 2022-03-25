@@ -1,7 +1,8 @@
 #include "pch.h"
 
 #include "CServerDriver.h"
-
+#include "CBodyTrackDriver.h"
+#include "CVirtualBaseStation.h"
 
 const char* const CServerDriver::msInterfaces[]
 {
@@ -13,6 +14,7 @@ const char* const CServerDriver::msInterfaces[]
 CServerDriver::CServerDriver()
 {
 	driver = new CBodyTrackDriver();
+	station = new CVirtualBaseStation(this);
 	standby = false;
 	trackingEnabled = false;
 }
@@ -22,8 +24,10 @@ CServerDriver::~CServerDriver()
 	Cleanup();
 }
 
+
 bool CServerDriver::UpdateConfig()
 {
+	/*
 	return SetConfigVector(SECTION_POS, driver->GetCameraPos())
 		&& SetConfigQuaternion(SECTION_ROT, driver->GetCameraRot())
 		&& SetConfigFloat(SECTION_CAMSET, KEY_FOCAL, driver->focalLength)
@@ -31,10 +35,10 @@ bool CServerDriver::UpdateConfig()
 		&& SetConfigBoolean(SECTION_SDKSET, KEY_STABLE, driver->stabilization)
 		&& SetConfigInteger(SECTION_SDKSET, KEY_BATCH_SZ, driver->batchSize)
 		&& SetConfigInteger(SECTION_SDKSET, KEY_NVAR, driver->nvARMode)
-		&& SetConfigInteger(SECTION_SDKSET, KEY_IMAGE_W, driver->ImageWidth())
-		&& SetConfigInteger(SECTION_SDKSET, KEY_IMAGE_H, driver->ImageHeight())
 		&& SetConfigFloat(SECTION_SDKSET, KEY_CONF, driver->confidenceRequirement)
 		&& SetConfigBoolean(SECTION_SDKSET, KEY_TRACKING, trackingEnabled);
+	*/
+	return true;
 }
 
 bool CServerDriver::SaveConfig(bool update)
@@ -103,10 +107,6 @@ void CServerDriver::AttachConfig(bool update)
 	driver->stabilization = GetConfigBoolean(SECTION_SDKSET, KEY_STABLE, true);
 	driver->useCudaGraph = GetConfigBoolean(SECTION_SDKSET, KEY_USE_CUDA, true);
 	driver->nvARMode = GetConfigInteger(SECTION_SDKSET, KEY_NVAR, 1);
-	driver->ResizeImage(
-		GetConfigInteger(SECTION_SDKSET, KEY_IMAGE_W, 1920),
-		GetConfigInteger(SECTION_SDKSET, KEY_IMAGE_H, 1080)
-	);
 
 	driver->SetCamera(
 		GetConfigVector(SECTION_POS),
@@ -140,6 +140,7 @@ void CServerDriver::RunFrame()
 {
 	driver->trackingActive = trackingEnabled && !standby;
 	driver->RunFrame();
+	station->RunFrame();
 }
 
 void CServerDriver::EnterStandby()
