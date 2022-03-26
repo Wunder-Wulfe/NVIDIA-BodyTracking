@@ -36,8 +36,6 @@ public:
     void SetOffsetPosition(glm::vec3 &pos);
     void SetOffsetRotation(glm::quat &quat);
 
-    bool tracking;
-
     void RunFrame();
 protected:
     vr::PropertyContainerHandle_t m_propertyHandle;
