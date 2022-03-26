@@ -1,5 +1,7 @@
 #include "pch.h"
 #include "CDriverSettings.h"
+#include "CServerDriver.h"
+#include "CNvBodyTracker.h"
 
 extern char g_modulePath[];
 
@@ -13,26 +15,15 @@ CDriverSettings::~CDriverSettings()
 {
 }
 
-bool CDriverSettings::UpdateConfig()
+bool CDriverSettings::UpdateConfig(CServerDriver *source)
 {
-    /*
-    return SetConfigVector(SECTION_POS, m_bodyTracker->GetCameraPos())
-        && SetConfigQuaternion(SECTION_ROT, m_bodyTracker->GetCameraRot())
-        && SetConfigFloat(SECTION_CAMSET, KEY_FOCAL, m_bodyTracker->focalLength)
-        && SetConfigBoolean(SECTION_SDKSET, KEY_USE_CUDA, m_bodyTracker->useCudaGraph)
-        && SetConfigBoolean(SECTION_SDKSET, KEY_STABLE, m_bodyTracker->stabilization)
-        && SetConfigInteger(SECTION_SDKSET, KEY_BATCH_SZ, m_bodyTracker->batchSize)
-        && SetConfigInteger(SECTION_SDKSET, KEY_NVAR, m_bodyTracker->nvARMode)
-        && SetConfigFloat(SECTION_SDKSET, KEY_CONF, m_bodyTracker->confidenceRequirement)
-        && SetConfigBoolean(SECTION_SDKSET, KEY_TRACKING, trackingEnabled);
-    */
+    return SetConfigVector(SECTION_POS, source->m_bodyTracker->GetCameraPos())
+        && SetConfigQuaternion(SECTION_ROT, source->m_bodyTracker->GetCameraRot());
     return true;
 }
 
-bool CDriverSettings::SaveConfig(bool update)
+bool CDriverSettings::SaveConfig()
 {
-    if(update)
-        UpdateConfig();
     return 0 < m_iniFile.SaveFile(m_filePath.c_str());
 }
 

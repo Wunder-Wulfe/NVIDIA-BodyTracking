@@ -137,6 +137,7 @@ void CServerDriver::Cleanup()
     delptr(m_cameraDriver);
     delptr(m_bodyTracker);
 
+    m_driverSettings->UpdateConfig(this);
     m_driverSettings->SaveConfig();
     delptr(m_driverSettings);
 

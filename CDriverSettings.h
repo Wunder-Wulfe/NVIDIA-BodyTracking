@@ -101,6 +101,8 @@
 // Zero
 #define C_0 "0"
 
+class CServerDriver;
+
 enum class TRACKING_FLAG;
 enum class TRACKER_ROLE;
 
@@ -156,8 +158,8 @@ public:
     INTERP_MODE GetConfigInterpolationMode(const char *section, const char *key, INTERP_MODE def = INTERP_MODE::NONE) const;
     const Proportions &GetConfigProportions(const char *section, const Proportions &def = Proportions()) const;
 
-    bool UpdateConfig();
-    bool SaveConfig(bool update = false);
+    bool UpdateConfig(CServerDriver *source);
+    bool SaveConfig();
     bool SaveConfig(const char *alt);
     bool LoadConfig();
 };

@@ -38,6 +38,8 @@ protected:
     std::vector<CVirtualBodyTracker *> m_trackers;
     CVirtualBaseStation *m_station;
     CCameraDriver *m_cameraDriver;
+
+    friend class CDriverSettings;
 public:
     CServerDriver();
     ~CServerDriver();
