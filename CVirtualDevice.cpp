@@ -2,12 +2,10 @@
 #include "CVirtualDevice.h"
 #include "CServerDriver.h"
 
-CVirtualDevice::CVirtualDevice(CServerDriver *driv)
+CVirtualDevice::CVirtualDevice()
 {
-    cls = vr::ETrackedDeviceClass::TrackedDeviceClass_GenericTracker;
     m_connected = false;
     m_forcedConnected = true;
-    tracking = false;
 
     m_pose = { 0 };
     m_pose.poseTimeOffset = -0.011;
@@ -30,7 +28,6 @@ CVirtualDevice::CVirtualDevice(CServerDriver *driv)
 
     m_propertyHandle = vr::k_ulInvalidPropertyContainer;
     m_trackedDevice = vr::k_unTrackedDeviceIndexInvalid;
-    m_serverDriver = driv;
 }
 
 CVirtualDevice::~CVirtualDevice()
@@ -42,7 +39,7 @@ vr::EVRInitError CVirtualDevice::Activate(uint32_t unObjectId)
 {
     vr::EVRInitError l_error = vr::VRInitError_Driver_Failed;
 
-    if (m_trackedDevice == vr::k_unTrackedDeviceIndexInvalid)
+    if(m_trackedDevice == vr::k_unTrackedDeviceIndexInvalid)
     {
         m_trackedDevice = unObjectId;
         m_propertyHandle = vr::VRProperties()->TrackedDeviceToPropertyContainer(m_trackedDevice);
@@ -69,14 +66,14 @@ void CVirtualDevice::EnterStandby()
 {
 }
 
-void* CVirtualDevice::GetComponent(const char* pchComponentNameAndVersion)
+void *CVirtualDevice::GetComponent(const char *pchComponentNameAndVersion)
 {
-    void* l_result = nullptr;
-    if (!strcmp(pchComponentNameAndVersion, vr::ITrackedDeviceServerDriver_Version)) l_result = dynamic_cast<vr::ITrackedDeviceServerDriver*>(this);
+    void *l_result = nullptr;
+    if(!strcmp(pchComponentNameAndVersion, vr::ITrackedDeviceServerDriver_Version)) l_result = dynamic_cast<vr::ITrackedDeviceServerDriver *>(this);
     return l_result;
 }
 
-void CVirtualDevice::DebugRequest(const char* pchRequest, char* pchResponseBuffer, uint32_t unResponseBufferSize)
+void CVirtualDevice::DebugRequest(const char *pchRequest, char *pchResponseBuffer, uint32_t unResponseBufferSize)
 {
 }
 
@@ -86,7 +83,7 @@ vr::DriverPose_t CVirtualDevice::GetPose()
 }
 
 // CEmulatedDevice
-const std::string& CVirtualDevice::GetSerial() const
+const std::string &CVirtualDevice::GetSerial() const
 {
     return m_serial;
 }
@@ -108,14 +105,20 @@ void CVirtualDevice::SetForcedConnected(bool p_state)
     m_pose.deviceIsConnected = (m_connected && m_forcedConnected);
 }
 
-void CVirtualDevice::SetPosition(glm::vec3& pos)
+void CVirtualDevice::SetInRange(bool p_state)
+{
+    m_pose.result = (p_state ? vr::ETrackingResult::TrackingResult_Running_OK : vr::ETrackingResult::TrackingResult_Running_OutOfRange);
+    m_pose.poseIsValid = p_state;
+}
+
+void CVirtualDevice::SetPosition(glm::vec3 &pos)
 {
     m_pose.vecPosition[0U] = pos.x;
     m_pose.vecPosition[1U] = pos.y;
     m_pose.vecPosition[2U] = pos.z;
 }
 
-void CVirtualDevice::SetRotation(glm::quat& quat)
+void CVirtualDevice::SetRotation(glm::quat &quat)
 {
     m_pose.qRotation.x = quat.x;
     m_pose.qRotation.y = quat.y;
@@ -144,16 +147,6 @@ void CVirtualDevice::SetupProperties()
 
 void CVirtualDevice::RunFrame()
 {
-    if (tracking && m_trackedDevice != vr::k_unTrackedDeviceIndexInvalid)
-    {
-        SetConnected(true);
+    if(m_trackedDevice != vr::k_unTrackedDeviceIndexInvalid)
         vr::VRServerDriverHost()->TrackedDevicePoseUpdated(m_trackedDevice, m_pose, sizeof(vr::DriverPose_t));
-    }
-    else
-        SetConnected(false);
-}
-
-void CVirtualDevice::AddTracker()
-{
-    vr::VRServerDriverHost()->TrackedDeviceAdded(GetSerial().c_str(), cls, this);
 }

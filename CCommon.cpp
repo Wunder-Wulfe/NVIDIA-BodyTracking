@@ -3,7 +3,7 @@
 
 char logging_buffer[LOG_BUFFER_SIZE] = { NULL };
 
-const char* TrackerRoleName[] = {
+const char *TrackerRoleName[] = {
    "RTX-Hips",
    "RTX-LeftFoot",
    "RTX-RightFoot",

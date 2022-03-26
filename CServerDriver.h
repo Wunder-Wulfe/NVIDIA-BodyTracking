@@ -1,72 +1,6 @@
 #pragma once
 
-#define BUFFER_SIZE 20
-
-// X Coordinate of a vector/quaternion (float)
-#define C_X "X"
-// Y Coordinate of a vector/quaternion (float)
-#define C_Y "Y"
-// Z Coordinate of a vector/quaternion (float)
-#define C_Z "Z"
-// W Coordinate of a quaternion (float)
-#define C_W "W"
-
-// Settings file path
-#define C_SETTINGS "\\settings.ini"
-
-// Camera position section (glm::vec3)
-#define SECTION_POS "CameraPosition"
-// Camera rotation section (glm::quat)
-#define SECTION_ROT "CameraRotation"
-
-// Camera settings section
-#define SECTION_CAMSET "CameraSettings"
-// Camera focal length (float)
-#define KEY_FOCAL "FocalLength"
-// Resolution scale (float)
-#define KEY_RES_SCALE "ResolutionScale"
-// Whether or not to make the camera visible (bool)
-#define KEY_CAM_VIS "Visible"
-
-// SDK settings section
-#define SECTION_SDKSET "SDKSettings"
-// Whether or not tracking is enabled (bool)
-#define KEY_TRACKING "TrackingEnabled"
-// The minimum confidence interval (float)
-#define KEY_CONF "ConfidenceMin"
-// Use CUDA graphs (bool)
-#define KEY_USE_CUDA "UseCudaGraph"
-// Stabilization (bool)
-#define KEY_STABLE "Stabilization"
-// Batch size (int)
-#define KEY_BATCH_SZ "BatchSize"
-// NV AR mode (int)
-#define KEY_NVAR "NVARMode"
-
-// Which trackers are enabled currently
-#define SECTION_TRACK_MODE "EnabledTrackers"
-// Hip tracking enabled (bool)
-#define KEY_HIP_ON "Hips"
-// Foot tracking enabled (bool)
-#define KEY_FEET_ON "Feet"
-// Elbow tracking enabled (bool)
-#define KEY_ELBOW_ON "Elbows"
-// Knee tracking enabled (bool)
-#define KEY_KNEE_ON "Knees"
-// Chest tracking enabled (bool)
-#define KEY_CHEST_ON "Chest"
-// Shoulder tracking enabled (bool)
-#define KEY_SHOULDER_ON "Shoulders"
-// Toe tracking enabled (bool)
-#define KEY_TOE_ON "Toes"
-// Head tracking enabled (bool)
-#define KEY_HEAD_ON "Head"
-// Hand tracking enabled (bool)
-#define KEY_HAND_ON "Hand"
-
-// Zero
-#define C_0 "0"
-
+class CDriverSettings;
 class CNvBodyTracker;
 class CVirtualBodyTracker;
 class CVirtualBaseStation;
@@ -76,63 +10,38 @@ enum class TRACKER_ROLE;
 
 class CServerDriver final : public vr::IServerTrackedDeviceProvider
 {
-    static const char* const msInterfaces[];  
+    static const char *const ms_interfaces[];
 
-    vr::EVRInitError Init(vr::IVRDriverContext* pDriverContext);
+    CDriverSettings *m_driverSettings;
+    CNvBodyTracker *m_bodyTracker;
+    std::vector<CVirtualBodyTracker *> m_trackers;
+    CVirtualBaseStation *m_station;
+    CCameraDriver *m_cameraDriver;
+
+    TRACKING_FLAG m_trackingMode;
+    bool m_standby;
+
+    // vr::IServerTrackedDeviceProvider
+    vr::EVRInitError Init(vr::IVRDriverContext *pDriverContext);
     void Cleanup();
-    const char* const* GetInterfaceVersions();
+    const char *const *GetInterfaceVersions();
     void RunFrame();
     bool ShouldBlockStandbyMode();
     void EnterStandby();
     void LeaveStandby();
 
-    bool standby;
-    bool trackingEnabled;
+    CServerDriver(const CServerDriver &that) = delete;
+    CServerDriver &operator=(const CServerDriver &that) = delete;
 
-    CNvBodyTracker* driver;
+    void SetupTracker(const char *name, TRACKING_FLAG flag, TRACKER_ROLE role);
+    void SetupTracker(const char *name, TRACKING_FLAG flag, TRACKER_ROLE role, TRACKER_ROLE secondary);
 
-    CServerDriver(const CServerDriver& that) = delete;
-    CServerDriver& operator=(const CServerDriver& that) = delete;
-
-    CSimpleIniA iniFile;
-
-    char tbuffer[BUFFER_SIZE] = { NULL };
-
-    std::vector<CVirtualBodyTracker*> trackers;
-    CVirtualBaseStation* station;
-    CCameraDriver* camDriver;
-
-
-    void Initialize();
-
-    inline int GetConfigInteger(const char* section, const char* key, int def = 0) { return atoi(iniFile.GetValue(section, key, C_0)); }
-    inline float GetConfigFloat(const char* section, const char* key, float def = 0.0f) { return (float)iniFile.GetDoubleValue(section, key, 0.0); }
-    glm::vec3 GetConfigVector(const char* section);
-    glm::quat GetConfigQuaternion(const char* section);
-    inline bool GetConfigBoolean(const char* section, const char* key, bool def = false) { return iniFile.GetBoolValue(section, key, def); }
-    inline const char* GetConfigString(const char* section, const char* key, const char* def = "") { return iniFile.GetValue(section, key, def); }
-
-    inline bool SetConfigInteger(const char* section, const char* key, int value) { _itoa_s(value, tbuffer, BUFFER_SIZE); return 0 < iniFile.SetValue(section, key, tbuffer); }
-    inline bool SetConfigFloat(const char* section, const char* key, float value) { return 0 < iniFile.SetDoubleValue(section, key, (double)value); }
-    bool SetConfigVector(const char* section, const glm::vec3 value);
-    bool SetConfigQuaternion(const char* section, const glm::quat value);
-    inline bool SetConfigBoolean(const char* section, const char* key, bool value) { return 0 < iniFile.SetBoolValue(section, key, value); }
-    inline bool SetConfigString(const char* section, const char* key, const char* value) { return 0 < iniFile.SetValue(section, key, value); }
-
-    TRACKING_FLAG trackingMode;
-
-    TRACKING_FLAG GetConfigTrackingFlag(const char* section, const char* key, TRACKING_FLAG expected, TRACKING_FLAG def);
-    TRACKING_FLAG GetConfigTrackingMode(const char* section, TRACKING_FLAG def);
-
-    void SetupTracker(const char* name, TRACKING_FLAG flag, TRACKER_ROLE role);
-    void SetupTracker(const char* name, TRACKING_FLAG flag, TRACKER_ROLE role, TRACKER_ROLE secondary);
+    template<class T> inline void delptr(T &ptr)
+    {
+        delete ptr;
+        ptr = nullptr;
+    }
 public:
     CServerDriver();
     ~CServerDriver();
-
-    void AttachConfig(bool update=true);
-    bool UpdateConfig();
-    bool SaveConfig(bool update=false);
-    bool SaveConfig(const char* alt);
-    bool LoadConfig();
 };

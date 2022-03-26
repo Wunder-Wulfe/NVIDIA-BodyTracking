@@ -4,87 +4,87 @@ enum class TRACKING_FLAG;
 
 struct Proportions
 {
-	float
-		elbowOffset,
-		kneeOffset,
-		hipOffset,
-		chestOffset;
+    float
+        elbowOffset,
+        kneeOffset,
+        hipOffset,
+        chestOffset;
 };
 
 class CNvBodyTracker
 {
-	bool image_loaded;
+    bool m_imageLoaded;
 
-	int input_image_width, input_image_height, input_image_pitch;
+    int m_inputImageWidth, m_inputImageHeight, m_inputImagePitch;
 
-	NvAR_FeatureHandle bodyDetectHandle{}, keyPointDetectHandle{};
-	CUstream stream{};
-	NvCVImage inputImageBuffer{}, tmpImage{};
-	std::vector<NvAR_Point2f> keypoints;
-	std::vector<float> keypoints_confidence;
-	std::vector<NvAR_Point3f> keypoints3D;
-	std::vector<NvAR_Quaternion> jointAngles;
-	unsigned int numKeyPoints;
-	std::vector<NvAR_Point3f> referencePose;
-	std::vector<NvAR_Rect> output_bbox_data;
-	std::vector<float> output_bbox_conf_data;
-	NvAR_BBoxes output_bboxes{};
-	int _batchSize;
-	float confidence;
+    NvAR_FeatureHandle m_bodyDetectHandle{}, m_keyPointDetectHandle{};
+    CUstream m_stream{};
+    NvCVImage m_inputImageBuffer{}, m_tmpImage{};
+    std::vector<NvAR_Point2f> m_keypoints;
+    std::vector<float> m_keypointsConfidence;
+    std::vector<NvAR_Point3f> m_keypoints3D;
+    std::vector<NvAR_Quaternion> m_jointAngles;
+    unsigned int m_numKeyPoints;
+    std::vector<NvAR_Point3f> m_referencePose;
+    std::vector<NvAR_Rect> m_outputBBoxData;
+    std::vector<float> m_outputBBoxConfData;
+    NvAR_BBoxes m_outputBBoxes{};
+    int m_batchSize;
+    float m_confidence;
 
-	Proportions proportions;
-	TRACKING_FLAG flags;
+    Proportions m_proportions;
+    TRACKING_FLAG m_flags;
 
-	std::vector<glm::vec3> real_keypoints3D;
-	std::vector<glm::quat> real_jointAngles;
+    glm::mat4x4 m_camMatrix;
 
-	void FillBatched(std::vector<NvAR_Point3f> &from, std::vector<glm::vec3> &to);
-	void FillBatched(std::vector<NvAR_Quaternion>& from, std::vector<glm::quat>& to);
+    std::vector<glm::vec3> m_realKeypoints3D;
+    std::vector<glm::quat> m_realJointAngles;
 
-	void EmptyKeypoints();
+    void FillBatched(const std::vector<NvAR_Point3f> &from, std::vector<glm::vec3> &to);
+    void FillBatched(const std::vector<NvAR_Quaternion> &from, std::vector<glm::quat> &to);
 
-	void ComputeAvgConfidence();
-			
-	template<class T>
-	inline T& TableIndex(T* table, int index, int batch) { return table[batch * numKeyPoints + index]; }
-	template<class T>
-	inline T& TableIndex(std::vector<T> &vector, int index, int batch) { return vector[batch * numKeyPoints + index]; }
+    void EmptyKeypoints();
 
-	inline glm::vec3 CastPoint(NvAR_Point3f point) { return glm::vec3(point.x, point.y, point.z); }
-	inline glm::quat CastQuaternion(NvAR_Quaternion quat) { return glm::quat(quat.w, quat.x, quat.y, quat.z); }
+    void ComputeAvgConfidence();
 
+    template<class T>
+    inline T &TableIndex(T *table, int index, int batch) { return table[batch * m_numKeyPoints + index]; }
+    template<class T>
+    inline const T &TableIndex(const std::vector<T> &vector, int index, int batch) { return vector[batch * m_numKeyPoints + index]; }
+
+    inline glm::vec3 CastPoint(NvAR_Point3f point) { return glm::vec3(point.x, point.y, point.z); }
+    inline glm::quat CastQuaternion(NvAR_Quaternion quat) { return glm::quat(quat.w, quat.x, quat.y, quat.z); }
 public:
-	void Initialize();
-	void Initialize(int w, int h, int batch_size=1);
-	void ResizeImage(int w, int h);
-	void Cleanup();
+    bool useCudaGraph;
+    float focalLength;
+    bool stabilization;
+    int nvARMode;
+    int batchSize;
+    bool trackingActive;
+    float confidenceRequirement;
 
-	void KeyInfoUpdated(bool override = false);
+    void Initialize();
+    void Initialize(int w, int h, int batch_size = 1);
+    void ResizeImage(int w, int h);
+    void Cleanup();
 
-	bool useCudaGraph;
-	float focalLength;
-	bool stabilization;
-	int nvARMode;
-	int batchSize;
-	bool trackingActive;
-	float confidenceRequirement;
+    void KeyInfoUpdated(bool override = false);
 
-	inline float GetConfidence() const { return confidence; };
+    inline float GetConfidence() const { return m_confidence; };
 
-	glm::mat4x4 camMatrix;
-	inline void SetCamera(glm::vec3 pos, glm::quat rot) { camMatrix = glm::translate(glm::mat4_cast(rot), pos); }
-	inline void RotateCamera(glm::quat rot) { camMatrix *= glm::mat4_cast(rot); }
-	inline void MoveCamera(glm::vec3 pos) { camMatrix = glm::translate(camMatrix, pos); }
-	inline glm::vec3 GetCameraPos() { return glm::vec3(camMatrix[3][0], camMatrix[3][1], camMatrix[3][2]); }
-	inline glm::quat GetCameraRot() { return glm::quat_cast(camMatrix); }
-	inline bool GetConfidenceAcceptable() { return confidence >= confidenceRequirement; }
+    inline void SetCamera(glm::vec3 pos, glm::quat rot) { m_camMatrix = glm::translate(glm::mat4_cast(rot), pos); }
+    inline void RotateCamera(glm::quat rot) { m_camMatrix *= glm::mat4_cast(rot); }
+    inline void MoveCamera(glm::vec3 pos) { m_camMatrix = glm::translate(m_camMatrix, pos); }
+    inline glm::vec3 GetCameraPos() { return glm::vec3(m_camMatrix[3][0], m_camMatrix[3][1], m_camMatrix[3][2]); }
+    inline glm::quat GetCameraRot() { return glm::quat_cast(m_camMatrix); }
+    inline bool GetConfidenceAcceptable() { return m_confidence >= confidenceRequirement; }
 
-	inline int GetImageWidth() const { return input_image_width; }
-	inline int GetImageHeight() const { return input_image_height; }
+    inline int GetImageWidth() const { return m_inputImageWidth; }
+    inline int GetImageHeight() const { return m_inputImageHeight; }
 
-	void RunFrame();
+    void RunFrame();
 
-	CNvBodyTracker();
-	~CNvBodyTracker();
+    CNvBodyTracker();
+    ~CNvBodyTracker();
 };
 
