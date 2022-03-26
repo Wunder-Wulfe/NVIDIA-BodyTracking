@@ -2,7 +2,9 @@
 
 #define LOG_BUFFER_SIZE 1000
 
-#define vr_log(fmt, ...) sprintf_s(logging_buffer, LOG_BUFFER_SIZE, fmt, __VA_ARGS__); vr::VRDriverLog()->Log(logging_buffer)
+#define vr_log(fmt, ...) {sprintf_s(logging_buffer, LOG_BUFFER_SIZE, fmt, __VA_ARGS__); vr::VRDriverLog()->Log(logging_buffer);}
+
+#define delptr(ptr) {delete ptr; ptr = nullptr;}
 
 char logging_buffer[];
 

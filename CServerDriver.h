@@ -32,12 +32,6 @@ class CServerDriver final : public vr::IServerTrackedDeviceProvider
 
     void SetupTracker(const char *name, TRACKING_FLAG flag, TRACKER_ROLE role);
     void SetupTracker(const char *name, TRACKING_FLAG flag, TRACKER_ROLE role, TRACKER_ROLE secondary);
-
-    template<class T> inline void delptr(T &ptr)
-    {
-        delete ptr;
-        ptr = nullptr;
-    }
 protected:
     CDriverSettings *m_driverSettings;
     CNvBodyTracker *m_bodyTracker;

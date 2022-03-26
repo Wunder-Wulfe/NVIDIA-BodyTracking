@@ -31,18 +31,28 @@ CServerDriver::~CServerDriver()
 
 void CServerDriver::OnImageUpdate(const CCameraDriver &me, cv::Mat &image)
 {
-    if (me.driver->m_bodyTracker->trackingActive)
+    CServerDriver *driv = me.driver;
+    CNvBodyTracker *track = driv->m_bodyTracker;
+
+    if (track->trackingActive)
     {
-        for (CVirtualBodyTracker *tracker : me.driver->m_trackers)
+        for (auto tracker : driv->m_trackers)
         {
             switch (tracker->role)
             {
             case TRACKER_ROLE::HIPS:
-
+                track->GetConfidenceAcceptable(BODY_JOINT::LEFT_HIP);
                 break;
             default:
                 break;
             }
+        }
+    }
+    else
+    {
+        for (auto tracker : driv->m_trackers)
+        {
+            tracker->SetConnected(false);
         }
     }
 }

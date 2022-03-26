@@ -75,7 +75,7 @@ public:
     void KeyInfoUpdated(bool override = false);
 
     inline float GetConfidence() const { return m_confidence; };
-    float GetConfidence(BODY_JOINT role) const { return m_realConfidence[(int)role]; }
+    inline float GetConfidence(BODY_JOINT role) const { return m_realConfidence[(int)role]; }
 
     inline void SetCamera(glm::vec3 pos, glm::quat rot) { m_camMatrix = glm::translate(glm::mat4_cast(rot), pos); }
     inline void RotateCamera(glm::quat rot) { m_camMatrix *= glm::mat4_cast(rot); }
@@ -83,6 +83,8 @@ public:
     inline glm::vec3 GetCameraPos() { return glm::vec3(m_camMatrix[3][0], m_camMatrix[3][1], m_camMatrix[3][2]); }
     inline glm::quat GetCameraRot() { return glm::quat_cast(m_camMatrix); }
     inline bool GetConfidenceAcceptable() { return m_confidence >= confidenceRequirement; }
+
+    inline bool GetConfidenceAcceptable(BODY_JOINT role) const { return GetConfidence(role) >= confidenceRequirement; }
 
     inline int GetImageWidth() const { return m_inputImageWidth; }
     inline int GetImageHeight() const { return m_inputImageHeight; }

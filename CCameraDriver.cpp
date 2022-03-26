@@ -81,4 +81,5 @@ void CCameraDriver::Cleanup()
     cv::destroyAllWindows();
     m_working = false;
     m_currentCamera.release();
+    m_cameras.clear();
 }

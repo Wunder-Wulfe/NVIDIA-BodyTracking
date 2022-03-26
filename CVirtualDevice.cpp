@@ -5,7 +5,7 @@
 CVirtualDevice::CVirtualDevice()
 {
     m_connected = false;
-    m_forcedConnected = true;
+    m_forcedConnected = false;
 
     m_pose = { 0 };
     m_pose.poseTimeOffset = -0.011;

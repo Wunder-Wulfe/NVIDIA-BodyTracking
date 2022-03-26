@@ -65,6 +65,19 @@
 // Hand tracking enabled (bool)
 #define KEY_HAND_ON "Hand"
 
+// Additional settings for the trackers
+#define SECTION_TRACKSET "TrackerSettings"
+// Interpolation mode to use for the trackers (One of [None, Linear, Sinusoidal, Quadratic, Cubic])
+#define KEY_INTERP "Interpolation"
+// The offset of the elbow trackers
+#define KEY_ELBOW_POS "ElbowTrackerPosition"
+// The offset of the knee trackers
+#define KEY_KNEE_POS "KneeTrackerPosition"
+// The offset of the hip trackers
+#define KEY_HIP_POS "HipTrackerPosition"
+// The offset of the chest trackers
+#define KEY_CHEST_POS "ChestTrackerPosition"
+
 // Zero
 #define C_0 "0"
 
