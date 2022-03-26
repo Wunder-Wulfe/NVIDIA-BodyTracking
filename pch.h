@@ -20,6 +20,7 @@
 #include "opencv2/opencv.hpp"
 #include "glm/gtc/quaternion.hpp"
 #include "glm/gtx/transform.hpp"
+#include "glm/gtx/matrix_interpolation.hpp"
 #include "SimpleIni.h"
 
 #include "nvAR.h"

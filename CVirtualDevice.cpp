@@ -2,7 +2,7 @@
 #include "CVirtualDevice.h"
 #include "CServerDriver.h"
 
-CVirtualDevice::CVirtualDevice()
+CVirtualDevice::CVirtualDevice() : driver(nullptr)
 {
     m_connected = false;
     m_forcedConnected = false;
@@ -111,14 +111,14 @@ void CVirtualDevice::SetInRange(bool p_state)
     m_pose.poseIsValid = p_state;
 }
 
-inline void CVirtualDevice::SetPosition(const glm::vec3 &pos)
+void CVirtualDevice::SetPosition(const glm::vec3 &pos)
 {
     m_pose.vecPosition[0U] = pos.x;
     m_pose.vecPosition[1U] = pos.y;
     m_pose.vecPosition[2U] = pos.z;
 }
 
-inline void CVirtualDevice::SetRotation(const glm::quat &quat)
+void CVirtualDevice::SetRotation(const glm::quat &quat)
 {
     m_pose.qRotation.x = quat.x;
     m_pose.qRotation.y = quat.y;
@@ -126,14 +126,14 @@ inline void CVirtualDevice::SetRotation(const glm::quat &quat)
     m_pose.qRotation.w = quat.w;
 }
 
-inline void CVirtualDevice::SetOffsetPosition(const glm::vec3 &pos)
+void CVirtualDevice::SetOffsetPosition(const glm::vec3 &pos)
 {
     m_pose.vecWorldFromDriverTranslation[0U] = pos.x;
     m_pose.vecWorldFromDriverTranslation[1U] = pos.y;
     m_pose.vecWorldFromDriverTranslation[2U] = pos.z;
 }
 
-inline void CVirtualDevice::SetOffsetRotation(const glm::quat &quat)
+void CVirtualDevice::SetOffsetRotation(const glm::quat &quat)
 {
     m_pose.qWorldFromDriverRotation.x = quat.x;
     m_pose.qWorldFromDriverRotation.y = quat.y;
@@ -141,22 +141,22 @@ inline void CVirtualDevice::SetOffsetRotation(const glm::quat &quat)
     m_pose.qWorldFromDriverRotation.w = quat.w;
 }
 
-inline void CVirtualDevice::SetTransform(const glm::vec3 &pos, const glm::quat &quat)
+void CVirtualDevice::SetTransform(const glm::vec3 &pos, const glm::quat &quat)
 {
     SetPosition(pos);
     SetRotation(quat);
 }
-inline void CVirtualDevice::SetTransform(const glm::mat4x4 &mat)
+void CVirtualDevice::SetTransform(const glm::mat4x4 &mat)
 {
     SetTransform(glm::vec3(mat[3][0], mat[3][1], mat[3][2]), glm::quat_cast(mat));
 }
 
-inline void CVirtualDevice::SetOffsetTransform(const glm::vec3 &pos, const glm::quat &quat)
+void CVirtualDevice::SetOffsetTransform(const glm::vec3 &pos, const glm::quat &quat)
 {
     SetOffsetPosition(pos);
     SetOffsetRotation(quat);
 }
-inline void CVirtualDevice::SetOffsetTransform(const glm::mat4x4 &mat)
+void CVirtualDevice::SetOffsetTransform(const glm::mat4x4 &mat)
 {
     SetOffsetTransform(glm::vec3(mat[3][0], mat[3][1], mat[3][2]), glm::quat_cast(mat));
 }

@@ -1,9 +1,12 @@
 #include "pch.h"
 #include "CVirtualBodyTracker.h"
 #include "CCommon.h"
+#include "CDriverSettings.h"
 #include "CServerDriver.h"
 
-CVirtualBodyTracker::CVirtualBodyTracker(size_t p_index, TRACKER_ROLE rle)
+#define M_PI 3.14159265358979323846f
+
+CVirtualBodyTracker::CVirtualBodyTracker(size_t p_index, TRACKER_ROLE rle) : m_lastTransform(), m_curTransform(), frame(0)
 {
     m_serial.assign(TrackerRoleName[(int)rle]);
     m_index = p_index;
@@ -129,4 +132,47 @@ void CVirtualBodyTracker::SetupProperties()
     vr::VRProperties()->SetBoolProperty(m_propertyHandle, vr::Prop_HasCameraComponent_Bool, false);
     vr::VRProperties()->SetBoolProperty(m_propertyHandle, vr::Prop_HasDriverDirectModeComponent_Bool, false);
     vr::VRProperties()->SetBoolProperty(m_propertyHandle, vr::Prop_HasVirtualDisplayComponent_Bool, false);
+}
+
+void CVirtualBodyTracker::UpdateTransform(const glm::mat4x4 &newTransform)
+{
+    m_lastTransform = m_curTransform;
+    m_curTransform = newTransform;
+    frame = 0;
+}
+
+const glm::mat4x4 &CVirtualBodyTracker::InterpolatedTransform() const
+{
+    if (IsConnected())
+    {
+        float t = frame / driver->m_refreshRateCache;
+        switch (driver->m_interpolation)
+        {
+        case INTERP_MODE::LINEAR:
+            break;
+        case INTERP_MODE::SINE:
+            t = -(std::cos(M_PI * t) - 1.f) / 2.f;
+            break;
+        case INTERP_MODE::QUAD:
+            t = t < 0.5f ? 2.f * t * t : 1.f - std::powf(-2.f * t + 2.f, 2.f) / 2.f;
+            break;
+        case INTERP_MODE::CUBIC:
+            t = t < 0.5f ? 4.f * t * t * t : 1.f - std::powf(-2.f * t + 2.f, 3.f) / 2.f;
+            break;
+        default:
+            return m_curTransform;
+        }
+        return glm::interpolate(m_lastTransform, m_curTransform, t);
+    }
+    else
+    {
+        return m_curTransform;
+    }
+}
+
+void CVirtualBodyTracker::RunFrame()
+{
+    SetTransform(InterpolatedTransform());
+    frame++;
+    CVirtualDevice::RunFrame();
 }

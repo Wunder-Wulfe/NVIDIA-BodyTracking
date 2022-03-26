@@ -7,6 +7,8 @@ class CVirtualBaseStation;
 class CCameraDriver;
 enum class TRACKING_FLAG;
 enum class TRACKER_ROLE;
+enum class INTERP_MODE;
+struct Proportions;
 
 class CServerDriver final : public vr::IServerTrackedDeviceProvider
 {
@@ -32,15 +34,26 @@ class CServerDriver final : public vr::IServerTrackedDeviceProvider
 
     void SetupTracker(const char *name, TRACKING_FLAG flag, TRACKER_ROLE role);
     void SetupTracker(const char *name, TRACKING_FLAG flag, TRACKER_ROLE role, TRACKER_ROLE secondary);
+
+    inline void LoadRefreshRate() { m_refreshRateCache = vr::VRSettings()->GetFloat("driver_nvidiaBodyTracking", "displayFrequency"); }
 protected:
     CDriverSettings *m_driverSettings;
     CNvBodyTracker *m_bodyTracker;
     std::vector<CVirtualBodyTracker *> m_trackers;
     CVirtualBaseStation *m_station;
     CCameraDriver *m_cameraDriver;
+    Proportions *m_proportions;
+
+    INTERP_MODE m_interpolation;
+
+    float m_refreshRateCache;
 
     friend class CDriverSettings;
+    friend class CVirtualBodyTracker;
 public:
+    float GetFPS() const;
+    inline float GetRefreshRate() const { return m_refreshRateCache; }
+
     CServerDriver();
     ~CServerDriver();
 };

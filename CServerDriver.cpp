@@ -15,6 +15,8 @@ const char *const CServerDriver::ms_interfaces[]
     nullptr
 };
 
+float CServerDriver::GetFPS() const { return m_cameraDriver->GetFps(); }
+
 CServerDriver::CServerDriver()
 {
     m_driverSettings = nullptr;
@@ -27,6 +29,7 @@ CServerDriver::CServerDriver()
 
 CServerDriver::~CServerDriver()
 {
+    Cleanup();
 }
 
 void CServerDriver::OnImageUpdate(const CCameraDriver &me, cv::Mat &image)
@@ -70,6 +73,8 @@ vr::EVRInitError CServerDriver::Init(vr::IVRDriverContext *pDriverContext)
     m_driverSettings->LoadConfig();
 
     m_trackingMode = m_driverSettings->GetConfigTrackingMode(SECTION_TRACK_MODE);
+    m_interpolation = m_driverSettings->GetConfigInterpolationMode(SECTION_TRACKSET, KEY_INTERP);
+    m_proportions = new Proportions(m_driverSettings->GetConfigProportions(SECTION_TRACKSET));
 
     try
     {
@@ -136,6 +141,7 @@ void CServerDriver::Cleanup()
 
     delptr(m_cameraDriver);
     delptr(m_bodyTracker);
+    delptr(m_proportions);
 
     m_driverSettings->UpdateConfig(this);
     m_driverSettings->SaveConfig();
@@ -146,6 +152,8 @@ void CServerDriver::Cleanup()
 
 void CServerDriver::RunFrame()
 {
+    LoadRefreshRate();
+
     m_bodyTracker->trackingActive = !m_standby;
     m_cameraDriver->RunFrame();
     m_bodyTracker->RunFrame();
@@ -183,12 +191,16 @@ const char *const *CServerDriver::GetInterfaceVersions()
 
 void CServerDriver::SetupTracker(const char *name, TRACKING_FLAG flag, TRACKER_ROLE role)
 {
+    CVirtualBodyTracker *tracker;
     bool enabled = (m_trackingMode & flag) != TRACKING_FLAG::NONE;
     vr_log("\tTracking for %s %s\n", name, enabled ? "enabled" : "disabled");
+    
     if(enabled)
     {
-        m_trackers.push_back(new CVirtualBodyTracker(m_trackers.size(), role));
-        vr::VRServerDriverHost()->TrackedDeviceAdded(m_trackers.back()->GetSerial().c_str(), vr::ETrackedDeviceClass::TrackedDeviceClass_GenericTracker, m_trackers.back());
+        tracker = new CVirtualBodyTracker(m_trackers.size(), role);
+        m_trackers.push_back(tracker);
+        vr::VRServerDriverHost()->TrackedDeviceAdded(tracker->GetSerial().c_str(), vr::ETrackedDeviceClass::TrackedDeviceClass_GenericTracker, tracker);
+        tracker->driver = this;
     }
 }
 

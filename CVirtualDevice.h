@@ -30,23 +30,25 @@ public:
 
     void SetInRange(bool p_state);
 
-    inline void SetPosition(const glm::vec3 &pos);
-    inline void SetRotation(const glm::quat &quat);
-    inline void SetTransform(const glm::vec3 &pos, const glm::quat &quat);
-    inline void SetTransform(const glm::mat4x4 &mat);
+    void SetPosition(const glm::vec3 &pos);
+    void SetRotation(const glm::quat &quat);
+    void SetTransform(const glm::vec3 &pos, const glm::quat &quat);
+    void SetTransform(const glm::mat4x4 &mat);
 
-    inline void SetOffsetPosition(const glm::vec3 &pos);
-    inline void SetOffsetRotation(const glm::quat &quat);
-    inline void SetOffsetTransform(const glm::vec3 &pos, const glm::quat &quat);
-    inline void SetOffsetTransform(const glm::mat4x4 &mat);
+    void SetOffsetPosition(const glm::vec3 &pos);
+    void SetOffsetRotation(const glm::quat &quat);
+    void SetOffsetTransform(const glm::vec3 &pos, const glm::quat &quat);
+    void SetOffsetTransform(const glm::mat4x4 &mat);
 
-    void RunFrame();
+    virtual void RunFrame();
 protected:
     vr::PropertyContainerHandle_t m_propertyHandle;
     uint32_t m_trackedDevice;
-
+    CServerDriver *driver;
     std::string m_serial;
 
     virtual void SetupProperties();
+
+    friend class CServerDriver;
 };
 
