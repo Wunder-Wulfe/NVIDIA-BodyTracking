@@ -1,269 +1,170 @@
 #include "pch.h"
 
 #include "CServerDriver.h"
+#include "CDriverSettings.h"
 #include "CNvBodyTracker.h"
 #include "CVirtualBodyTracker.h"
 #include "CVirtualBaseStation.h"
 #include "CCameraDriver.h"
 #include "CCommon.h"
 
-template<class T>
-inline void delptr(T& ptr) {
-	delete ptr;
-	ptr = nullptr;
-}
-
-extern char g_modulePath[];
-
-const char* const CServerDriver::msInterfaces[]
+const char *const CServerDriver::ms_interfaces[]
 {
-	vr::ITrackedDeviceServerDriver_Version,
-	vr::IServerTrackedDeviceProvider_Version,
-	nullptr
+    vr::ITrackedDeviceServerDriver_Version,
+    vr::IServerTrackedDeviceProvider_Version,
+    nullptr
 };
 
 CServerDriver::CServerDriver()
 {
-	driver = nullptr;
-	camDriver = nullptr;
-	station = nullptr;
-	standby = false;
-	trackingEnabled = false;
+    m_driverSettings = nullptr;
+    m_bodyTracker = nullptr;
+    m_cameraDriver = nullptr;
+    m_station = nullptr;
+    m_standby = false;
+    m_trackingMode = TRACKING_FLAG::NONE;
 }
 
 CServerDriver::~CServerDriver()
 {
-	Cleanup();
 }
 
-
-bool CServerDriver::UpdateConfig()
+vr::EVRInitError CServerDriver::Init(vr::IVRDriverContext *pDriverContext)
 {
-	/*
-	return SetConfigVector(SECTION_POS, driver->GetCameraPos())
-		&& SetConfigQuaternion(SECTION_ROT, driver->GetCameraRot())
-		&& SetConfigFloat(SECTION_CAMSET, KEY_FOCAL, driver->focalLength)
-		&& SetConfigBoolean(SECTION_SDKSET, KEY_USE_CUDA, driver->useCudaGraph)
-		&& SetConfigBoolean(SECTION_SDKSET, KEY_STABLE, driver->stabilization)
-		&& SetConfigInteger(SECTION_SDKSET, KEY_BATCH_SZ, driver->batchSize)
-		&& SetConfigInteger(SECTION_SDKSET, KEY_NVAR, driver->nvARMode)
-		&& SetConfigFloat(SECTION_SDKSET, KEY_CONF, driver->confidenceRequirement)
-		&& SetConfigBoolean(SECTION_SDKSET, KEY_TRACKING, trackingEnabled);
-	*/
-	return true;
-}
+    VR_INIT_SERVER_DRIVER_CONTEXT(pDriverContext);
 
-bool CServerDriver::SaveConfig(bool update)
-{
-	if (update)
-		UpdateConfig();
-	return 0 < iniFile.SaveFile(C_SETTINGS);
-}
+    m_driverSettings = new CDriverSettings();
+    m_driverSettings->LoadConfig();
 
-bool CServerDriver::SaveConfig(const char* alt)
-{
-	return 0 < iniFile.SaveFile(alt);
-}
+    m_trackingMode = m_driverSettings->GetConfigTrackingMode(SECTION_TRACK_MODE);
 
-bool CServerDriver::LoadConfig()
-{
-	std::string l_path(g_modulePath);
-	l_path.erase(l_path.begin() + l_path.rfind('\\'), l_path.end());
-	l_path.append(C_SETTINGS);
-	return 0 < iniFile.LoadFile(l_path.c_str());
-}
+    try
+    {
+        m_bodyTracker = new CNvBodyTracker();
+        m_bodyTracker->batchSize = m_driverSettings->GetConfigInteger(SECTION_SDKSET, KEY_BATCH_SZ, 1);
+        m_bodyTracker->focalLength = m_driverSettings->GetConfigFloat(SECTION_CAMSET, KEY_FOCAL, 800.0f);
+        m_bodyTracker->stabilization = m_driverSettings->GetConfigBoolean(SECTION_SDKSET, KEY_STABLE, true);
+        m_bodyTracker->useCudaGraph = m_driverSettings->GetConfigBoolean(SECTION_SDKSET, KEY_USE_CUDA, true);
+        m_bodyTracker->nvARMode = m_driverSettings->GetConfigInteger(SECTION_SDKSET, KEY_NVAR, 1);
+        m_bodyTracker->confidenceRequirement = m_driverSettings->GetConfigFloat(SECTION_SDKSET, KEY_CONF, 0.0);
+        m_bodyTracker->trackingActive = m_driverSettings->GetConfigBoolean(SECTION_SDKSET, KEY_TRACKING, false);
+        m_bodyTracker->SetCamera(m_driverSettings->GetConfigVector(SECTION_POS), m_driverSettings->GetConfigQuaternion(SECTION_ROT));
+        m_bodyTracker->KeyInfoUpdated();
+    }
+    catch(std::exception e)
+    {
+        vr_log("Unable to use NVIDIA AR SDK: %s\n", e.what());
+        return vr::EVRInitError::VRInitError_Driver_NotLoaded;
+    }
 
-glm::vec3 CServerDriver::GetConfigVector(const char* section)
-{
-	return glm::vec3(
-		GetConfigFloat(section, C_X),
-		GetConfigFloat(section, C_Y),
-		GetConfigFloat(section, C_Z)
-	);
-}
-glm::quat CServerDriver::GetConfigQuaternion(const char* section)
-{
-	return glm::quat(
-		GetConfigFloat(section, C_W),
-		GetConfigFloat(section, C_X),
-		GetConfigFloat(section, C_Y),
-		GetConfigFloat(section, C_Z)
-	);
-}
+    try
+    {
+        m_cameraDriver = new CCameraDriver(m_driverSettings->GetConfigFloat(SECTION_CAMSET, KEY_RES_SCALE, 1.0));
+        m_cameraDriver->show = m_driverSettings->GetConfigBoolean(SECTION_CAMSET, KEY_CAM_VIS, true);
+        m_cameraDriver->LoadCameras();
+    }
+    catch(std::exception e)
+    {
+        vr_log("Unable to use OpenCV: %s\n", e.what());
+        return vr::EVRInitError::VRInitError_Driver_NotLoaded;
+    }
 
-bool CServerDriver::SetConfigVector(const char* section, const glm::vec3 value)
-{
-	return SetConfigFloat(section, C_X, value.x)
-			&& SetConfigFloat(section, C_Y, value.y)
-			&& SetConfigFloat(section, C_Z, value.z);
-}
+    m_station = new CVirtualBaseStation(this);
+    vr::VRServerDriverHost()->TrackedDeviceAdded(m_station->GetSerial().c_str(), vr::ETrackedDeviceClass::TrackedDeviceClass_TrackingReference, m_station);
 
-bool CServerDriver::SetConfigQuaternion(const char* section, const glm::quat value)
-{
-	return SetConfigFloat(section, C_W, value.w)
-		&& SetConfigFloat(section, C_X, value.x)
-		&& SetConfigFloat(section, C_Y, value.y)
-		&& SetConfigFloat(section, C_Z, value.z);
-}
+    // Enable body tracking
+    m_bodyTracker->Initialize();
 
-TRACKING_FLAG CServerDriver::GetConfigTrackingFlag(const char* section, const char* key, TRACKING_FLAG expected, TRACKING_FLAG def = TRACKING_FLAG::NONE)
-{
-	return GetConfigBoolean(section, key, false) ? expected : def;
-}
+    vr_log("Tracking enabled: %s\n", m_bodyTracker->trackingActive ? "true" : "false");
+    vr_log("Current tracking modes:\n");
 
-TRACKING_FLAG CServerDriver::GetConfigTrackingMode(const char* section, TRACKING_FLAG def = TRACKING_FLAG::NONE)
-{
-	TRACKING_FLAG flags = GetConfigTrackingFlag(section, KEY_HIP_ON, TRACKING_FLAG::HIP)
-		| GetConfigTrackingFlag(section, KEY_FEET_ON, TRACKING_FLAG::FEET)
-		| GetConfigTrackingFlag(section, KEY_ELBOW_ON, TRACKING_FLAG::ELBOW)
-		| GetConfigTrackingFlag(section, KEY_KNEE_ON, TRACKING_FLAG::KNEE)
-		| GetConfigTrackingFlag(section, KEY_CHEST_ON, TRACKING_FLAG::CHEST)
-		| GetConfigTrackingFlag(section, KEY_SHOULDER_ON, TRACKING_FLAG::SHOULDER)
-		| GetConfigTrackingFlag(section, KEY_TOE_ON, TRACKING_FLAG::TOE)
-		| GetConfigTrackingFlag(section, KEY_HEAD_ON, TRACKING_FLAG::HEAD)
-		| GetConfigTrackingFlag(section, KEY_HAND_ON, TRACKING_FLAG::HAND);
-	if (flags == TRACKING_FLAG::NONE)
-		return def;
-	else
-		return flags;
-}
+    SetupTracker(KEY_HIP_ON, TRACKING_FLAG::HIP, TRACKER_ROLE::HIPS);
+    SetupTracker(KEY_FEET_ON, TRACKING_FLAG::FEET, TRACKER_ROLE::LEFT_FOOT, TRACKER_ROLE::RIGHT_FOOT);
+    SetupTracker(KEY_ELBOW_ON, TRACKING_FLAG::ELBOW, TRACKER_ROLE::LEFT_ELBOW, TRACKER_ROLE::RIGHT_ELBOW);
+    SetupTracker(KEY_KNEE_ON, TRACKING_FLAG::KNEE, TRACKER_ROLE::LEFT_KNEE, TRACKER_ROLE::RIGHT_KNEE);
+    SetupTracker(KEY_CHEST_ON, TRACKING_FLAG::CHEST, TRACKER_ROLE::CHEST);
+    SetupTracker(KEY_SHOULDER_ON, TRACKING_FLAG::SHOULDER, TRACKER_ROLE::LEFT_SHOULDER, TRACKER_ROLE::RIGHT_SHOULDER);
+    SetupTracker(KEY_TOE_ON, TRACKING_FLAG::TOE, TRACKER_ROLE::LEFT_TOE, TRACKER_ROLE::RIGHT_TOE);
+    SetupTracker(KEY_HEAD_ON, TRACKING_FLAG::HEAD, TRACKER_ROLE::HEAD);
+    SetupTracker(KEY_HAND_ON, TRACKING_FLAG::HAND, TRACKER_ROLE::LEFT_HAND, TRACKER_ROLE::RIGHT_HAND);
 
-void CServerDriver::Initialize()
-{
-	driver = new CNvBodyTracker();
-	station = new CVirtualBaseStation(this);
-	camDriver = new CCameraDriver(GetConfigFloat(SECTION_CAMSET, KEY_RES_SCALE, 1.0));
-	camDriver->show = GetConfigBoolean(SECTION_CAMSET, KEY_CAM_VIS, true);
-
-	trackingMode = GetConfigTrackingMode(SECTION_TRACK_MODE);
-
-	LoadConfig();
-
-	AttachConfig(false);
-
-	camDriver->LoadCameras();
-
-	driver->Initialize();
-}
-
-void CServerDriver::AttachConfig(bool update)
-{
-	driver->batchSize = GetConfigInteger(SECTION_SDKSET, KEY_BATCH_SZ, 1);
-	driver->focalLength = GetConfigFloat(SECTION_CAMSET, KEY_FOCAL, 800.0f);
-	driver->stabilization = GetConfigBoolean(SECTION_SDKSET, KEY_STABLE, true);
-	driver->useCudaGraph = GetConfigBoolean(SECTION_SDKSET, KEY_USE_CUDA, true);
-	driver->nvARMode = GetConfigInteger(SECTION_SDKSET, KEY_NVAR, 1);
-
-	driver->SetCamera(
-		GetConfigVector(SECTION_POS),
-		GetConfigQuaternion(SECTION_ROT)
-	);
-	driver->confidenceRequirement = GetConfigFloat(SECTION_SDKSET, KEY_CONF, 0.0);
-
-	driver->trackingActive = GetConfigBoolean(SECTION_SDKSET, KEY_TRACKING, false);
-
-	if (update)
-		driver->KeyInfoUpdated();
-}
-
-void CServerDriver::SetupTracker(const char* name, TRACKING_FLAG flag, TRACKER_ROLE role)
-{
-	bool enabled = (trackingMode & flag) != TRACKING_FLAG::NONE;
-	vr_log("\tTracking for %s %s\n", name, enabled ? "enabled" : "disabled");
-	if (enabled)
-	{
-		trackers.push_back(new CVirtualBodyTracker(this, trackers.size(), role));
-	}
-}
-
-void CServerDriver::SetupTracker(const char* name, TRACKING_FLAG flag, TRACKER_ROLE role, TRACKER_ROLE secondary)
-{
-	bool enabled = (trackingMode & flag) != TRACKING_FLAG::NONE;
-	vr_log("\tTracking for %s %s\n", name, enabled ? "enabled" : "disabled");
-	if (enabled)
-	{
-		trackers.push_back(new CVirtualBodyTracker(this, trackers.size(), role));
-		trackers.push_back(new CVirtualBodyTracker(this, trackers.size(), secondary));
-	}
-}
-
-vr::EVRInitError CServerDriver::Init(vr::IVRDriverContext* pDriverContext)
-{
-	VR_INIT_SERVER_DRIVER_CONTEXT(pDriverContext);
-
-	Initialize();
-
-	station->AddTracker();
-
-	vr_log("Tracking enabled: %s\n", driver->trackingActive ? "true" : "false");
-
-	vr_log("Current tracking modes:\n");
-	
-	SetupTracker(KEY_HIP_ON, TRACKING_FLAG::HIP, TRACKER_ROLE::HIPS);
-
-	SetupTracker(KEY_FEET_ON, TRACKING_FLAG::FEET, TRACKER_ROLE::LEFT_FOOT, TRACKER_ROLE::RIGHT_FOOT);
-
-	SetupTracker(KEY_ELBOW_ON, TRACKING_FLAG::ELBOW, TRACKER_ROLE::LEFT_ELBOW, TRACKER_ROLE::RIGHT_ELBOW);
-
-	SetupTracker(KEY_KNEE_ON, TRACKING_FLAG::KNEE, TRACKER_ROLE::LEFT_KNEE, TRACKER_ROLE::RIGHT_KNEE);
-
-	SetupTracker(KEY_CHEST_ON, TRACKING_FLAG::CHEST, TRACKER_ROLE::CHEST);
-
-	SetupTracker(KEY_SHOULDER_ON, TRACKING_FLAG::SHOULDER, TRACKER_ROLE::LEFT_SHOULDER, TRACKER_ROLE::RIGHT_SHOULDER);
-
-	SetupTracker(KEY_TOE_ON, TRACKING_FLAG::TOE, TRACKER_ROLE::LEFT_TOE, TRACKER_ROLE::RIGHT_TOE);
-
-	SetupTracker(KEY_HEAD_ON, TRACKING_FLAG::HEAD, TRACKER_ROLE::HEAD);
-
-	SetupTracker(KEY_HAND_ON, TRACKING_FLAG::HAND, TRACKER_ROLE::LEFT_HAND, TRACKER_ROLE::RIGHT_HAND);
-
-	return vr::VRInitError_None;
+    return vr::VRInitError_None;
 }
 
 void CServerDriver::Cleanup()
 {
-	delptr(driver);
-	delptr(camDriver);
-	delptr(station);
+    for(auto l_tracker : m_trackers)
+        delptr(l_tracker);
+    m_trackers.clear();
 
-	for (CVirtualBodyTracker*& tracker : trackers)
-		delptr(tracker);
-	trackers.clear();
+    delptr(m_station);
 
-	vr::CleanupDriverContext();
+    delptr(m_cameraDriver);
+    delptr(m_bodyTracker);
+
+    m_driverSettings->SaveConfig();
+    delptr(m_driverSettings);
+
+    vr::CleanupDriverContext();
 }
 
 void CServerDriver::RunFrame()
 {
-	driver->trackingActive = trackingEnabled && !standby;
-	camDriver->RunFrame();
-	driver->RunFrame();
-	station->RunFrame();
-	station->SetConnected(driver->trackingActive && driver->GetConfidenceAcceptable());
+    m_bodyTracker->trackingActive = !m_standby;
+    m_cameraDriver->RunFrame();
+    m_bodyTracker->RunFrame();
 
-	for (CVirtualBodyTracker* tracker : trackers)
-	{
-		tracker->RunFrame();
-		tracker->SetConnected(driver->trackingActive && driver->GetConfidenceAcceptable());
-	}
+    for(auto l_tracker : m_trackers)
+    {
+        l_tracker->SetConnected(m_bodyTracker->trackingActive && m_bodyTracker->GetConfidenceAcceptable());
+        l_tracker->RunFrame();
+    }
+
+    m_station->SetConnected(m_bodyTracker->trackingActive);
+    m_station->RunFrame();
 }
 
 void CServerDriver::EnterStandby()
 {
-	standby = true;
+    m_standby = true;
 }
 
 void CServerDriver::LeaveStandby()
 {
-	standby = false;
+    m_standby = false;
 }
 
 bool CServerDriver::ShouldBlockStandbyMode()
 {
-	return false;
+    return false;
 }
 
-const char* const* CServerDriver::GetInterfaceVersions()
+const char *const *CServerDriver::GetInterfaceVersions()
 {
-	return msInterfaces;
+    return ms_interfaces;
+}
+
+void CServerDriver::SetupTracker(const char *name, TRACKING_FLAG flag, TRACKER_ROLE role)
+{
+    bool enabled = (m_trackingMode & flag) != TRACKING_FLAG::NONE;
+    vr_log("\tTracking for %s %s\n", name, enabled ? "enabled" : "disabled");
+    if(enabled)
+    {
+        m_trackers.push_back(new CVirtualBodyTracker(m_trackers.size(), role));
+        vr::VRServerDriverHost()->TrackedDeviceAdded(m_trackers.back()->GetSerial().c_str(), vr::ETrackedDeviceClass::TrackedDeviceClass_GenericTracker, m_trackers.back());
+    }
+}
+
+void CServerDriver::SetupTracker(const char *name, TRACKING_FLAG flag, TRACKER_ROLE role, TRACKER_ROLE secondary)
+{
+    bool enabled = (m_trackingMode & flag) != TRACKING_FLAG::NONE;
+    vr_log("\tTracking for %s %s\n", name, enabled ? "enabled" : "disabled");
+    if(enabled)
+    {
+        m_trackers.push_back(new CVirtualBodyTracker(m_trackers.size(), role));
+        vr::VRServerDriverHost()->TrackedDeviceAdded(m_trackers.back()->GetSerial().c_str(), vr::ETrackedDeviceClass::TrackedDeviceClass_GenericTracker, m_trackers.back());
+
+        m_trackers.push_back(new CVirtualBodyTracker(m_trackers.size(), secondary));
+        vr::VRServerDriverHost()->TrackedDeviceAdded(m_trackers.back()->GetSerial().c_str(), vr::ETrackedDeviceClass::TrackedDeviceClass_GenericTracker, m_trackers.back());
+    }
 }

@@ -2,215 +2,215 @@
 #include "CNvBodyTracker.h"
 #include "CCommon.h"
 
-char* g_nvARSDKPath = nullptr;
+char *g_nvARSDKPath = nullptr;
 
 CNvBodyTracker::CNvBodyTracker()
 {
-	trackingActive = false;
-	stabilization = true;
-	image_loaded = false;
-	useCudaGraph = true;
-	nvARMode = 1;
-	focalLength = 800.0f;
-	batchSize = 1;
-	_batchSize = -1;
-	keyPointDetectHandle = bodyDetectHandle = nullptr;
+    trackingActive = false;
+    stabilization = true;
+    m_imageLoaded = false;
+    useCudaGraph = true;
+    nvARMode = 1;
+    focalLength = 800.0f;
+    batchSize = 1;
+    m_batchSize = -1;
+    m_keyPointDetectHandle = nullptr;
+    m_bodyDetectHandle = nullptr;
 }
-
 
 void CNvBodyTracker::KeyInfoUpdated(bool override)
 {
-	int _nkp = numKeyPoints;
+    int _nkp = m_numKeyPoints;
 
-	if (batchSize != _batchSize || override)
-	{
-		if (keyPointDetectHandle != nullptr)
-		{
-			NvAR_Destroy(keyPointDetectHandle);
-			keyPointDetectHandle = nullptr;
-		}
-		NvAR_Create(NvAR_Feature_BodyPoseEstimation, &keyPointDetectHandle);
-		NvAR_SetString(keyPointDetectHandle, NvAR_Parameter_Config(ModelDir), "");
-		NvAR_SetCudaStream(keyPointDetectHandle, NvAR_Parameter_Config(CUDAStream), stream);
-		NvAR_SetU32(keyPointDetectHandle, NvAR_Parameter_Config(BatchSize), batchSize);
-	}
-	NvAR_SetU32(keyPointDetectHandle, NvAR_Parameter_Config(Mode), nvARMode);
-	NvAR_SetU32(keyPointDetectHandle, NvAR_Parameter_Config(Temporal), stabilization);
-	NvAR_SetF32(keyPointDetectHandle, NvAR_Parameter_Config(FocalLength), focalLength);
-	NvAR_SetF32(keyPointDetectHandle, NvAR_Parameter_Config(UseCudaGraph), useCudaGraph);
-	NvAR_Load(keyPointDetectHandle);
+    if(batchSize != m_batchSize || override)
+    {
+        if(m_keyPointDetectHandle != nullptr)
+        {
+            NvAR_Destroy(m_keyPointDetectHandle);
+            m_keyPointDetectHandle = nullptr;
+        }
+        NvAR_Create(NvAR_Feature_BodyPoseEstimation, &m_keyPointDetectHandle);
+        NvAR_SetString(m_keyPointDetectHandle, NvAR_Parameter_Config(ModelDir), "");
+        NvAR_SetCudaStream(m_keyPointDetectHandle, NvAR_Parameter_Config(CUDAStream), m_stream);
+        NvAR_SetU32(m_keyPointDetectHandle, NvAR_Parameter_Config(BatchSize), batchSize);
+    }
+    NvAR_SetU32(m_keyPointDetectHandle, NvAR_Parameter_Config(Mode), nvARMode);
+    NvAR_SetU32(m_keyPointDetectHandle, NvAR_Parameter_Config(Temporal), stabilization);
+    NvAR_SetF32(m_keyPointDetectHandle, NvAR_Parameter_Config(FocalLength), focalLength);
+    NvAR_SetF32(m_keyPointDetectHandle, NvAR_Parameter_Config(UseCudaGraph), useCudaGraph);
+    NvAR_Load(m_keyPointDetectHandle);
 
-	NvAR_GetU32(keyPointDetectHandle, NvAR_Parameter_Config(NumKeyPoints), &numKeyPoints);
-	if (batchSize != _batchSize || numKeyPoints != _nkp || override)
-	{
-		keypoints.assign(batchSize * numKeyPoints, { 0.f, 0.f });
-		keypoints3D.assign(batchSize * numKeyPoints, { 0.f, 0.f, 0.f });
-		jointAngles.assign(batchSize * numKeyPoints, { 0.f, 0.f, 0.f, 1.f });
-		keypoints_confidence.assign(batchSize * numKeyPoints, 0.f);
-		referencePose.assign(numKeyPoints, { 0.f, 0.f, 0.f });
+    NvAR_GetU32(m_keyPointDetectHandle, NvAR_Parameter_Config(NumKeyPoints), &m_numKeyPoints);
+    if(batchSize != m_batchSize || m_numKeyPoints != _nkp || override)
+    {
+        m_keypoints.assign(batchSize * m_numKeyPoints, { 0.f, 0.f });
+        m_keypoints3D.assign(batchSize * m_numKeyPoints, { 0.f, 0.f, 0.f });
+        m_jointAngles.assign(batchSize * m_numKeyPoints, { 0.f, 0.f, 0.f, 1.f });
+        m_keypointsConfidence.assign(batchSize * m_numKeyPoints, 0.f);
+        m_referencePose.assign(m_numKeyPoints, { 0.f, 0.f, 0.f });
 
-		EmptyKeypoints();
+        EmptyKeypoints();
 
-		const void* pReferencePose;
-		NvAR_GetObject(keyPointDetectHandle, NvAR_Parameter_Config(ReferencePose), &pReferencePose,
-			sizeof(NvAR_Point3f));
-		memcpy(referencePose.data(), pReferencePose, sizeof(NvAR_Point3f) * numKeyPoints);
+        const void *pReferencePose;
+        NvAR_GetObject(m_keyPointDetectHandle, NvAR_Parameter_Config(ReferencePose), &pReferencePose,
+            sizeof(NvAR_Point3f));
+        memcpy(m_referencePose.data(), pReferencePose, sizeof(NvAR_Point3f) * m_numKeyPoints);
 
-		NvAR_SetObject(keyPointDetectHandle, NvAR_Parameter_Output(KeyPoints), keypoints.data(),
-			sizeof(NvAR_Point2f));
-		NvAR_SetObject(keyPointDetectHandle, NvAR_Parameter_Output(KeyPoints3D), keypoints3D.data(),
-			sizeof(NvAR_Point3f));
-		NvAR_SetObject(keyPointDetectHandle, NvAR_Parameter_Output(JointAngles), jointAngles.data(),
-			sizeof(NvAR_Quaternion));
-		NvAR_SetF32Array(keyPointDetectHandle, NvAR_Parameter_Output(KeyPointsConfidence),
-			keypoints_confidence.data(), batchSize * numKeyPoints);
-	}
+        NvAR_SetObject(m_keyPointDetectHandle, NvAR_Parameter_Output(KeyPoints), m_keypoints.data(),
+            sizeof(NvAR_Point2f));
+        NvAR_SetObject(m_keyPointDetectHandle, NvAR_Parameter_Output(KeyPoints3D), m_keypoints3D.data(),
+            sizeof(NvAR_Point3f));
+        NvAR_SetObject(m_keyPointDetectHandle, NvAR_Parameter_Output(JointAngles), m_jointAngles.data(),
+            sizeof(NvAR_Quaternion));
+        NvAR_SetF32Array(m_keyPointDetectHandle, NvAR_Parameter_Output(KeyPointsConfidence),
+            m_keypointsConfidence.data(), batchSize * m_numKeyPoints);
+    }
 
-	_batchSize = batchSize;
+    m_batchSize = batchSize;
 }
 
 void CNvBodyTracker::Initialize()
 {
-	if (stream != nullptr)
-		Cleanup();
+    if(m_stream != nullptr)
+        Cleanup();
 
-	unsigned int output_bbox_size;
-	NvAR_CudaStreamCreate(&stream);
-	if (bodyDetectHandle == nullptr)
-	{
-		NvAR_Create(NvAR_Feature_BodyDetection, &bodyDetectHandle);
-		NvAR_SetString(bodyDetectHandle, NvAR_Parameter_Config(ModelDir), "");
-		NvAR_SetCudaStream(bodyDetectHandle, NvAR_Parameter_Config(CUDAStream), stream);
-		NvAR_SetU32(bodyDetectHandle, NvAR_Parameter_Config(Temporal), stabilization);
-		NvAR_Load(bodyDetectHandle);
-	}
+    unsigned int output_bbox_size;
+    NvAR_CudaStreamCreate(&m_stream);
+    if(m_bodyDetectHandle == nullptr)
+    {
+        NvAR_Create(NvAR_Feature_BodyDetection, &m_bodyDetectHandle);
+        NvAR_SetString(m_bodyDetectHandle, NvAR_Parameter_Config(ModelDir), "");
+        NvAR_SetCudaStream(m_bodyDetectHandle, NvAR_Parameter_Config(CUDAStream), m_stream);
+        NvAR_SetU32(m_bodyDetectHandle, NvAR_Parameter_Config(Temporal), stabilization);
+        NvAR_Load(m_bodyDetectHandle);
+    }
 
-	KeyInfoUpdated(true);
+    KeyInfoUpdated(true);
 
-	output_bbox_size = batchSize;
-	if (!stabilization) output_bbox_size = 25;
-	output_bbox_data.assign(output_bbox_size, { 0.f, 0.f, 0.f, 0.f });
-	output_bboxes.boxes = output_bbox_data.data();
-	output_bboxes.max_boxes = (uint8_t)output_bbox_size;
-	output_bboxes.num_boxes = (uint8_t)output_bbox_size;
-	NvAR_SetObject(keyPointDetectHandle, NvAR_Parameter_Output(BoundingBoxes), &output_bboxes, sizeof(NvAR_BBoxes));
+    output_bbox_size = batchSize;
+    if(!stabilization) output_bbox_size = 25;
+    m_outputBBoxData.assign(output_bbox_size, { 0.f, 0.f, 0.f, 0.f });
+    m_outputBBoxes.boxes = m_outputBBoxData.data();
+    m_outputBBoxes.max_boxes = (uint8_t)output_bbox_size;
+    m_outputBBoxes.num_boxes = (uint8_t)output_bbox_size;
+    NvAR_SetObject(m_keyPointDetectHandle, NvAR_Parameter_Output(BoundingBoxes), &m_outputBBoxes, sizeof(NvAR_BBoxes));
 }
 
 void CNvBodyTracker::Initialize(int w, int h, int batch_size)
 {
-	batchSize = batch_size;
-	ResizeImage(w, h);
-	Initialize();
+    batchSize = batch_size;
+    ResizeImage(w, h);
+    Initialize();
 }
 
 void CNvBodyTracker::ResizeImage(int w, int h)
 {
-	input_image_width = w;
-	input_image_height = h;
-	input_image_pitch = 3 * input_image_width * sizeof(unsigned char);
+    m_inputImageWidth = w;
+    m_inputImageHeight = h;
+    m_inputImagePitch = 3 * m_inputImageWidth * sizeof(unsigned char);
 
-	if (image_loaded)
-		NvCVImage_Dealloc(&inputImageBuffer);
-	NvCVImage_Alloc(&inputImageBuffer, input_image_width, input_image_height, NVCV_BGR, NVCV_U8,
-		NVCV_CHUNKY, NVCV_GPU, 1);
-	NvAR_SetObject(keyPointDetectHandle, NvAR_Parameter_Input(Image), &inputImageBuffer, sizeof(NvCVImage));
-	image_loaded = true;
+    if(m_imageLoaded)
+        NvCVImage_Dealloc(&m_inputImageBuffer);
+    NvCVImage_Alloc(&m_inputImageBuffer, m_inputImageWidth, m_inputImageHeight, NVCV_BGR, NVCV_U8,
+        NVCV_CHUNKY, NVCV_GPU, 1);
+    NvAR_SetObject(m_keyPointDetectHandle, NvAR_Parameter_Input(Image), &m_inputImageBuffer, sizeof(NvCVImage));
+    m_imageLoaded = true;
 }
 
 CNvBodyTracker::~CNvBodyTracker()
 {
-	Cleanup();
+    Cleanup();
 }
 
 void CNvBodyTracker::Cleanup()
 {
-	if (keyPointDetectHandle != nullptr)
-	{
-		NvAR_Destroy(keyPointDetectHandle);
-		keyPointDetectHandle = nullptr;
-	}
-	if (bodyDetectHandle != nullptr)
-	{
-		NvAR_Destroy(bodyDetectHandle);
-		bodyDetectHandle = nullptr;
-	}
-	if (stream != nullptr)
-	{
-		NvAR_CudaStreamDestroy(stream);
-		stream = nullptr;
-	}
-	if (image_loaded)
-		NvCVImage_Dealloc(&inputImageBuffer);
+    if(m_keyPointDetectHandle != nullptr)
+    {
+        NvAR_Destroy(m_keyPointDetectHandle);
+        m_keyPointDetectHandle = nullptr;
+    }
+    if(m_bodyDetectHandle != nullptr)
+    {
+        NvAR_Destroy(m_bodyDetectHandle);
+        m_bodyDetectHandle = nullptr;
+    }
+    if(m_stream != nullptr)
+    {
+        NvAR_CudaStreamDestroy(m_stream);
+        m_stream = nullptr;
+    }
+    if(m_imageLoaded)
+        NvCVImage_Dealloc(&m_inputImageBuffer);
 }
 
-void CNvBodyTracker::FillBatched(std::vector<NvAR_Quaternion>& from, std::vector<glm::quat>& to)
+void CNvBodyTracker::FillBatched(const std::vector<NvAR_Quaternion> &from, std::vector<glm::quat> &to)
 {
-	int index, batch;
-	for (index = 0; index < (int)numKeyPoints; index++)
-	{
-		to[index] = CastQuaternion(from[index]) / (float)batchSize;
-	}
+    int index, batch;
+    for(index = 0; index < (int)m_numKeyPoints; index++)
+    {
+        to[index] = CastQuaternion(from[index]) / (float)batchSize;
+    }
 
-	for (batch = 1; batch < batchSize; batch++)
-	{
-		for (index = 0; index < (int)numKeyPoints; index++)
-		{
-			to[index] += CastQuaternion(TableIndex(from, index, batch)) / (float)batchSize;
-		}
-	}
+    for(batch = 1; batch < batchSize; batch++)
+    {
+        for(index = 0; index < (int)m_numKeyPoints; index++)
+        {
+            to[index] += CastQuaternion(TableIndex(from, index, batch)) / (float)batchSize;
+        }
+    }
 }
 
-void CNvBodyTracker::FillBatched(std::vector<NvAR_Point3f>& from, std::vector<glm::vec3>& to)
+void CNvBodyTracker::FillBatched(const std::vector<NvAR_Point3f> &from, std::vector<glm::vec3> &to)
 {
-	int index, batch;
-	for (index = 0; index < (int)numKeyPoints; index++)
-	{
-		to[index] = CastPoint(from[index]) / (float)batchSize;
-	}
+    int index, batch;
+    for(index = 0; index < (int)m_numKeyPoints; index++)
+    {
+        to[index] = CastPoint(from[index]) / (float)batchSize;
+    }
 
-	for (batch = 1; batch < batchSize; batch++)
-	{
-		for (index = 0; index < (int)numKeyPoints; index++)
-		{
-			to[index] += CastPoint(TableIndex(from, index, batch)) / (float)batchSize;
-		}
-	}
+    for(batch = 1; batch < batchSize; batch++)
+    {
+        for(index = 0; index < (int)m_numKeyPoints; index++)
+        {
+            to[index] += CastPoint(TableIndex(from, index, batch)) / (float)batchSize;
+        }
+    }
 }
 
 void CNvBodyTracker::ComputeAvgConfidence()
 {
-	float avg = 0.0;
-	int batch, index;
-	for (batch = 0; batch < batchSize; batch++)
-	{
-		for (index = 0; index < (int)numKeyPoints; index++)
-		{
-			avg += TableIndex(keypoints_confidence, index, batch);
-		}
-	}
-	confidence = avg / (batchSize + numKeyPoints);
+    float avg = 0.0;
+    int batch, index;
+    for(batch = 0; batch < batchSize; batch++)
+    {
+        for(index = 0; index < (int)m_numKeyPoints; index++)
+        {
+            avg += TableIndex(m_keypointsConfidence, index, batch);
+        }
+    }
+    m_confidence = avg / (batchSize + m_numKeyPoints);
 }
 
 void CNvBodyTracker::EmptyKeypoints()
 {
-	real_keypoints3D.assign(numKeyPoints, { 0.f, 0.f, 0.f });
-	real_jointAngles.assign(numKeyPoints, { 0.f, 0.f, 0.f, 0.f });
+    m_realKeypoints3D.assign(m_numKeyPoints, { 0.f, 0.f, 0.f });
+    m_realJointAngles.assign(m_numKeyPoints, { 0.f, 0.f, 0.f, 0.f });
 }
 
 void CNvBodyTracker::RunFrame()
 {
-	if (trackingActive)
-	{
-		NvAR_Run(keyPointDetectHandle);
-		ComputeAvgConfidence();
-		if (confidence >= confidenceRequirement)
-		{
-			FillBatched(keypoints3D, real_keypoints3D);
-			FillBatched(jointAngles, real_jointAngles);
-		}
-		else
-			EmptyKeypoints();
-	}
-	else
-		EmptyKeypoints();
+    if(trackingActive)
+    {
+        NvAR_Run(m_keyPointDetectHandle);
+        ComputeAvgConfidence();
+        if(m_confidence >= confidenceRequirement)
+        {
+            FillBatched(m_keypoints3D, m_realKeypoints3D);
+            FillBatched(m_jointAngles, m_realJointAngles);
+        }
+        else
+            EmptyKeypoints();
+    }
+    else
+        EmptyKeypoints();
 }

@@ -2,30 +2,32 @@
 
 struct CameraInfo
 {
-	int id, width, height;
+    int id, width, height;
 
-	CameraInfo(cv::VideoCapture &cam, int c_id);
+    CameraInfo(cv::VideoCapture &cam, int c_id);
 };
 
 class CCameraDriver
 {
-	cv::VideoCapture currentCamera;
-	CameraInfo* cinfo;
-	int cameraIndex;
-	void Cleanup();
-	cv::Mat frame;
-	bool working;
+    cv::VideoCapture m_currentCamera;
+    CameraInfo *m_cameraInfo;
+    int m_cameraIndex;
+    cv::Mat m_frame;
+    std::vector<CameraInfo> m_cameras;
+    bool m_working;
+    float m_resScale;
+
+    void Cleanup();
 public:
-	CCameraDriver(float scale = 1.0);
-	~CCameraDriver() { Cleanup(); };
-	void LoadCameras();
-	void RunFrame();
-	float resScale;
-	bool show;
-	std::vector<CameraInfo> cameras;
+    bool show;
 
-	void ChangeCamera(int up = 1);
+    CCameraDriver(float scale = 1.0);
+    ~CCameraDriver();
 
-	inline cv::Mat GetImage() { return frame; }
+    void LoadCameras();
+    void RunFrame();
+
+    void ChangeCamera(int up = 1);
+
+    inline const cv::Mat &GetImage() const { return m_frame; }
 };
-

@@ -2,10 +2,10 @@
 #include "CVirtualBaseStation.h"
 #include "CServerDriver.h"
 
-CVirtualBaseStation::CVirtualBaseStation(CServerDriver* p_server) : CVirtualDevice(p_server)
+CVirtualBaseStation::CVirtualBaseStation(CServerDriver *p_server)
 {
     m_serial.assign("RTX-30");
-    cls = vr::ETrackedDeviceClass::TrackedDeviceClass_TrackingReference;
+    m_serverDriver = p_server;
 }
 
 CVirtualBaseStation::~CVirtualBaseStation()
@@ -52,7 +52,7 @@ void CVirtualBaseStation::SetupProperties()
     vr::VRProperties()->SetUint64Property(m_propertyHandle, vr::Prop_VendorSpecific_Reserved_Start, 0x525458547261636B); // "RTXTrack"
 }
 
-void CVirtualBaseStation::DebugRequest(const char* pchRequest, char* pchResponseBuffer, uint32_t unResponseBufferSize)
+void CVirtualBaseStation::DebugRequest(const char *pchRequest, char *pchResponseBuffer, uint32_t unResponseBufferSize)
 {
     //m_serverDriver->ProcessExternalMessage(pchRequest);
 }
