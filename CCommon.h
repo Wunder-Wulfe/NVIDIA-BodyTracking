@@ -14,7 +14,7 @@ inline void vr_log(const char *fmt, const T&... args)
 template<class T>
 inline void delptr(T &ptr)
 {
-    delete ptr;
+    if (ptr != nullptr) delete ptr;
     ptr = nullptr;
 }
 
