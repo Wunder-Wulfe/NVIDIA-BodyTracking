@@ -10,13 +10,10 @@ enum class TRACKER_ROLE;
 
 class CServerDriver final : public vr::IServerTrackedDeviceProvider
 {
-    static const char *const ms_interfaces[];
+    static void OnImageUpdate(const CCameraDriver &me, cv::Mat &image);
+    static void OnCameraUpdate(const CCameraDriver &me, int index);
 
-    CDriverSettings *m_driverSettings;
-    CNvBodyTracker *m_bodyTracker;
-    std::vector<CVirtualBodyTracker *> m_trackers;
-    CVirtualBaseStation *m_station;
-    CCameraDriver *m_cameraDriver;
+    static const char *const ms_interfaces[];
 
     TRACKING_FLAG m_trackingMode;
     bool m_standby;
@@ -41,6 +38,12 @@ class CServerDriver final : public vr::IServerTrackedDeviceProvider
         delete ptr;
         ptr = nullptr;
     }
+protected:
+    CDriverSettings *m_driverSettings;
+    CNvBodyTracker *m_bodyTracker;
+    std::vector<CVirtualBodyTracker *> m_trackers;
+    CVirtualBaseStation *m_station;
+    CCameraDriver *m_cameraDriver;
 public:
     CServerDriver();
     ~CServerDriver();

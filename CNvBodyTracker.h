@@ -1,6 +1,7 @@
 #pragma once
 
 enum class TRACKING_FLAG;
+enum class BODY_JOINT;
 
 struct Proportions
 {
@@ -34,12 +35,15 @@ class CNvBodyTracker
 
     Proportions m_proportions;
     TRACKING_FLAG m_flags;
+    float m_fps;
 
     glm::mat4x4 m_camMatrix;
 
+    std::vector<float> m_realConfidence;
     std::vector<glm::vec3> m_realKeypoints3D;
     std::vector<glm::quat> m_realJointAngles;
 
+    void FillBatched(const std::vector<float> &from, std::vector<float> &to);
     void FillBatched(const std::vector<NvAR_Point3f> &from, std::vector<glm::vec3> &to);
     void FillBatched(const std::vector<NvAR_Quaternion> &from, std::vector<glm::quat> &to);
 
@@ -71,6 +75,7 @@ public:
     void KeyInfoUpdated(bool override = false);
 
     inline float GetConfidence() const { return m_confidence; };
+    float GetConfidence(BODY_JOINT role) const { return m_realConfidence[(int)role]; }
 
     inline void SetCamera(glm::vec3 pos, glm::quat rot) { m_camMatrix = glm::translate(glm::mat4_cast(rot), pos); }
     inline void RotateCamera(glm::quat rot) { m_camMatrix *= glm::mat4_cast(rot); }
@@ -81,6 +86,8 @@ public:
 
     inline int GetImageWidth() const { return m_inputImageWidth; }
     inline int GetImageHeight() const { return m_inputImageHeight; }
+
+    inline void SetFPS(float f) { m_fps = f; }
 
     void RunFrame();
 

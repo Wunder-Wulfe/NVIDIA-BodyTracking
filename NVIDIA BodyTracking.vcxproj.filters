@@ -18,6 +18,7 @@
     <ClInclude Include="CNvBodyTracker.h" />
     <ClInclude Include="CCameraDriver.h" />
     <ClInclude Include="CDriverSettings.h" />
+    <ClInclude Include="CCallback.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="vendor\MAXINE-AR-SDK\nvar\src\nvARProxy.cpp">
@@ -36,5 +37,6 @@
     <ClCompile Include="CNvBodyTracker.cpp" />
     <ClCompile Include="CCameraDriver.cpp" />
     <ClCompile Include="CDriverSettings.cpp" />
+    <ClCompile Include="CCallback.cpp" />
   </ItemGroup>
 </Project>

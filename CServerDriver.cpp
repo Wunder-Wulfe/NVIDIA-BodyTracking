@@ -29,6 +29,29 @@ CServerDriver::~CServerDriver()
 {
 }
 
+void CServerDriver::OnImageUpdate(const CCameraDriver &me, cv::Mat &image)
+{
+    if (me.driver->m_bodyTracker->trackingActive)
+    {
+        for (CVirtualBodyTracker *tracker : me.driver->m_trackers)
+        {
+            switch (tracker->role)
+            {
+            case TRACKER_ROLE::HIPS:
+
+                break;
+            default:
+                break;
+            }
+        }
+    }
+}
+
+void CServerDriver::OnCameraUpdate(const CCameraDriver &me, int index)
+{
+    me.driver->m_bodyTracker->SetFPS(me.GetFps());
+}
+
 vr::EVRInitError CServerDriver::Init(vr::IVRDriverContext *pDriverContext)
 {
     VR_INIT_SERVER_DRIVER_CONTEXT(pDriverContext);
@@ -59,9 +82,11 @@ vr::EVRInitError CServerDriver::Init(vr::IVRDriverContext *pDriverContext)
 
     try
     {
-        m_cameraDriver = new CCameraDriver(m_driverSettings->GetConfigFloat(SECTION_CAMSET, KEY_RES_SCALE, 1.0));
+        m_cameraDriver = new CCameraDriver(this, m_driverSettings->GetConfigFloat(SECTION_CAMSET, KEY_RES_SCALE, 1.0));
         m_cameraDriver->show = m_driverSettings->GetConfigBoolean(SECTION_CAMSET, KEY_CAM_VIS, true);
         m_cameraDriver->LoadCameras();
+        m_cameraDriver->imageChanged += CFunctionFactory(OnImageUpdate, void, const CCameraDriver&, cv::Mat&);
+        m_cameraDriver->cameraChanged += CFunctionFactory(OnCameraUpdate, void, const CCameraDriver &, int);
     }
     catch(std::exception e)
     {

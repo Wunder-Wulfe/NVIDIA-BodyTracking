@@ -16,6 +16,7 @@ CNvBodyTracker::CNvBodyTracker()
     m_batchSize = -1;
     m_keyPointDetectHandle = nullptr;
     m_bodyDetectHandle = nullptr;
+    m_fps = 1;
 }
 
 void CNvBodyTracker::KeyInfoUpdated(bool override)
@@ -143,6 +144,24 @@ void CNvBodyTracker::Cleanup()
         NvCVImage_Dealloc(&m_inputImageBuffer);
 }
 
+
+void CNvBodyTracker::FillBatched(const std::vector<float> &from, std::vector<float> &to)
+{
+    int index, batch;
+    for (index = 0; index < (int)m_numKeyPoints; index++)
+    {
+        to[index] = from[index] / (float)batchSize;
+    }
+
+    for (batch = 1; batch < batchSize; batch++)
+    {
+        for (index = 0; index < (int)m_numKeyPoints; index++)
+        {
+            to[index] += TableIndex(from, index, batch) / (float)batchSize;
+        }
+    }
+}
+
 void CNvBodyTracker::FillBatched(const std::vector<NvAR_Quaternion> &from, std::vector<glm::quat> &to)
 {
     int index, batch;
@@ -205,6 +224,7 @@ void CNvBodyTracker::RunFrame()
         ComputeAvgConfidence();
         if(m_confidence >= confidenceRequirement)
         {
+            FillBatched(m_keypointsConfidence, m_realConfidence);
             FillBatched(m_keypoints3D, m_realKeypoints3D);
             FillBatched(m_jointAngles, m_realJointAngles);
         }

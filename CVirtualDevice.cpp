@@ -111,14 +111,14 @@ void CVirtualDevice::SetInRange(bool p_state)
     m_pose.poseIsValid = p_state;
 }
 
-void CVirtualDevice::SetPosition(glm::vec3 &pos)
+inline void CVirtualDevice::SetPosition(const glm::vec3 &pos)
 {
     m_pose.vecPosition[0U] = pos.x;
     m_pose.vecPosition[1U] = pos.y;
     m_pose.vecPosition[2U] = pos.z;
 }
 
-void CVirtualDevice::SetRotation(glm::quat &quat)
+inline void CVirtualDevice::SetRotation(const glm::quat &quat)
 {
     m_pose.qRotation.x = quat.x;
     m_pose.qRotation.y = quat.y;
@@ -126,19 +126,39 @@ void CVirtualDevice::SetRotation(glm::quat &quat)
     m_pose.qRotation.w = quat.w;
 }
 
-void CVirtualDevice::SetOffsetPosition(glm::vec3 &pos)
+inline void CVirtualDevice::SetOffsetPosition(const glm::vec3 &pos)
 {
     m_pose.vecWorldFromDriverTranslation[0U] = pos.x;
     m_pose.vecWorldFromDriverTranslation[1U] = pos.y;
     m_pose.vecWorldFromDriverTranslation[2U] = pos.z;
 }
 
-void CVirtualDevice::SetOffsetRotation(glm::quat &quat)
+inline void CVirtualDevice::SetOffsetRotation(const glm::quat &quat)
 {
     m_pose.qWorldFromDriverRotation.x = quat.x;
     m_pose.qWorldFromDriverRotation.y = quat.y;
     m_pose.qWorldFromDriverRotation.z = quat.z;
     m_pose.qWorldFromDriverRotation.w = quat.w;
+}
+
+inline void CVirtualDevice::SetTransform(const glm::vec3 &pos, const glm::quat &quat)
+{
+    SetPosition(pos);
+    SetRotation(quat);
+}
+inline void CVirtualDevice::SetTransform(const glm::mat4x4 &mat)
+{
+    SetTransform(glm::vec3(mat[3][0], mat[3][1], mat[3][2]), glm::quat_cast(mat));
+}
+
+inline void CVirtualDevice::SetOffsetTransform(const glm::vec3 &pos, const glm::quat &quat)
+{
+    SetOffsetPosition(pos);
+    SetOffsetRotation(quat);
+}
+inline void CVirtualDevice::SetOffsetTransform(const glm::mat4x4 &mat)
+{
+    SetOffsetTransform(glm::vec3(mat[3][0], mat[3][1], mat[3][2]), glm::quat_cast(mat));
 }
 
 void CVirtualDevice::SetupProperties()

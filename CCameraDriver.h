@@ -1,4 +1,5 @@
 #pragma once
+#include "CCallback.cpp"
 
 struct CameraInfo
 {
@@ -6,6 +7,8 @@ struct CameraInfo
 
     CameraInfo(cv::VideoCapture &cam, int c_id);
 };
+
+class CServerDriver;
 
 class CCameraDriver
 {
@@ -21,7 +24,7 @@ class CCameraDriver
 public:
     bool show;
 
-    CCameraDriver(float scale = 1.0);
+    CCameraDriver(CServerDriver *driv, float scale = 1.0);
     ~CCameraDriver();
 
     void LoadCameras();
@@ -30,4 +33,10 @@ public:
     void ChangeCamera(int up = 1);
 
     inline const cv::Mat &GetImage() const { return m_frame; }
+    inline const float GetFps() const { return (float)m_currentCamera.get(CV_CAP_PROP_FPS); }
+
+    CServerDriver *driver;
+
+    CCallback<void(const CCameraDriver&, cv::Mat&)> imageChanged;
+    CCallback<void(const CCameraDriver&, int)> cameraChanged;
 };

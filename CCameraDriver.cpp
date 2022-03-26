@@ -31,14 +31,16 @@ void CCameraDriver::LoadCameras()
     ChangeCamera(0);
 }
 
-CCameraDriver::CCameraDriver(float scale) : m_currentCamera()
+CCameraDriver::CCameraDriver(CServerDriver *driv, float scale) : m_currentCamera(), imageChanged(), cameraChanged()
 {
     m_resScale = scale;
     m_cameraIndex = 0;
     show = false;
     m_working = false;
     m_cameraInfo = nullptr;
+    driver = driv;
 }
+
 CCameraDriver::~CCameraDriver()
 {
     Cleanup();
@@ -48,7 +50,10 @@ void CCameraDriver::RunFrame()
 {
     m_currentCamera >> m_frame;
     if (show && !m_frame.empty())
+    {
         cv::imshow("Input", m_frame);
+        imageChanged(*this, m_frame);
+    }
 }
 
 void CCameraDriver::ChangeCamera(int up)
@@ -60,8 +65,9 @@ void CCameraDriver::ChangeCamera(int up)
         m_currentCamera.open(m_cameraInfo->id);
         m_currentCamera.set(cv::CAP_PROP_FRAME_WIDTH, (int)(m_cameraInfo->width * m_resScale));
         m_currentCamera.set(cv::CAP_PROP_FRAME_HEIGHT, (int)(m_cameraInfo->height * m_resScale));
-
-        vr_log("Switching to camera of index %d (%dx%d)\n", m_cameraInfo->id, m_cameraInfo->width, m_cameraInfo->height);
+        
+        vr_log("Switching to camera of index %d (%dx%d) (%.2f fps)\n", m_cameraInfo->id, m_cameraInfo->width, m_cameraInfo->height, GetFps());
+        cameraChanged(*this, m_cameraIndex);
     }
     else
     {

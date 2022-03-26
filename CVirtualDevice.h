@@ -30,11 +30,15 @@ public:
 
     void SetInRange(bool p_state);
 
-    void SetPosition(glm::vec3 &pos);
-    void SetRotation(glm::quat &quat);
+    void SetPosition(const glm::vec3 &pos);
+    void SetRotation(const glm::quat &quat);
+    void SetTransform(const glm::vec3 &pos, const glm::quat &quat);
+    void SetTransform(const glm::mat4x4 &mat);
 
-    void SetOffsetPosition(glm::vec3 &pos);
-    void SetOffsetRotation(glm::quat &quat);
+    void SetOffsetPosition(const glm::vec3 &pos);
+    void SetOffsetRotation(const glm::quat &quat);
+    void SetOffsetTransform(const glm::vec3 &pos, const glm::quat &quat);
+    void SetOffsetTransform(const glm::mat4x4 &mat);
 
     void RunFrame();
 protected:
