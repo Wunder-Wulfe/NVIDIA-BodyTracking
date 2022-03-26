@@ -106,6 +106,12 @@ void CVirtualDevice::SetForcedConnected(bool p_state)
     m_pose.deviceIsConnected = (m_connected && m_forcedConnected);
 }
 
+void CVirtualDevice::SetInRange(bool p_state)
+{
+    m_pose.result = (p_state ? vr::ETrackingResult::TrackingResult_Running_OK : vr::ETrackingResult::TrackingResult_Running_OutOfRange);
+    m_pose.poseIsValid = p_state;
+}
+
 void CVirtualDevice::SetPosition(glm::vec3 &pos)
 {
     m_pose.vecPosition[0U] = pos.x;

@@ -28,6 +28,8 @@ public:
     void SetConnected(bool p_state);
     void SetForcedConnected(bool p_state);
 
+    void SetInRange(bool p_state);
+
     void SetPosition(glm::vec3 &pos);
     void SetRotation(glm::quat &quat);
 

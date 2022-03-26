@@ -116,7 +116,8 @@ void CServerDriver::RunFrame()
 
     for(auto l_tracker : m_trackers)
     {
-        l_tracker->SetConnected(m_bodyTracker->trackingActive && m_bodyTracker->GetConfidenceAcceptable());
+        l_tracker->SetConnected(m_bodyTracker->trackingActive);
+        l_tracker->SetInRange(m_bodyTracker->GetConfidenceAcceptable());
         l_tracker->RunFrame();
     }
 
