@@ -46,7 +46,7 @@ bool CDriverSettings::LoadConfig()
     return 0 < m_iniFile.LoadFile(m_filePath.c_str());
 }
 
-glm::vec3 CDriverSettings::GetConfigVector(const char *section)
+glm::vec3 CDriverSettings::GetConfigVector(const char *section) const
 {
     return glm::vec3(
         GetConfigFloat(section, C_X),
@@ -54,7 +54,7 @@ glm::vec3 CDriverSettings::GetConfigVector(const char *section)
         GetConfigFloat(section, C_Z)
     );
 }
-glm::quat CDriverSettings::GetConfigQuaternion(const char *section)
+glm::quat CDriverSettings::GetConfigQuaternion(const char *section) const
 {
     return glm::quat(
         GetConfigFloat(section, C_W),
@@ -79,12 +79,12 @@ bool CDriverSettings::SetConfigQuaternion(const char *section, const glm::quat v
         && SetConfigFloat(section, C_Z, value.z);
 }
 
-TRACKING_FLAG CDriverSettings::GetConfigTrackingFlag(const char *section, const char *key, TRACKING_FLAG expected, TRACKING_FLAG def = TRACKING_FLAG::NONE)
+TRACKING_FLAG CDriverSettings::GetConfigTrackingFlag(const char *section, const char *key, TRACKING_FLAG expected, TRACKING_FLAG def) const
 {
     return GetConfigBoolean(section, key, false) ? expected : def;
 }
 
-TRACKING_FLAG CDriverSettings::GetConfigTrackingMode(const char *section, TRACKING_FLAG def)
+TRACKING_FLAG CDriverSettings::GetConfigTrackingMode(const char *section, TRACKING_FLAG def) const
 {
     TRACKING_FLAG m_flags = GetConfigTrackingFlag(section, KEY_HIP_ON, TRACKING_FLAG::HIP)
         | GetConfigTrackingFlag(section, KEY_FEET_ON, TRACKING_FLAG::FEET)
@@ -99,4 +99,39 @@ TRACKING_FLAG CDriverSettings::GetConfigTrackingMode(const char *section, TRACKI
         return def;
     else
         return m_flags;
+}
+
+INTERP_MODE CDriverSettings::GetConfigInterpolationMode(const char *section, const char *key, INTERP_MODE def) const
+{
+    std::string result = GetConfigString(section, key, INTERP_NONE);
+    if (result == INTERP_CUBE)
+    {
+        return INTERP_MODE::CUBIC;
+    }
+    else if (result == INTERP_QUAD)
+    {
+        return INTERP_MODE::QUAD;
+    }
+    else if (result == INTERP_SINE)
+    {
+        return INTERP_MODE::SINE;
+    }
+    else if (result == INTERP_LIN)
+    {
+        return INTERP_MODE::LINEAR;
+    }
+    else
+    {
+        return def;
+    }
+}
+
+const Proportions &CDriverSettings::GetConfigProportions(const char *section, const Proportions &def) const
+{
+    Proportions result;
+    result.hipOffset    = GetConfigFloat(section, KEY_HIP_POS, def.hipOffset);
+    result.elbowOffset  = GetConfigFloat(section, KEY_ELBOW_POS, def.elbowOffset);
+    result.kneeOffset   = GetConfigFloat(section, KEY_KNEE_POS, def.kneeOffset);
+    result.chestOffset  = GetConfigFloat(section, KEY_CHEST_POS, def.chestOffset);
+    return result;
 }

@@ -2,11 +2,21 @@
 
 #define LOG_BUFFER_SIZE 1000
 
-#define vr_log(fmt, ...) {sprintf_s(logging_buffer, LOG_BUFFER_SIZE, fmt, __VA_ARGS__); vr::VRDriverLog()->Log(logging_buffer);}
-
-#define delptr(ptr) {delete ptr; ptr = nullptr;}
-
 char logging_buffer[];
+
+template<class... T>
+inline void vr_log(const char *fmt, const T&... args)
+{
+    sprintf_s(logging_buffer, LOG_BUFFER_SIZE, fmt, args...);
+    vr::VRDriverLog()->Log(logging_buffer);
+}
+
+template<class T>
+inline void delptr(T &ptr)
+{
+    delete ptr;
+    ptr = nullptr;
+}
 
 enum class BODY_JOINT
 {

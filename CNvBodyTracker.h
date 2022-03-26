@@ -3,15 +3,6 @@
 enum class TRACKING_FLAG;
 enum class BODY_JOINT;
 
-struct Proportions
-{
-    float
-        elbowOffset,
-        kneeOffset,
-        hipOffset,
-        chestOffset;
-};
-
 class CNvBodyTracker
 {
     bool m_imageLoaded;
@@ -33,7 +24,6 @@ class CNvBodyTracker
     int m_batchSize;
     float m_confidence;
 
-    Proportions m_proportions;
     TRACKING_FLAG m_flags;
     float m_fps;
 
