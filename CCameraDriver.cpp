@@ -47,8 +47,8 @@ CCameraDriver::~CCameraDriver()
 void CCameraDriver::RunFrame()
 {
     m_currentCamera >> m_frame;
-    /*if (show && !m_frame.empty())
-        cv::imshow("Input", m_frame);*/
+    if (show && !m_frame.empty())
+        cv::imshow("Input", m_frame);
 }
 
 void CCameraDriver::ChangeCamera(int up)
