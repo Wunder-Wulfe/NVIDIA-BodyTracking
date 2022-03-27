@@ -42,6 +42,7 @@ public:
     inline int GetHeight() const { return m_cameras[m_cameraIndex].height; }
     inline int GetScaledWidth() const { return (int)(GetWidth() * m_resScale); }
     inline int GetScaledHeight() const { return (int)(GetHeight() * m_resScale); }
+    inline float GetScale() const { return m_resScale; }
 
     inline cv::VideoCaptureModes const GetMode() { return (cv::VideoCaptureModes)(int)m_currentCamera.get(CV_CAP_PROP_MODE); }
 

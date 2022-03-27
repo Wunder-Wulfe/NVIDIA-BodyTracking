@@ -6,7 +6,7 @@
 
 char *g_nvARSDKPath = nullptr;
 
-CNvSDKInterface::CNvSDKInterface()
+CNvSDKInterface::CNvSDKInterface() : m_tmpImage{}
 {
     trackingActive = false;
     stabilization = true;
@@ -20,11 +20,14 @@ CNvSDKInterface::CNvSDKInterface()
     m_bodyDetectHandle = nullptr;
     m_fps = 1;
     driver = nullptr;
+    ready = false;
 }
 
 void CNvSDKInterface::KeyInfoUpdated(bool override)
 {
     int _nkp = m_numKeyPoints;
+
+    vr_log("Key information has been update, reloading data in the NVIDIA AR SDK\n");
 
     if(batchSize != m_batchSize || override)
     {
@@ -45,6 +48,8 @@ void CNvSDKInterface::KeyInfoUpdated(bool override)
     NvAR_Load(m_keyPointDetectHandle);
 
     NvAR_GetU32(m_keyPointDetectHandle, NvAR_Parameter_Config(NumKeyPoints), &m_numKeyPoints);
+
+    vr_log("Number of keypoints: %d\n", m_numKeyPoints);
     if(batchSize != m_batchSize || m_numKeyPoints != _nkp || override)
     {
         m_keypoints.assign(batchSize * m_numKeyPoints, { 0.f, 0.f });
@@ -52,6 +57,10 @@ void CNvSDKInterface::KeyInfoUpdated(bool override)
         m_jointAngles.assign(batchSize * m_numKeyPoints, { 0.f, 0.f, 0.f, 1.f });
         m_keypointsConfidence.assign(batchSize * m_numKeyPoints, 0.f);
         m_referencePose.assign(m_numKeyPoints, { 0.f, 0.f, 0.f });
+
+        m_realKeypoints3D.assign(m_numKeyPoints, { 0.f, 0.f, 0.f });
+        m_realJointAngles.assign(m_numKeyPoints, { 0.f, 0.f, 0.f, 0.f });
+        m_realConfidence.assign(m_numKeyPoints, 0.f);
 
         EmptyKeypoints();
 
@@ -75,19 +84,8 @@ void CNvSDKInterface::KeyInfoUpdated(bool override)
 
 void CNvSDKInterface::Initialize()
 {
-    if(m_stream != nullptr)
-        Cleanup();
-
     unsigned int output_bbox_size;
     NvAR_CudaStreamCreate(&m_stream);
-    if(m_bodyDetectHandle == nullptr)
-    {
-        NvAR_Create(NvAR_Feature_BodyDetection, &m_bodyDetectHandle);
-        NvAR_SetString(m_bodyDetectHandle, NvAR_Parameter_Config(ModelDir), "");
-        NvAR_SetCudaStream(m_bodyDetectHandle, NvAR_Parameter_Config(CUDAStream), m_stream);
-        NvAR_SetU32(m_bodyDetectHandle, NvAR_Parameter_Config(Temporal), stabilization);
-        NvAR_Load(m_bodyDetectHandle);
-    }
 
     KeyInfoUpdated(true);
 
@@ -127,18 +125,20 @@ void CNvSDKInterface::LoadImageFromCam(const cv::VideoCapture &cam)
     if (m_imageLoaded)
         NvCVImage_Dealloc(&m_inputImageBuffer);
 
-    float resScale = driver->m_resScale;
+    float resScale = camDriv->GetScale();
 
     NvCVImage_Alloc(&m_inputImageBuffer, camDriv->GetScaledWidth(), camDriv->GetScaledHeight(), NVCV_BGR, NVCV_U8,
         NVCV_CHUNKY, NVCV_GPU, 1);
     NvAR_SetObject(m_keyPointDetectHandle, NvAR_Parameter_Input(Image), &m_inputImageBuffer, sizeof(NvCVImage));
+    KeyInfoUpdated(true);
     m_imageLoaded = true;
+    ready = true;
 }
 
 void CNvSDKInterface::UpdateImageFromCam(const cv::Mat &image)
 {
-    NvCVImage fxSrcChunkyCPU;
-    NVWrapperForCVMat(&image, &fxSrcChunkyCPU);
+    NvCVImage fxSrcChunkyCPU{};
+    (void)NVWrapperForCVMat(&image, &fxSrcChunkyCPU);
     NvCVImage_Transfer(&fxSrcChunkyCPU, &m_inputImageBuffer, 1.f, m_stream, &m_tmpImage);
 }
 
@@ -153,11 +153,6 @@ void CNvSDKInterface::Cleanup()
     {
         NvAR_Destroy(m_keyPointDetectHandle);
         m_keyPointDetectHandle = nullptr;
-    }
-    if(m_bodyDetectHandle != nullptr)
-    {
-        NvAR_Destroy(m_bodyDetectHandle);
-        m_bodyDetectHandle = nullptr;
     }
     if(m_stream != nullptr)
     {
@@ -238,6 +233,7 @@ void CNvSDKInterface::EmptyKeypoints()
 {
     m_realKeypoints3D.assign(m_numKeyPoints, { 0.f, 0.f, 0.f });
     m_realJointAngles.assign(m_numKeyPoints, { 0.f, 0.f, 0.f, 0.f });
+    m_realConfidence.assign(m_numKeyPoints, 0.f);
 }
 
 void CNvSDKInterface::RunFrame()

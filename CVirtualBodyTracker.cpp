@@ -6,7 +6,7 @@
 
 #define M_PI 3.14159265358979323846f
 
-CVirtualBodyTracker::CVirtualBodyTracker(size_t p_index, TRACKER_ROLE rle) : m_lastTransform(), m_curTransform(), frame(0)
+CVirtualBodyTracker::CVirtualBodyTracker(size_t p_index, TRACKER_ROLE rle) : m_lastTransform{0.f}, m_curTransform{0.f}, frame(0)
 {
     m_serial.assign(TrackerRoleName[(int)rle]);
     m_index = p_index;
@@ -22,7 +22,6 @@ void CVirtualBodyTracker::SetupProperties()
     vr::VRProperties()->SetStringProperty(m_propertyHandle, vr::Prop_TrackingSystemName_String, "lighthouse");
     vr::VRProperties()->SetStringProperty(m_propertyHandle, vr::Prop_ModelNumber_String, "RTX Tracker");
     vr::VRProperties()->SetStringProperty(m_propertyHandle, vr::Prop_SerialNumber_String, m_serial.c_str()); // Changed
-    vr::VRProperties()->SetStringProperty(m_propertyHandle, vr::Prop_RenderModelName_String, "{htc}vr_tracker_vive_1_0");
     vr::VRProperties()->SetBoolProperty(m_propertyHandle, vr::Prop_WillDriftInYaw_Bool, false);
     vr::VRProperties()->SetStringProperty(m_propertyHandle, vr::Prop_ManufacturerName_String, "HTC");
     vr::VRProperties()->SetStringProperty(m_propertyHandle, vr::Prop_TrackingFirmwareVersion_String, "1541800000 RUNNER-WATCHMAN$runner-watchman@runner-watchman 2018-01-01 FPGA 512(2.56/0/0) BL 0 VRC 1541800000 Radio 1518800000"); // Changed
@@ -60,6 +59,7 @@ void CVirtualBodyTracker::SetupProperties()
     vr::VRProperties()->SetBoolProperty(m_propertyHandle, vr::Prop_Identifiable_Bool, false);
     vr::VRProperties()->SetBoolProperty(m_propertyHandle, vr::Prop_Firmware_RemindUpdate_Bool, false);
     vr::VRProperties()->SetInt32Property(m_propertyHandle, vr::Prop_ControllerRoleHint_Int32, vr::TrackedControllerRole_Invalid);
+    vr::VRProperties()->SetStringProperty(m_propertyHandle, vr::Prop_RenderModelName_String, "{nvidiaBodyTracking}/rendermodels/tracker/nvidiaTracker");
 
     switch(role)
     {
@@ -134,15 +134,16 @@ void CVirtualBodyTracker::SetupProperties()
     vr::VRProperties()->SetBoolProperty(m_propertyHandle, vr::Prop_HasVirtualDisplayComponent_Bool, false);
 }
 
-void CVirtualBodyTracker::UpdateTransform(const glm::mat4x4 &newTransform)
+void CVirtualBodyTracker::UpdateTransform(const glm::mat4x4 newTransform)
 {
     m_lastTransform = m_curTransform;
     m_curTransform = newTransform;
     frame = 0;
 }
 
-const glm::mat4x4 &CVirtualBodyTracker::InterpolatedTransform() const
+const glm::mat4x4 CVirtualBodyTracker::InterpolatedTransform() const
 {
+    vr_log("DO INTERPOLATION");
     if (IsConnected())
     {
         float t = driver->GetFPS() * frame / driver->GetRefreshRate();
@@ -173,6 +174,7 @@ const glm::mat4x4 &CVirtualBodyTracker::InterpolatedTransform() const
 void CVirtualBodyTracker::RunFrame()
 {
     SetTransform(InterpolatedTransform());
+    vr_log("TRANSFORM SET");
     frame++;
     CVirtualDevice::RunFrame();
 }

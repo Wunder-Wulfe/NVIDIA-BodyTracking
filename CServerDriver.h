@@ -52,7 +52,7 @@ protected:
 
     float m_refreshRateCache;
     float m_fpsCache;
-    float m_resScale;
+    uint m_frame;
 
     friend class CDriverSettings;
     friend class CVirtualBodyTracker;

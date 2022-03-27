@@ -11,9 +11,11 @@ CameraInfo::CameraInfo(cv::VideoCapture &cam, int c_id)
 
 void CCameraDriver::LoadCameras()
 {
-    m_currentCamera.release();
-    m_cameras.clear();
-
+    if (m_cameras.size() > 0)
+    {
+        m_currentCamera.release();
+        m_cameras.clear();
+    }
     cv::VideoCapture camera;
     int device_counts = 0;
     while(true)
@@ -22,7 +24,7 @@ void CCameraDriver::LoadCameras()
 
         m_cameras.push_back(CameraInfo(camera, device_counts));
 
-        vr_log("Found device at index %d (%dx%d)\n", device_counts, m_cameras[device_counts].width, m_cameras[device_counts].height);
+        vr_log("Found camera at index %d (%dx%d)\n", device_counts, m_cameras[device_counts].width, m_cameras[device_counts].height);
 
         device_counts++;
     }
@@ -48,9 +50,11 @@ CCameraDriver::~CCameraDriver()
 
 void CCameraDriver::RunFrame()
 {
-    if (m_currentCamera.read(m_frame) && show && !m_frame.empty())
+    if (m_cameras.size() == 0) return;
+
+    if (m_currentCamera.read(m_frame) && !m_frame.empty())
     {
-        cv::imshow("Input", m_frame);
+        if (show) cv::imshow("Input", m_frame);
         imageChanged(*this, m_frame);
     }
 }

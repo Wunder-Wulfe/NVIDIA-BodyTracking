@@ -22,7 +22,7 @@ class CVirtualBodyTracker : public CVirtualDevice
     uint frame;
 
     //  Compute the transform based on the currently set values, and interpolate between them using the frame number
-    const glm::mat4x4 &InterpolatedTransform() const;
+    const glm::mat4x4 InterpolatedTransform() const;
 
     void SetupProperties() override;
 
@@ -34,7 +34,7 @@ public:
     void RunFrame() override;
 
     //  Update the tracker with data from the body tracking service
-    void UpdateTransform(const glm::mat4x4 &newTransform);
+    void UpdateTransform(const glm::mat4x4 newTransform);
 
     explicit CVirtualBodyTracker(size_t p_index, TRACKER_ROLE rle);
     ~CVirtualBodyTracker();
