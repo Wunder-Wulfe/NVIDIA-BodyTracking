@@ -1,10 +1,12 @@
 #include "pch.h"
-#include "CNvBodyTracker.h"
+#include "CNvSDKInterface.h"
 #include "CCommon.h"
+#include "CServerDriver.h"
+#include "CCameraDriver.h"
 
 char *g_nvARSDKPath = nullptr;
 
-CNvBodyTracker::CNvBodyTracker()
+CNvSDKInterface::CNvSDKInterface()
 {
     trackingActive = false;
     stabilization = true;
@@ -17,9 +19,10 @@ CNvBodyTracker::CNvBodyTracker()
     m_keyPointDetectHandle = nullptr;
     m_bodyDetectHandle = nullptr;
     m_fps = 1;
+    driver = nullptr;
 }
 
-void CNvBodyTracker::KeyInfoUpdated(bool override)
+void CNvSDKInterface::KeyInfoUpdated(bool override)
 {
     int _nkp = m_numKeyPoints;
 
@@ -70,7 +73,7 @@ void CNvBodyTracker::KeyInfoUpdated(bool override)
     m_batchSize = batchSize;
 }
 
-void CNvBodyTracker::Initialize()
+void CNvSDKInterface::Initialize()
 {
     if(m_stream != nullptr)
         Cleanup();
@@ -97,14 +100,14 @@ void CNvBodyTracker::Initialize()
     NvAR_SetObject(m_keyPointDetectHandle, NvAR_Parameter_Output(BoundingBoxes), &m_outputBBoxes, sizeof(NvAR_BBoxes));
 }
 
-void CNvBodyTracker::Initialize(int w, int h, int batch_size)
+void CNvSDKInterface::Initialize(int w, int h, int batch_size)
 {
     batchSize = batch_size;
     ResizeImage(w, h);
     Initialize();
 }
 
-void CNvBodyTracker::ResizeImage(int w, int h)
+void CNvSDKInterface::ResizeImage(int w, int h)
 {
     m_inputImageWidth = w;
     m_inputImageHeight = h;
@@ -118,12 +121,33 @@ void CNvBodyTracker::ResizeImage(int w, int h)
     m_imageLoaded = true;
 }
 
-CNvBodyTracker::~CNvBodyTracker()
+void CNvSDKInterface::LoadImageFromCam(const cv::VideoCapture &cam)
+{
+    CCameraDriver *camDriv = driver->m_cameraDriver;
+    if (m_imageLoaded)
+        NvCVImage_Dealloc(&m_inputImageBuffer);
+
+    float resScale = driver->m_resScale;
+
+    NvCVImage_Alloc(&m_inputImageBuffer, camDriv->GetScaledWidth(), camDriv->GetScaledHeight(), NVCV_BGR, NVCV_U8,
+        NVCV_CHUNKY, NVCV_GPU, 1);
+    NvAR_SetObject(m_keyPointDetectHandle, NvAR_Parameter_Input(Image), &m_inputImageBuffer, sizeof(NvCVImage));
+    m_imageLoaded = true;
+}
+
+void CNvSDKInterface::UpdateImageFromCam(const cv::Mat &image)
+{
+    NvCVImage fxSrcChunkyCPU;
+    NVWrapperForCVMat(&image, &fxSrcChunkyCPU);
+    NvCVImage_Transfer(&fxSrcChunkyCPU, &m_inputImageBuffer, 1.f, m_stream, &m_tmpImage);
+}
+
+CNvSDKInterface::~CNvSDKInterface()
 {
     Cleanup();
 }
 
-void CNvBodyTracker::Cleanup()
+void CNvSDKInterface::Cleanup()
 {
     if(m_keyPointDetectHandle != nullptr)
     {
@@ -145,7 +169,7 @@ void CNvBodyTracker::Cleanup()
 }
 
 
-void CNvBodyTracker::FillBatched(const std::vector<float> &from, std::vector<float> &to)
+void CNvSDKInterface::FillBatched(const std::vector<float> &from, std::vector<float> &to)
 {
     int index, batch;
     for (index = 0; index < (int)m_numKeyPoints; index++)
@@ -162,7 +186,7 @@ void CNvBodyTracker::FillBatched(const std::vector<float> &from, std::vector<flo
     }
 }
 
-void CNvBodyTracker::FillBatched(const std::vector<NvAR_Quaternion> &from, std::vector<glm::quat> &to)
+void CNvSDKInterface::FillBatched(const std::vector<NvAR_Quaternion> &from, std::vector<glm::quat> &to)
 {
     int index, batch;
     for(index = 0; index < (int)m_numKeyPoints; index++)
@@ -179,7 +203,7 @@ void CNvBodyTracker::FillBatched(const std::vector<NvAR_Quaternion> &from, std::
     }
 }
 
-void CNvBodyTracker::FillBatched(const std::vector<NvAR_Point3f> &from, std::vector<glm::vec3> &to)
+void CNvSDKInterface::FillBatched(const std::vector<NvAR_Point3f> &from, std::vector<glm::vec3> &to)
 {
     int index, batch;
     for(index = 0; index < (int)m_numKeyPoints; index++)
@@ -196,7 +220,7 @@ void CNvBodyTracker::FillBatched(const std::vector<NvAR_Point3f> &from, std::vec
     }
 }
 
-void CNvBodyTracker::ComputeAvgConfidence()
+void CNvSDKInterface::ComputeAvgConfidence()
 {
     float avg = 0.0;
     int batch, index;
@@ -210,13 +234,13 @@ void CNvBodyTracker::ComputeAvgConfidence()
     m_confidence = avg / (batchSize + m_numKeyPoints);
 }
 
-void CNvBodyTracker::EmptyKeypoints()
+void CNvSDKInterface::EmptyKeypoints()
 {
     m_realKeypoints3D.assign(m_numKeyPoints, { 0.f, 0.f, 0.f });
     m_realJointAngles.assign(m_numKeyPoints, { 0.f, 0.f, 0.f, 0.f });
 }
 
-void CNvBodyTracker::RunFrame()
+void CNvSDKInterface::RunFrame()
 {
     if(trackingActive)
     {

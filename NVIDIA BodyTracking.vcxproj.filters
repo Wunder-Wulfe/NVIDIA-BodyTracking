@@ -15,7 +15,7 @@
     <ClInclude Include="CVirtualBodyTracker.h" />
     <ClInclude Include="CVirtualDevice.h" />
     <ClInclude Include="pch.h" />
-    <ClInclude Include="CNvBodyTracker.h" />
+    <ClInclude Include="CNvSDKInterface.h" />
     <ClInclude Include="CCameraDriver.h" />
     <ClInclude Include="CDriverSettings.h" />
     <ClInclude Include="CCallback.h" />
@@ -34,7 +34,7 @@
     <ClCompile Include="CVirtualDevice.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="pch.cpp" />
-    <ClCompile Include="CNvBodyTracker.cpp" />
+    <ClCompile Include="CNvSDKInterface.cpp" />
     <ClCompile Include="CCameraDriver.cpp" />
     <ClCompile Include="CDriverSettings.cpp" />
     <ClCompile Include="CCallback.cpp" />

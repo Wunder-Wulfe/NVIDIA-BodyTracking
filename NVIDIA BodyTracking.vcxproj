@@ -58,7 +58,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>./;./vendor/MAXINE-AR-SDK/samples/external/opencv/include;./vendor/openvr/headers;./vendor/MAXINE-AR-SDK/nvar/include;./vendor/opencv/include/opencv;./vendor/opencv/include/opencv2;./vendor/glm;./vendor/simpleini;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./;./vendor/MAXINE-AR-SDK/samples/utils;./vendor/MAXINE-AR-SDK/samples/external/opencv/include;./vendor/openvr/headers;./vendor/MAXINE-AR-SDK/nvar/include;./vendor/opencv/include/opencv;./vendor/opencv/include/opencv2;./vendor/glm;./vendor/simpleini;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ModuleOutputFile>$(IntDir)</ModuleOutputFile>
     </ClCompile>
     <Link>
@@ -79,7 +79,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>./;./vendor/MAXINE-AR-SDK/samples/external/opencv/include;./vendor/openvr/headers;./vendor/MAXINE-AR-SDK/nvar/include;./vendor/opencv/include/opencv;./vendor/opencv/include/opencv2;./vendor/glm;./vendor/simpleini;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./;./vendor/MAXINE-AR-SDK/samples/utils;./vendor/MAXINE-AR-SDK/samples/external/opencv/include;./vendor/openvr/headers;./vendor/MAXINE-AR-SDK/nvar/include;./vendor/opencv/include/opencv;./vendor/opencv/include/opencv2;./vendor/glm;./vendor/simpleini;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -95,7 +95,7 @@
     <ClInclude Include="CCallback.h" />
     <ClInclude Include="CCameraDriver.h" />
     <ClInclude Include="CDriverSettings.h" />
-    <ClInclude Include="CNvBodyTracker.h" />
+    <ClInclude Include="CNvSDKInterface.h" />
     <ClInclude Include="CCommon.h" />
     <ClInclude Include="CServerDriver.h" />
     <ClInclude Include="CVirtualBaseStation.h" />
@@ -107,7 +107,7 @@
     <ClCompile Include="CCallback.cpp" />
     <ClCompile Include="CCameraDriver.cpp" />
     <ClCompile Include="CDriverSettings.cpp" />
-    <ClCompile Include="CNvBodyTracker.cpp" />
+    <ClCompile Include="CNvSDKInterface.cpp" />
     <ClCompile Include="CCommon.cpp" />
     <ClCompile Include="CServerDriver.cpp" />
     <ClCompile Include="CVirtualBaseStation.cpp" />

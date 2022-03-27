@@ -18,9 +18,12 @@ class CCameraDriver
     cv::Mat m_frame;
     std::vector<CameraInfo> m_cameras;
     bool m_working;
-    float m_resScale;
 
     void Cleanup();
+protected:
+    float m_resScale;
+
+    friend class CServerDriver;
 public:
     bool show;
 
@@ -34,6 +37,13 @@ public:
 
     inline const cv::Mat &GetImage() const { return m_frame; }
     inline const float GetFps() const { return (float)m_currentCamera.get(CV_CAP_PROP_FPS); }
+
+    inline int GetWidth() const { return m_cameras[m_cameraIndex].width; }
+    inline int GetHeight() const { return m_cameras[m_cameraIndex].height; }
+    inline int GetScaledWidth() const { return (int)(GetWidth() * m_resScale); }
+    inline int GetScaledHeight() const { return (int)(GetHeight() * m_resScale); }
+
+    inline cv::VideoCaptureModes const GetMode() { return (cv::VideoCaptureModes)(int)m_currentCamera.get(CV_CAP_PROP_MODE); }
 
     CServerDriver *driver;
 

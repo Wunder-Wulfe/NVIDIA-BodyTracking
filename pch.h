@@ -26,3 +26,4 @@
 #include "nvAR.h"
 #include "nvAR_defs.h"
 #include "nvCVImage.h"
+#include "nvCVOpenCV.h"

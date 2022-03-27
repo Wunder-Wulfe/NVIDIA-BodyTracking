@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "CDriverSettings.h"
 #include "CServerDriver.h"
-#include "CNvBodyTracker.h"
+#include "CNvSDKInterface.h"
 
 extern char g_modulePath[];
 
@@ -17,8 +17,8 @@ CDriverSettings::~CDriverSettings()
 
 bool CDriverSettings::UpdateConfig(CServerDriver *source)
 {
-    return SetConfigVector(SECTION_POS, source->m_bodyTracker->GetCameraPos())
-        && SetConfigQuaternion(SECTION_ROT, source->m_bodyTracker->GetCameraRot());
+    return SetConfigVector(SECTION_POS, source->m_nvInterface->GetCameraPos())
+        && SetConfigQuaternion(SECTION_ROT, source->m_nvInterface->GetCameraRot());
     return true;
 }
 

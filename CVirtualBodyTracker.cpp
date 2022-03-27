@@ -145,7 +145,7 @@ const glm::mat4x4 &CVirtualBodyTracker::InterpolatedTransform() const
 {
     if (IsConnected())
     {
-        float t = frame / driver->m_refreshRateCache;
+        float t = driver->GetFPS() * frame / driver->GetRefreshRate();
         switch (driver->m_interpolation)
         {
         case INTERP_MODE::LINEAR:

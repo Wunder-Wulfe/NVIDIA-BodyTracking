@@ -1,9 +1,12 @@
 #pragma once
 
+//  The maximum size for our log buffer
 #define LOG_BUFFER_SIZE 1000
 
+//  General logging buffer used to report to vrserver.txt
 char logging_buffer[];
 
+//  Shorthand for logging to vrserver.txt
 template<class... T>
 inline void vr_log(const char *fmt, const T&... args)
 {
@@ -11,6 +14,7 @@ inline void vr_log(const char *fmt, const T&... args)
     vr::VRDriverLog()->Log(logging_buffer);
 }
 
+//  Delete a pointer safely
 template<class T>
 inline void delptr(T &ptr)
 {
@@ -18,6 +22,7 @@ inline void delptr(T &ptr)
     ptr = nullptr;
 }
 
+//  All possible joints capable of being tracked via the NVIDIA AR SDK, used to index the keypoint tables
 enum class BODY_JOINT
 {
     PELVIS,
@@ -56,6 +61,7 @@ enum class BODY_JOINT
     RIGHT_THUMB_TIP
 };
 
+//  The roles body trackers will be able to play
 enum class TRACKER_ROLE
 {
     HIPS,
@@ -74,8 +80,10 @@ enum class TRACKER_ROLE
     LEFT_HAND,
     RIGHT_HAND
 };
+//  The name of the associated roles
 const char *TrackerRoleName[];
 
+//  Flags used to indicate which tracking modes are applicable / enabled
 enum class TRACKING_FLAG
 {
     NONE = 0b0,
@@ -89,6 +97,5 @@ enum class TRACKING_FLAG
     HEAD = 0b10000000,
     HAND = 0b100000000
 };
-
 inline TRACKING_FLAG operator|(const TRACKING_FLAG &a, const TRACKING_FLAG &b) { return (TRACKING_FLAG)((int)a | (int)b); }
 inline TRACKING_FLAG operator&(const TRACKING_FLAG &a, const TRACKING_FLAG &b) { return (TRACKING_FLAG)((int)a & (int)b); }
