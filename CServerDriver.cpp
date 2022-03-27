@@ -196,18 +196,23 @@ bool CServerDriver::TrackerUpdate(CVirtualBodyTracker &tracker, const CNvSDKInte
         transform = inter.GetTransform(BODY_JOINT::RIGHT_WRIST);
         break;
     }
+    transform[3][0] /= 5000.f;
+    transform[3][1] /= 5000.f;
+    transform[3][2] /= 5000.f;
 
     //vr_log("Tracker %s passed transform check", TrackerRoleName[(int)tracker.role]);
 
     tracker.SetTransform(inter.GetCameraMatrix());
     tracker.UpdateTransform(transform);
+    tracker.m_curTransform = transform;
 
-    //vr_log("Tracker %s updated transform check", TrackerRoleName[(int)tracker.role]);
+    vr_log("Tracker %s updated transform check", TrackerRoleName[(int)tracker.role]);
+    vr_log("transform info: %.3f %.3f %.3f", transform[3][0], transform[3][1], transform[3][2]);
 
     return true;
 }
 
-void CServerDriver::OnImageUpdate(const CCameraDriver &me, cv::Mat &image)
+void CServerDriver::OnImageUpdate(const CCameraDriver &me, cv::Mat image)
 {
     CServerDriver *driv = me.driver;
     ptrsafe(driv);
@@ -217,18 +222,19 @@ void CServerDriver::OnImageUpdate(const CCameraDriver &me, cv::Mat &image)
     if (track->trackingActive && track->ready)
     {
         //vr_log("Updating the image from the camera (frame %d)\n", driv->m_frame);
-        track->UpdateImageFromCam(image);
+        track->UpdateImageFromCam(me.GetImage());
         //vr_log("Computing NVIDIA data (frame %d)\n", driv->m_frame);
         track->RunFrame();
         for (auto tracker : driv->m_trackers)
         {
             //vr_log("Tracker %s is being updated", TrackerRoleName[(int)tracker->role]);
             tracker->SetStandby(!TrackerUpdate(*tracker, *track, *driv->m_proportions));
+            //vr_log("CONNECTED? %s", tracker->IsConnected() ? "TRUE" : "FALSE");
         }
     }
     else
     {
-        //vr_log("Trackers are not ready to be connected (frame %d)\n", driv->m_frame);
+        vr_log("Trackers are not ready to be connected (frame %d)\n", driv->m_frame);
         for (auto tracker : driv->m_trackers)
         {
             tracker->SetStandby(true);
@@ -289,7 +295,7 @@ vr::EVRInitError CServerDriver::Init(vr::IVRDriverContext *pDriverContext)
         m_cameraDriver = new CCameraDriver(this, m_driverSettings->GetConfigFloat(SECTION_CAMSET, KEY_RES_SCALE, 1.f));
         m_cameraDriver->show = m_driverSettings->GetConfigBoolean(SECTION_CAMSET, KEY_CAM_VIS, true);
         m_cameraDriver->LoadCameras();
-        m_cameraDriver->imageChanged += CFunctionFactory(OnImageUpdate, void, const CCameraDriver&, cv::Mat&);
+        m_cameraDriver->imageChanged += CFunctionFactory(OnImageUpdate, void, const CCameraDriver&, cv::Mat);
         m_cameraDriver->cameraChanged += CFunctionFactory(OnCameraUpdate, void, const CCameraDriver &, int);
     }
     catch(std::exception e)
@@ -375,8 +381,10 @@ void CServerDriver::RunFrame()
     else if (m_frame % 30u == 0u)
         m_cameraDriver->ChangeCamera(0);
 
-    m_station->SetStandby(m_nvInterface->trackingActive);
+    m_station->SetStandby(!m_nvInterface->trackingActive);
     m_station->RunFrame();
+
+    LeaveStandby();
 }
 
 void CServerDriver::EnterStandby()

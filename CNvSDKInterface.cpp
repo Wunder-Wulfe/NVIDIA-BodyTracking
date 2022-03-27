@@ -4,6 +4,8 @@
 #include "CServerDriver.h"
 #include "CCameraDriver.h"
 
+extern char g_modulePath[];
+
 char *g_nvARSDKPath = nullptr;
 
 CNvSDKInterface::CNvSDKInterface() : m_tmpImage{}
@@ -21,6 +23,7 @@ CNvSDKInterface::CNvSDKInterface() : m_tmpImage{}
     m_fps = 1;
     driver = nullptr;
     ready = false;
+    confidenceRequirement = 0.0;
 }
 
 void CNvSDKInterface::KeyInfoUpdated(bool override)
@@ -33,19 +36,24 @@ void CNvSDKInterface::KeyInfoUpdated(bool override)
     {
         if(m_keyPointDetectHandle != nullptr)
         {
-            NvAR_Destroy(m_keyPointDetectHandle);
-            m_keyPointDetectHandle = nullptr;
+            //NvAR_Destroy(m_keyPointDetectHandle);
+            //m_keyPointDetectHandle = nullptr;
         }
         NvAR_Create(NvAR_Feature_BodyPoseEstimation, &m_keyPointDetectHandle);
-        NvAR_SetString(m_keyPointDetectHandle, NvAR_Parameter_Config(ModelDir), "");
-        NvAR_SetCudaStream(m_keyPointDetectHandle, NvAR_Parameter_Config(CUDAStream), m_stream);
-        NvAR_SetU32(m_keyPointDetectHandle, NvAR_Parameter_Config(BatchSize), batchSize);
     }
+
+    std::string fpath;
+    fpath.assign(g_modulePath);
+    fpath.erase(fpath.begin() + fpath.rfind('\\'), fpath.end());
+    fpath.append("\\models");
+
+    NvAR_SetString(m_keyPointDetectHandle, NvAR_Parameter_Config(ModelDir), fpath.c_str());
+    NvAR_SetCudaStream(m_keyPointDetectHandle, NvAR_Parameter_Config(CUDAStream), m_stream);
+    NvAR_SetU32(m_keyPointDetectHandle, NvAR_Parameter_Config(BatchSize), batchSize);
     NvAR_SetU32(m_keyPointDetectHandle, NvAR_Parameter_Config(Mode), nvARMode);
     NvAR_SetU32(m_keyPointDetectHandle, NvAR_Parameter_Config(Temporal), stabilization);
     NvAR_SetF32(m_keyPointDetectHandle, NvAR_Parameter_Config(FocalLength), focalLength);
     NvAR_SetF32(m_keyPointDetectHandle, NvAR_Parameter_Config(UseCudaGraph), useCudaGraph);
-    NvAR_Load(m_keyPointDetectHandle);
 
     NvAR_GetU32(m_keyPointDetectHandle, NvAR_Parameter_Config(NumKeyPoints), &m_numKeyPoints);
 
@@ -68,16 +76,18 @@ void CNvSDKInterface::KeyInfoUpdated(bool override)
         NvAR_GetObject(m_keyPointDetectHandle, NvAR_Parameter_Config(ReferencePose), &pReferencePose,
             sizeof(NvAR_Point3f));
         memcpy(m_referencePose.data(), pReferencePose, sizeof(NvAR_Point3f) * m_numKeyPoints);
-
-        NvAR_SetObject(m_keyPointDetectHandle, NvAR_Parameter_Output(KeyPoints), m_keypoints.data(),
-            sizeof(NvAR_Point2f));
-        NvAR_SetObject(m_keyPointDetectHandle, NvAR_Parameter_Output(KeyPoints3D), m_keypoints3D.data(),
-            sizeof(NvAR_Point3f));
-        NvAR_SetObject(m_keyPointDetectHandle, NvAR_Parameter_Output(JointAngles), m_jointAngles.data(),
-            sizeof(NvAR_Quaternion));
-        NvAR_SetF32Array(m_keyPointDetectHandle, NvAR_Parameter_Output(KeyPointsConfidence),
-            m_keypointsConfidence.data(), batchSize * m_numKeyPoints);
     }
+
+    NvAR_SetObject(m_keyPointDetectHandle, NvAR_Parameter_Output(KeyPoints), m_keypoints.data(),
+        sizeof(NvAR_Point2f));
+    NvAR_SetObject(m_keyPointDetectHandle, NvAR_Parameter_Output(KeyPoints3D), m_keypoints3D.data(),
+        sizeof(NvAR_Point3f));
+    NvAR_SetObject(m_keyPointDetectHandle, NvAR_Parameter_Output(JointAngles), m_jointAngles.data(),
+        sizeof(NvAR_Quaternion));
+    NvAR_SetF32Array(m_keyPointDetectHandle, NvAR_Parameter_Output(KeyPointsConfidence),
+        m_keypointsConfidence.data(), batchSize * m_numKeyPoints);
+
+    NvAR_Load(m_keyPointDetectHandle);
 
     m_batchSize = batchSize;
 }
@@ -124,16 +134,18 @@ void CNvSDKInterface::LoadImageFromCam(const cv::VideoCapture &cam)
     CCameraDriver *camDriv = driver->m_cameraDriver;
     if (m_imageLoaded)
         NvCVImage_Dealloc(&m_inputImageBuffer);
-
-    NvCVImage_Alloc(&m_inputImageBuffer, camDriv->GetScaledWidth(), camDriv->GetScaledHeight(), NVCV_BGR, NVCV_U8,
+    KeyInfoUpdated(true);
+    m_inputImageWidth = camDriv->GetScaledWidth();
+    m_inputImageHeight = camDriv->GetScaledHeight();
+    m_inputImagePitch = 3 * m_inputImageWidth * sizeof(unsigned char);
+    NvCVImage_Alloc(&m_inputImageBuffer, m_inputImageWidth, m_inputImageHeight, NVCV_BGR, NVCV_U8,
         NVCV_CHUNKY, NVCV_GPU, 1);
     NvAR_SetObject(m_keyPointDetectHandle, NvAR_Parameter_Input(Image), &m_inputImageBuffer, sizeof(NvCVImage));
-    KeyInfoUpdated(true);
     m_imageLoaded = true;
     ready = true;
 }
 
-void CNvSDKInterface::UpdateImageFromCam(const cv::Mat &image)
+void CNvSDKInterface::UpdateImageFromCam(const cv::Mat image)
 {
     NvCVImage fxSrcChunkyCPU{};
     (void)NVWrapperForCVMat(&image, &fxSrcChunkyCPU);
@@ -275,6 +287,7 @@ void CNvSDKInterface::RunFrame()
     {
         NvAR_Run(m_keyPointDetectHandle);
         ComputeAvgConfidence();
+        //vr_log("CONFIDENCE: %.5f", m_confidence);
         if(m_confidence >= confidenceRequirement)
         {
             FillBatched(m_keypointsConfidence, m_realConfidence);

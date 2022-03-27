@@ -13,7 +13,7 @@ struct Proportions;
 //  The main class responsible for managing data that is transferred between different classes
 class CServerDriver final : public vr::IServerTrackedDeviceProvider
 {
-    static void OnImageUpdate(const CCameraDriver &me, cv::Mat &image);
+    static void OnImageUpdate(const CCameraDriver &me, cv::Mat image);
     static void OnCameraUpdate(const CCameraDriver &me, int index);
 
     static const char *const ms_interfaces[];

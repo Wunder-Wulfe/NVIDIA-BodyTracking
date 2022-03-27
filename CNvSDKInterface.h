@@ -95,7 +95,7 @@ public:
     void DebugSequence(const std::vector<glm::quat> rot) const;
 
     void LoadImageFromCam(const cv::VideoCapture &cam);
-    void UpdateImageFromCam(const cv::Mat &image);
+    void UpdateImageFromCam(const cv::Mat image);
 
     inline bool GetConfidenceAcceptable(BODY_JOINT role) const { return GetConfidence(role) >= confidenceRequirement; }
     inline bool GetConfidenceAcceptable(BODY_JOINT role, BODY_JOINT secondary) const { return (GetConfidence(role) + GetConfidence(secondary)) / 2.f >= confidenceRequirement; }

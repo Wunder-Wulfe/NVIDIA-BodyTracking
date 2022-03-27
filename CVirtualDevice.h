@@ -12,17 +12,19 @@ class CVirtualDevice : public vr::ITrackedDeviceServerDriver
     CVirtualDevice &operator=(const CVirtualDevice &that) = delete;
 
     // vr::ITrackedDeviceServerDriver
-    vr::EVRInitError Activate(uint32_t unObjectId);
-    void Deactivate();
-    void EnterStandby();
-    void ExitStandby();
-    void SetStandby(bool v);
     void *GetComponent(const char *pchComponentNameAndVersion);
     void DebugRequest(const char *pchRequest, char *pchResponseBuffer, uint32_t unResponseBufferSize);
     vr::DriverPose_t GetPose();
 public:
     CVirtualDevice();
     virtual ~CVirtualDevice();
+
+    vr::EVRInitError Activate(uint32_t unObjectId);
+    void Deactivate();
+
+    void EnterStandby();
+    void ExitStandby();
+    void SetStandby(bool v);
 
     const std::string &GetSerial() const;
 

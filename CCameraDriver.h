@@ -36,7 +36,7 @@ public:
 
     void ChangeCamera(int up = 1);
 
-    inline const cv::Mat &GetImage() const { return m_frame; }
+    inline const cv::Mat GetImage() const { return m_frame; }
     inline const float GetFps() const { return (float)m_currentCamera.get(CV_CAP_PROP_FPS); }
 
     inline int GetWidth() const { return m_cameras[m_cameraIndex].width; }
@@ -49,6 +49,6 @@ public:
 
     CServerDriver *driver;
 
-    CCallback<void(const CCameraDriver&, cv::Mat&)> imageChanged;
+    CCallback<void(const CCameraDriver&, cv::Mat)> imageChanged;
     CCallback<void(const CCameraDriver&, int)> cameraChanged;
 };

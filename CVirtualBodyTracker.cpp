@@ -176,8 +176,16 @@ const glm::mat4x4 CVirtualBodyTracker::InterpolatedTransform() const
 
 void CVirtualBodyTracker::RunFrame()
 {
+    static bool wasActive = false;
+    if (wasActive != IsConnected())
+    {
+        if (IsConnected())
+            Activate(m_index);
+        else
+            Deactivate();
+    }
+    wasActive = IsConnected();
     SetOffsetTransform(InterpolatedTransform());
-    //vr_log("TRANSFORM SET");
     frame++;
     CVirtualDevice::RunFrame();
 }
