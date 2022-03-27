@@ -96,12 +96,12 @@ bool CServerDriver::TrackerUpdate(CVirtualBodyTracker &tracker, const CNvSDKInte
         break;
     }
 
-    vr_log("Tracker %s confidence check?", TrackerRoleName[(int)tracker.role]);
+    //vr_log("Tracker %s confidence check?", TrackerRoleName[(int)tracker.role]);
 
     if (!confidencePassed)
         return false;
 
-    vr_log("Tracker %s passed confidence check", TrackerRoleName[(int)tracker.role]);
+    //vr_log("Tracker %s passed confidence check", TrackerRoleName[(int)tracker.role]);
 
     glm::mat4x4 transform;
 
@@ -197,11 +197,11 @@ bool CServerDriver::TrackerUpdate(CVirtualBodyTracker &tracker, const CNvSDKInte
         break;
     }
 
-    vr_log("Tracker %s passed transform check", TrackerRoleName[(int)tracker.role]);
+    //vr_log("Tracker %s passed transform check", TrackerRoleName[(int)tracker.role]);
 
     tracker.UpdateTransform(transform);
 
-    vr_log("Tracker %s updated transform check", TrackerRoleName[(int)tracker.role]);
+    //vr_log("Tracker %s updated transform check", TrackerRoleName[(int)tracker.role]);
 
     return true;
 }
@@ -215,20 +215,20 @@ void CServerDriver::OnImageUpdate(const CCameraDriver &me, cv::Mat &image)
     
     if (track->trackingActive && track->ready)
     {
-        vr_log("Updating the image from the camera (frame %d)\n", driv->m_frame);
+        //vr_log("Updating the image from the camera (frame %d)\n", driv->m_frame);
         me.driver->m_nvInterface->UpdateImageFromCam(image);
-        vr_log("Computing NVIDIA data (frame %d)\n", driv->m_frame);
+        //vr_log("Computing NVIDIA data (frame %d)\n", driv->m_frame);
         me.driver->m_nvInterface->RunFrame();
-        vr_log("Aligning trackers to the correct locations (frame %d)\n", driv->m_frame);
+        //vr_log("Aligning trackers to the correct locations (frame %d)\n", driv->m_frame);
         for (auto tracker : driv->m_trackers)
         {
-            vr_log("Tracker %s is being updated", TrackerRoleName[(int)tracker->role]);
+            //vr_log("Tracker %s is being updated", TrackerRoleName[(int)tracker->role]);
             tracker->SetConnected(TrackerUpdate(*tracker, *me.driver->m_nvInterface, *me.driver->m_proportions));
         }
     }
     else
     {
-        vr_log("Trackers are not ready to be connected (frame %d)\n", driv->m_frame);
+        //vr_log("Trackers are not ready to be connected (frame %d)\n", driv->m_frame);
         for (auto tracker : driv->m_trackers)
         {
             tracker->SetConnected(false);
@@ -364,16 +364,16 @@ void CServerDriver::RunFrame()
     if (was_ready != m_nvInterface->ready)
     {
         was_ready = m_nvInterface->ready;
-        vr_log("NVIDIA AR SDK is %s\n", was_ready ? "ready and accepting image data" : "currently inactive / disabled");
+        //vr_log("NVIDIA AR SDK is %s\n", was_ready ? "ready and accepting image data" : "currently inactive / disabled");
     }
     if (m_nvInterface->ready)
     {
         for (auto l_tracker : m_trackers)
         {
-            vr_log("Running tracker %s", TrackerRoleName[(int)l_tracker->role]);
+            //vr_log("Running tracker %s", TrackerRoleName[(int)l_tracker->role]);
             l_tracker->SetConnected(m_nvInterface->trackingActive);
             l_tracker->SetInRange(m_nvInterface->GetConfidenceAcceptable());
-            vr_log("Confidence OK %s", TrackerRoleName[(int)l_tracker->role]);
+            //vr_log("Confidence OK %s", TrackerRoleName[(int)l_tracker->role]);
             l_tracker->RunFrame();
         }
     }
@@ -409,7 +409,7 @@ void CServerDriver::SetupTracker(const char *name, TRACKING_FLAG flag, TRACKER_R
 {
     CVirtualBodyTracker *tracker;
     bool enabled = (m_trackingMode & flag) != TRACKING_FLAG::NONE;
-    vr_log("\tTracking for %s %s\n", name, enabled ? "enabled" : "disabled");
+    //vr_log("\tTracking for %s %s\n", name, enabled ? "enabled" : "disabled");
     
     if(enabled)
     {
@@ -422,14 +422,19 @@ void CServerDriver::SetupTracker(const char *name, TRACKING_FLAG flag, TRACKER_R
 
 void CServerDriver::SetupTracker(const char *name, TRACKING_FLAG flag, TRACKER_ROLE role, TRACKER_ROLE secondary)
 {
+    CVirtualBodyTracker *tracker;
     bool enabled = (m_trackingMode & flag) != TRACKING_FLAG::NONE;
-    vr_log("\tTracking for %s %s\n", name, enabled ? "enabled" : "disabled");
+    //vr_log("\tTracking for %s %s\n", name, enabled ? "enabled" : "disabled");
     if(enabled)
     {
-        m_trackers.push_back(new CVirtualBodyTracker(m_trackers.size(), role));
-        vr::VRServerDriverHost()->TrackedDeviceAdded(m_trackers.back()->GetSerial().c_str(), vr::ETrackedDeviceClass::TrackedDeviceClass_GenericTracker, m_trackers.back());
+        tracker = new CVirtualBodyTracker(m_trackers.size(), role);
+        m_trackers.push_back(tracker);
+        vr::VRServerDriverHost()->TrackedDeviceAdded(tracker->GetSerial().c_str(), vr::ETrackedDeviceClass::TrackedDeviceClass_GenericTracker, tracker);
+        tracker->driver = this;
 
-        m_trackers.push_back(new CVirtualBodyTracker(m_trackers.size(), secondary));
-        vr::VRServerDriverHost()->TrackedDeviceAdded(m_trackers.back()->GetSerial().c_str(), vr::ETrackedDeviceClass::TrackedDeviceClass_GenericTracker, m_trackers.back());
+        tracker = new CVirtualBodyTracker(m_trackers.size(), secondary);
+        m_trackers.push_back(tracker);
+        vr::VRServerDriverHost()->TrackedDeviceAdded(tracker->GetSerial().c_str(), vr::ETrackedDeviceClass::TrackedDeviceClass_GenericTracker, tracker);
+        tracker->driver = this;
     }
 }

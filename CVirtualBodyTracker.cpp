@@ -6,7 +6,7 @@
 
 #define M_PI 3.14159265358979323846f
 
-CVirtualBodyTracker::CVirtualBodyTracker(size_t p_index, TRACKER_ROLE rle) : m_lastTransform{0.f}, m_curTransform{0.f}, frame(0)
+CVirtualBodyTracker::CVirtualBodyTracker(size_t p_index, TRACKER_ROLE rle) : m_lastTransform{0.f}, m_curTransform{0.f}, frame(0), m_wasSet(false)
 {
     m_serial.assign(TrackerRoleName[(int)rle]);
     m_index = p_index;
@@ -134,17 +134,20 @@ void CVirtualBodyTracker::SetupProperties()
     vr::VRProperties()->SetBoolProperty(m_propertyHandle, vr::Prop_HasVirtualDisplayComponent_Bool, false);
 }
 
-void CVirtualBodyTracker::UpdateTransform(const glm::mat4x4 newTransform)
+void CVirtualBodyTracker::UpdateTransform(const glm::mat4x4 &newTransform)
 {
     m_lastTransform = m_curTransform;
     m_curTransform = newTransform;
+    if (!m_wasSet)
+        m_lastTransform = m_curTransform;
+    m_wasSet = true;
     frame = 0;
 }
 
 const glm::mat4x4 CVirtualBodyTracker::InterpolatedTransform() const
 {
-    vr_log("DO INTERPOLATION");
-    if (IsConnected())
+    //vr_log("DO INTERPOLATION");
+    if (IsConnected() && m_wasSet)
     {
         float t = driver->GetFPS() * frame / driver->GetRefreshRate();
         switch (driver->m_interpolation)
@@ -174,7 +177,7 @@ const glm::mat4x4 CVirtualBodyTracker::InterpolatedTransform() const
 void CVirtualBodyTracker::RunFrame()
 {
     SetTransform(InterpolatedTransform());
-    vr_log("TRANSFORM SET");
+    //vr_log("TRANSFORM SET");
     frame++;
     CVirtualDevice::RunFrame();
 }

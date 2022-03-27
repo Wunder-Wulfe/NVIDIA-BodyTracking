@@ -18,6 +18,8 @@ class CVirtualBodyTracker : public CVirtualDevice
     //  The current transform set (used for interpolation)
     glm::mat4x4 m_curTransform;
 
+    bool m_wasSet;
+
     //  The frame number recorded by the tracker (used for interpolation)
     uint frame;
 
@@ -34,7 +36,7 @@ public:
     void RunFrame() override;
 
     //  Update the tracker with data from the body tracking service
-    void UpdateTransform(const glm::mat4x4 newTransform);
+    void UpdateTransform(const glm::mat4x4 &newTransform);
 
     explicit CVirtualBodyTracker(size_t p_index, TRACKER_ROLE rle);
     ~CVirtualBodyTracker();
