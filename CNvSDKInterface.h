@@ -49,6 +49,10 @@ class CNvSDKInterface
     inline const T TableIndex(const std::vector<T> &vector, int index, int batch) { return vector[batch * m_numKeyPoints + index]; }
 
 protected:
+    inline const std::vector<float> GetRealConfidence() const { return m_realConfidence; }
+    inline const std::vector<glm::vec3> GetRealKeypoints() const { return m_realKeypoints3D; }
+    inline const std::vector<glm::quat> GetRealAngles() const { return m_realJointAngles; }
+
     inline const glm::vec3 CastPoint(const NvAR_Point3f &point) const { return glm::vec3(point.x, point.y, point.z); }
     inline const glm::quat CastQuaternion(const NvAR_Quaternion &quat) const { return glm::quat(quat.w, quat.x, quat.y, quat.z); }
     inline const glm::mat4x4 CastMatrix(const glm::vec3 &point, const glm::quat &quat) const { return glm::translate(glm::mat4_cast(quat), point); }
@@ -81,9 +85,14 @@ public:
     inline void SetCamera(glm::vec3 pos, glm::quat rot) { m_camMatrix = glm::translate(glm::mat4_cast(rot), pos); }
     inline void RotateCamera(glm::quat rot) { m_camMatrix *= glm::mat4_cast(rot); }
     inline void MoveCamera(glm::vec3 pos) { m_camMatrix = glm::translate(m_camMatrix, pos); }
-    inline const glm::vec3 GetCameraPos() { return glm::vec3(m_camMatrix[3][0], m_camMatrix[3][1], m_camMatrix[3][2]); }
-    inline const glm::quat GetCameraRot() { return glm::quat_cast(m_camMatrix); }
-    inline bool GetConfidenceAcceptable() { return m_confidence >= confidenceRequirement; }
+    inline const glm::vec3 GetCameraPos() const { return glm::vec3(m_camMatrix[3][0], m_camMatrix[3][1], m_camMatrix[3][2]); }
+    inline const glm::quat GetCameraRot() const { return glm::quat_cast(m_camMatrix); }
+    inline const glm::mat4x4 GetCameraMatrix() const { return m_camMatrix; }
+    inline bool GetConfidenceAcceptable() const { return m_confidence >= confidenceRequirement; }
+
+    void DebugSequence(const std::vector<float> conf) const;
+    void DebugSequence(const std::vector<glm::vec3> kep) const;
+    void DebugSequence(const std::vector<glm::quat> rot) const;
 
     void LoadImageFromCam(const cv::VideoCapture &cam);
     void UpdateImageFromCam(const cv::Mat &image);

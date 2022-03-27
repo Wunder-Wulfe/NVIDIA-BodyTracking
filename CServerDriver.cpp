@@ -199,6 +199,7 @@ bool CServerDriver::TrackerUpdate(CVirtualBodyTracker &tracker, const CNvSDKInte
 
     //vr_log("Tracker %s passed transform check", TrackerRoleName[(int)tracker.role]);
 
+    tracker.SetTransform(inter.GetCameraMatrix());
     tracker.UpdateTransform(transform);
 
     //vr_log("Tracker %s updated transform check", TrackerRoleName[(int)tracker.role]);
@@ -216,14 +217,13 @@ void CServerDriver::OnImageUpdate(const CCameraDriver &me, cv::Mat &image)
     if (track->trackingActive && track->ready)
     {
         //vr_log("Updating the image from the camera (frame %d)\n", driv->m_frame);
-        me.driver->m_nvInterface->UpdateImageFromCam(image);
+        track->UpdateImageFromCam(image);
         //vr_log("Computing NVIDIA data (frame %d)\n", driv->m_frame);
-        me.driver->m_nvInterface->RunFrame();
-        //vr_log("Aligning trackers to the correct locations (frame %d)\n", driv->m_frame);
+        track->RunFrame();
         for (auto tracker : driv->m_trackers)
         {
             //vr_log("Tracker %s is being updated", TrackerRoleName[(int)tracker->role]);
-            tracker->SetConnected(TrackerUpdate(*tracker, *me.driver->m_nvInterface, *me.driver->m_proportions));
+            tracker->SetStandby(!TrackerUpdate(*tracker, *track, *driv->m_proportions));
         }
     }
     else
@@ -231,7 +231,7 @@ void CServerDriver::OnImageUpdate(const CCameraDriver &me, cv::Mat &image)
         //vr_log("Trackers are not ready to be connected (frame %d)\n", driv->m_frame);
         for (auto tracker : driv->m_trackers)
         {
-            tracker->SetConnected(false);
+            tracker->SetStandby(true);
         }
     }
 }
@@ -240,6 +240,7 @@ void CServerDriver::OnCameraUpdate(const CCameraDriver &me, int index)
 {
     ptrsafe(me.driver);
     ptrsafe(me.driver->m_nvInterface);
+
     me.driver->m_nvInterface->SetFPS(me.GetFps());
     vr_log("Attempting to load the image from the camera onto GPU memory\n");
     me.driver->m_nvInterface->LoadImageFromCam(me.m_currentCamera);
@@ -270,9 +271,10 @@ vr::EVRInitError CServerDriver::Init(vr::IVRDriverContext *pDriverContext)
         m_nvInterface->useCudaGraph = m_driverSettings->GetConfigBoolean(SECTION_SDKSET, KEY_USE_CUDA, true);
         m_nvInterface->nvARMode = m_driverSettings->GetConfigInteger(SECTION_SDKSET, KEY_NVAR, 1);
         m_nvInterface->confidenceRequirement = m_driverSettings->GetConfigFloat(SECTION_SDKSET, KEY_CONF, 0.0);
-        m_nvInterface->trackingActive = m_driverSettings->GetConfigBoolean(SECTION_SDKSET, KEY_TRACKING, false);
+        m_nvInterface->trackingActive = m_driverSettings->GetConfigBoolean(SECTION_SDKSET, KEY_TRACKING, true);
         m_nvInterface->SetCamera(m_driverSettings->GetConfigVector(SECTION_POS), m_driverSettings->GetConfigQuaternion(SECTION_ROT));
-        m_nvInterface->KeyInfoUpdated();
+        m_nvInterface->Initialize();
+        m_nvInterface->KeyInfoUpdated(true);
     }
     catch(std::exception e)
     {
@@ -300,9 +302,6 @@ vr::EVRInitError CServerDriver::Init(vr::IVRDriverContext *pDriverContext)
     m_station = new CVirtualBaseStation(this);
     vr::VRServerDriverHost()->TrackedDeviceAdded(m_station->GetSerial().c_str(), vr::ETrackedDeviceClass::TrackedDeviceClass_TrackingReference, m_station);
 
-    // Enable body tracking
-    m_nvInterface->Initialize();
-
     vr_log("Tracking enabled: %s\n", m_nvInterface->trackingActive ? "true" : "false");
     vr_log("Current tracking modes:\n");
 
@@ -315,6 +314,8 @@ vr::EVRInitError CServerDriver::Init(vr::IVRDriverContext *pDriverContext)
     SetupTracker(KEY_TOE_ON, TRACKING_FLAG::TOE, TRACKER_ROLE::LEFT_TOE, TRACKER_ROLE::RIGHT_TOE);
     SetupTracker(KEY_HEAD_ON, TRACKING_FLAG::HEAD, TRACKER_ROLE::HEAD);
     SetupTracker(KEY_HAND_ON, TRACKING_FLAG::HAND, TRACKER_ROLE::LEFT_HAND, TRACKER_ROLE::RIGHT_HAND);
+
+    m_camThread = std::thread(&CCameraDriver::RunAsync, m_cameraDriver);
 
     return vr::VRInitError_None;
 }
@@ -335,9 +336,11 @@ void CServerDriver::Cleanup()
     delptr(m_nvInterface);
     delptr(m_proportions);
 
-    vr::CleanupDriverContext();
-
     vr_log("Full device cleanup was successful\n");
+
+    m_camThread.join();
+
+    vr::CleanupDriverContext();
 }
 
 void CServerDriver::RunFrame()
@@ -356,32 +359,23 @@ void CServerDriver::RunFrame()
 
     //vr_log("Found FPS and Refresh Rates: %.2f %.2f", GetFPS(), GetRefreshRate());
 
-    
-    m_nvInterface->trackingActive = !m_standby;
-    m_cameraDriver->RunFrame();
-
     //vr_log("Fully rendered the camera");
     if (was_ready != m_nvInterface->ready)
     {
         was_ready = m_nvInterface->ready;
-        //vr_log("NVIDIA AR SDK is %s\n", was_ready ? "ready and accepting image data" : "currently inactive / disabled");
+        vr_log("NVIDIA AR SDK is %s\n", was_ready ? "ready and accepting image data" : "currently inactive / disabled");
     }
     if (m_nvInterface->ready)
     {
         for (auto l_tracker : m_trackers)
         {
-            //vr_log("Running tracker %s", TrackerRoleName[(int)l_tracker->role]);
-            l_tracker->SetConnected(m_nvInterface->trackingActive);
-            l_tracker->SetInRange(m_nvInterface->GetConfidenceAcceptable());
-            //vr_log("Confidence OK %s", TrackerRoleName[(int)l_tracker->role]);
             l_tracker->RunFrame();
         }
     }
     else if (m_frame % 30u == 0u)
         m_cameraDriver->ChangeCamera(0);
 
-    m_station->SetConnected(m_nvInterface->trackingActive);
-    m_station->SetInRange(m_nvInterface->trackingActive);
+    m_station->SetStandby(m_nvInterface->trackingActive);
     m_station->RunFrame();
 }
 

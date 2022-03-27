@@ -18,7 +18,7 @@ void CVirtualBaseStation::SetupProperties()
     vr::VRProperties()->SetStringProperty(m_propertyHandle, vr::Prop_SerialNumber_String, m_serial.c_str());
     vr::VRProperties()->SetStringProperty(m_propertyHandle, vr::Prop_ModelNumber_String, "RTX Tracker Driver");
     vr::VRProperties()->SetStringProperty(m_propertyHandle, vr::Prop_ManufacturerName_String, "NVIDIA");
-    vr::VRProperties()->SetStringProperty(m_propertyHandle, vr::Prop_ModeLabel_String, "R");
+    vr::VRProperties()->SetStringProperty(m_propertyHandle, vr::Prop_ModeLabel_String, "K");
 
     vr::VRProperties()->SetInt32Property(m_propertyHandle, vr::Prop_DeviceClass_Int32, vr::TrackedDeviceClass_TrackingReference);
     vr::VRProperties()->SetBoolProperty(m_propertyHandle, vr::Prop_IsOnDesktop_Bool, false);

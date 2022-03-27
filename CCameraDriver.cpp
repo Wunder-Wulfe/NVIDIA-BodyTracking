@@ -33,12 +33,12 @@ void CCameraDriver::LoadCameras()
     ChangeCamera(0);
 }
 
-CCameraDriver::CCameraDriver(CServerDriver *driv, float scale) : m_currentCamera(), imageChanged(), cameraChanged()
+CCameraDriver::CCameraDriver(CServerDriver *driv, float scale) : m_currentCamera(), imageChanged(), cameraChanged(), m_camMutex{}
 {
     m_resScale = scale;
     m_cameraIndex = 0;
     show = false;
-    m_working = false;
+    m_working = true;
     m_cameraInfo = nullptr;
     driver = driv;
 }
@@ -48,14 +48,22 @@ CCameraDriver::~CCameraDriver()
     Cleanup();
 }
 
-void CCameraDriver::RunFrame()
+void CCameraDriver::RunAsync()
 {
-    if (m_cameras.size() == 0) return;
-
-    if (m_currentCamera.read(m_frame) && !m_frame.empty())
+    m_working = true;
+    vr_log("Initializing main camera loop");
+    while (m_working)
     {
-        if (show) cv::imshow("Input", m_frame);
-        imageChanged(*this, m_frame);
+        m_camMutex.lock();
+        if (m_currentCamera.read(m_frame) && !m_frame.empty())
+        {
+            m_camMutex.unlock();
+            if (show) cv::imshow("Input", m_frame);
+            imageChanged(*this, m_frame);
+        }
+        else
+            m_camMutex.unlock();
+        cv::waitKey(1);
     }
 }
 

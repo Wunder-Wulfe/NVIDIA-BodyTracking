@@ -15,6 +15,8 @@ class CVirtualDevice : public vr::ITrackedDeviceServerDriver
     vr::EVRInitError Activate(uint32_t unObjectId);
     void Deactivate();
     void EnterStandby();
+    void ExitStandby();
+    void SetStandby(bool v);
     void *GetComponent(const char *pchComponentNameAndVersion);
     void DebugRequest(const char *pchRequest, char *pchResponseBuffer, uint32_t unResponseBufferSize);
     vr::DriverPose_t GetPose();
@@ -30,6 +32,14 @@ public:
 
     void SetInRange(bool p_state);
 
+    const glm::vec3 GetPosition() const;
+    const glm::quat GetRotation() const;
+    const glm::mat4x4 GetTransform() const;
+
+    const glm::vec3 GetOffsetPosition() const;
+    const glm::quat GetOffsetRotation() const;
+    const glm::mat4x4 GetOffsetTransform() const;
+
     void SetPosition(const glm::vec3 &pos);
     void SetRotation(const glm::quat &quat);
     void SetTransform(const glm::vec3 &pos, const glm::quat &quat);
@@ -39,6 +49,9 @@ public:
     void SetOffsetRotation(const glm::quat &quat);
     void SetOffsetTransform(const glm::vec3 &pos, const glm::quat &quat);
     void SetOffsetTransform(const glm::mat4x4 &mat);
+
+    void DebugTransform() const;
+    void DebugOffsetTransform() const;
 
     virtual void RunFrame();
 protected:

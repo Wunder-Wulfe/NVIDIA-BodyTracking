@@ -125,8 +125,6 @@ void CNvSDKInterface::LoadImageFromCam(const cv::VideoCapture &cam)
     if (m_imageLoaded)
         NvCVImage_Dealloc(&m_inputImageBuffer);
 
-    float resScale = camDriv->GetScale();
-
     NvCVImage_Alloc(&m_inputImageBuffer, camDriv->GetScaledWidth(), camDriv->GetScaledHeight(), NVCV_BGR, NVCV_U8,
         NVCV_CHUNKY, NVCV_GPU, 1);
     NvAR_SetObject(m_keyPointDetectHandle, NvAR_Parameter_Input(Image), &m_inputImageBuffer, sizeof(NvCVImage));
@@ -169,15 +167,16 @@ void CNvSDKInterface::FillBatched(const std::vector<float> &from, std::vector<fl
     int index, batch;
     for (index = 0; index < (int)m_numKeyPoints; index++)
     {
-        to[index] = from[index] / (float)batchSize;
+        to[index] = from[index];
     }
-
-    for (batch = 1; batch < batchSize; batch++)
+    if (batchSize <= 1) return;
+    for (index = 0; index < (int)m_numKeyPoints; index++)
     {
-        for (index = 0; index < (int)m_numKeyPoints; index++)
+        for (batch = 1; batch < batchSize; batch++)
         {
-            to[index] += TableIndex(from, index, batch) / (float)batchSize;
+            to[index] += TableIndex(from, index, batch);
         }
+        to[index] /= (float)batchSize;
     }
 }
 
@@ -186,15 +185,17 @@ void CNvSDKInterface::FillBatched(const std::vector<NvAR_Quaternion> &from, std:
     int index, batch;
     for(index = 0; index < (int)m_numKeyPoints; index++)
     {
-        to[index] = CastQuaternion(from[index]) / (float)batchSize;
+        to[index] = CastQuaternion(from[index]);
     }
-
-    for(batch = 1; batch < batchSize; batch++)
+    if (batchSize <= 1) return;
+    for (index = 0; index < (int)m_numKeyPoints; index++)
     {
-        for(index = 0; index < (int)m_numKeyPoints; index++)
+        for(batch = 1; batch < batchSize; batch++)
         {
-            to[index] += CastQuaternion(TableIndex(from, index, batch)) / (float)batchSize;
+
+            to[index] += CastQuaternion(TableIndex(from, index, batch));
         }
+        to[index] /= (float)batchSize;
     }
 }
 
@@ -203,15 +204,16 @@ void CNvSDKInterface::FillBatched(const std::vector<NvAR_Point3f> &from, std::ve
     int index, batch;
     for(index = 0; index < (int)m_numKeyPoints; index++)
     {
-        to[index] = CastPoint(from[index]) / (float)batchSize;
+        to[index] = CastPoint(from[index]);
     }
-
-    for(batch = 1; batch < batchSize; batch++)
+    if (batchSize <= 1) return;
+    for (index = 0; index < (int)m_numKeyPoints; index++)
     {
-        for(index = 0; index < (int)m_numKeyPoints; index++)
+        for(batch = 1; batch < batchSize; batch++)
         {
-            to[index] += CastPoint(TableIndex(from, index, batch)) / (float)batchSize;
+            to[index] += CastPoint(TableIndex(from, index, batch));
         }
+        to[index] /= (float)batchSize;
     }
 }
 
@@ -234,6 +236,37 @@ void CNvSDKInterface::EmptyKeypoints()
     m_realKeypoints3D.assign(m_numKeyPoints, { 0.f, 0.f, 0.f });
     m_realJointAngles.assign(m_numKeyPoints, { 0.f, 0.f, 0.f, 0.f });
     m_realConfidence.assign(m_numKeyPoints, 0.f);
+}
+
+void CNvSDKInterface::DebugSequence(const std::vector<float> conf) const
+{
+    uint counter = 0;
+    for (auto &val : conf)
+    {
+        vr_log("\tJOINT %s CONFIDENCE %.3f", BodyJointName[counter], val);
+        counter++;
+    }
+    vr_log("");
+}
+void CNvSDKInterface::DebugSequence(const std::vector<glm::vec3> kep) const
+{
+    uint counter = 0;
+    for (auto &val : kep)
+    {
+        vr_log("\tJOINT %s KEYPOINT < %.3f %.3f %.3f >", BodyJointName[counter], val.x, val.y, val.z);
+        counter++;
+    }
+    vr_log("");
+}
+void CNvSDKInterface::DebugSequence(const std::vector<glm::quat> rot) const
+{
+    uint counter = 0;
+    for (auto &val : rot)
+    {
+        vr_log("\tJOINT %s ANGLES < %.3f %.3f %.3f %.3f >", BodyJointName[counter], val.w, val.x, val.y, val.z);
+        counter++;
+    }
+    vr_log("");
 }
 
 void CNvSDKInterface::RunFrame()

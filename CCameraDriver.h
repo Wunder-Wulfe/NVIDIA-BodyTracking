@@ -17,7 +17,8 @@ class CCameraDriver
     int m_cameraIndex;
     cv::Mat m_frame;
     std::vector<CameraInfo> m_cameras;
-    bool m_working;
+    std::atomic<bool> m_working;
+    std::mutex m_camMutex;
 
     void Cleanup();
 protected:
@@ -31,7 +32,7 @@ public:
     ~CCameraDriver();
 
     void LoadCameras();
-    void RunFrame();
+    void RunAsync();
 
     void ChangeCamera(int up = 1);
 

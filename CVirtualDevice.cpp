@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "CVirtualDevice.h"
 #include "CServerDriver.h"
+#include "CCommon.h"
 
 CVirtualDevice::CVirtualDevice() : driver(nullptr)
 {
@@ -64,7 +65,25 @@ void CVirtualDevice::Deactivate()
 
 void CVirtualDevice::EnterStandby()
 {
+    m_forcedConnected = false;
+    SetConnected(false);
+    SetInRange(false);
 }
+
+void CVirtualDevice::ExitStandby()
+{
+    m_forcedConnected = true;
+    SetConnected(true);
+    SetInRange(true);
+}
+
+void CVirtualDevice::SetStandby(bool v)
+{
+    m_forcedConnected = !v;
+    SetConnected(!v);
+    SetInRange(!v);
+}
+
 
 void *CVirtualDevice::GetComponent(const char *pchComponentNameAndVersion)
 {
@@ -109,6 +128,50 @@ void CVirtualDevice::SetInRange(bool p_state)
 {
     m_pose.result = (p_state ? vr::ETrackingResult::TrackingResult_Running_OK : vr::ETrackingResult::TrackingResult_Running_OutOfRange);
     m_pose.poseIsValid = p_state;
+}
+
+const glm::vec3 CVirtualDevice::GetPosition() const
+{
+    return glm::vec3(
+        (float)m_pose.vecPosition[0U],
+        (float)m_pose.vecPosition[1U],
+        (float)m_pose.vecPosition[2U]
+    );
+}
+const glm::quat CVirtualDevice::GetRotation() const
+{
+    return glm::quat(
+        (float)m_pose.qRotation.w, 
+        (float)m_pose.qRotation.x,
+        (float)m_pose.qRotation.y,
+        (float)m_pose.qRotation.z
+    );
+}
+const glm::mat4x4 CVirtualDevice::GetTransform() const
+{
+    return glm::translate(glm::mat4_cast(GetRotation()), GetPosition());
+}
+
+const glm::vec3 CVirtualDevice::GetOffsetPosition() const
+{
+    return glm::vec3(
+        (float)m_pose.vecWorldFromDriverTranslation[0U],
+        (float)m_pose.vecWorldFromDriverTranslation[1U],
+        (float)m_pose.vecWorldFromDriverTranslation[2U]
+    );
+}
+const glm::quat CVirtualDevice::GetOffsetRotation() const
+{
+    return glm::quat(
+        (float)m_pose.qWorldFromDriverRotation.w,
+        (float)m_pose.qWorldFromDriverRotation.x,
+        (float)m_pose.qWorldFromDriverRotation.y,
+        (float)m_pose.qWorldFromDriverRotation.z
+    );
+}
+const glm::mat4x4 CVirtualDevice::GetOffsetTransform() const
+{
+    return glm::translate(glm::mat4_cast(GetOffsetRotation()), GetOffsetPosition());
 }
 
 void CVirtualDevice::SetPosition(const glm::vec3 &pos)
@@ -160,6 +223,29 @@ void CVirtualDevice::SetOffsetTransform(const glm::mat4x4 &mat)
 {
     SetOffsetTransform(glm::vec3(mat[3][0], mat[3][1], mat[3][2]), glm::quat_cast(mat));
 }
+
+void CVirtualDevice::DebugTransform() const {
+    glm::vec3 pos = GetPosition();
+    glm::quat rot = GetRotation();
+    vr_log(
+        "DEVICE %s WORLD POS < %.3f %.3f %.3f > WORLD ROT < %.3f %.3f %.3f %.3f >",
+        GetSerial().c_str(),
+        pos.x, pos.y, pos.z,
+        rot.w, rot.x, rot.y, rot.z
+    );
+}
+
+void CVirtualDevice::DebugOffsetTransform() const {
+    glm::vec3 pos = GetOffsetPosition();
+    glm::quat rot = GetOffsetRotation();
+    vr_log(
+        "DEVICE %s OFFSET POS < %.3f %.3f %.3f > OFFSET ROT < %.3f %.3f %.3f %.3f >",
+        GetSerial().c_str(),
+        pos.x, pos.y, pos.z,
+        rot.w, rot.x, rot.y, rot.z
+    );
+}
+
 
 void CVirtualDevice::SetupProperties()
 {

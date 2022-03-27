@@ -20,6 +20,7 @@ class CServerDriver final : public vr::IServerTrackedDeviceProvider
 
     TRACKING_FLAG m_trackingMode;
     bool m_standby;
+    std::thread m_camThread;
 
     // vr::IServerTrackedDeviceProvider
     vr::EVRInitError Init(vr::IVRDriverContext *pDriverContext);

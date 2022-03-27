@@ -60,6 +60,8 @@ enum class BODY_JOINT
     LEFT_THUMB_TIP,
     RIGHT_THUMB_TIP
 };
+//  The name of the associated body joints
+const char *BodyJointName[];
 
 //  The roles body trackers will be able to play
 enum class TRACKER_ROLE
