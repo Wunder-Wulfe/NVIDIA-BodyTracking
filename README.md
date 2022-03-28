@@ -8,17 +8,40 @@ For now, most of the code is based on the [AR SDK examples](https://github.com/N
 [Discord Server](https://discord.gg/XjkyuwRW6Z)
 
 
-Current status:
+Current keybinds:
 
-* Made config file
-* Created some of the classes
-* Loads and closes itself
+* Up Arrow
+  * Moves the base station forward
+* Down Arrow
+  * Moves the base station backward
+* Left Arrow
+  * Moves the base station left
+* Right Arrow
+  * Moves the base station right
 
-TODO:
+* W
+  * Rotates the base station upward
+* S
+  * Rotates the base station downward
+* A
+  * Rotates the base station to the left
+* Up Arrow
+  * Rotates the base station to the right
 
-* Capture image data from a camera the user can select (So it actually tracks something)
-* Create an overlay app/system to control the driver
-* Draw more icons for SteamVR
+* T
+  * Increases the X/Y scale 
+* R
+  * Decreases the X/Y scale 
+
+* O
+  * Increases the Z/depth scale
+* I
+  * Decreases the Z/depth scale
+
+* G
+  * Switches to the next available camera
+* F
+  * Switches to the previous available camera
 
 In order to use any of the executables, you are required to download and install the [NVIDIA Broadcast AR SDK](https://www.nvidia.com/en-us/geforce/broadcasting/broadcast-sdk/resources/).
 *(Note: As of right now, it works only on RTX 20 and 30 series cards. Other cards are untested)*
