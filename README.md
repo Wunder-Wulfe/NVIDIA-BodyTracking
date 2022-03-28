@@ -25,7 +25,7 @@ Current keybinds:
   * Rotates the base station downward
 * A
   * Rotates the base station to the left
-* Up Arrow
+* D
   * Rotates the base station to the right
 
 * T
