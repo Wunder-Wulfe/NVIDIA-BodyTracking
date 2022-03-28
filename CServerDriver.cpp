@@ -280,6 +280,7 @@ vr::EVRInitError CServerDriver::Init(vr::IVRDriverContext *pDriverContext)
         m_cameraDriver->imageChanged += CFunctionFactory(OnImageUpdate, void, const CCameraDriver&, cv::Mat);
         m_cameraDriver->cameraChanged += CFunctionFactory(OnCameraUpdate, void, const CCameraDriver &, int);
         m_camThread = std::thread(&CCameraDriver::RunAsync, m_cameraDriver);
+        m_camThread.detach();
     }
     catch(std::exception e)
     {
