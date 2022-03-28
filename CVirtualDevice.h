@@ -14,11 +14,11 @@ class CVirtualDevice : public vr::ITrackedDeviceServerDriver
     // vr::ITrackedDeviceServerDriver
     void *GetComponent(const char *pchComponentNameAndVersion);
     void DebugRequest(const char *pchRequest, char *pchResponseBuffer, uint32_t unResponseBufferSize);
-    vr::DriverPose_t GetPose();
 public:
     CVirtualDevice();
     virtual ~CVirtualDevice();
 
+    vr::DriverPose_t GetPose();
     vr::EVRInitError Activate(uint32_t unObjectId);
     void Deactivate();
 

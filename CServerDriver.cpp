@@ -36,6 +36,9 @@ CServerDriver::CServerDriver()
     m_refreshRateCache = 60.f;
     m_proportions = nullptr;
     m_frame = 0u;
+    m_scaleFactor = 1.f;
+    m_depth = 1.f;
+    key = -1;
 }
 
 CServerDriver::~CServerDriver()
@@ -50,7 +53,7 @@ bool CServerDriver::TrackerUpdate(CVirtualBodyTracker &tracker, const CNvSDKInte
     switch (tracker.role)
     {
     case TRACKER_ROLE::HIPS:
-        confidencePassed = inter.GetConfidenceAcceptable(BODY_JOINT::LEFT_HIP, BODY_JOINT::RIGHT_HIP);
+        confidencePassed = inter.GetConfidenceAcceptable(BODY_JOINT::PELVIS);
         break;
     case TRACKER_ROLE::LEFT_FOOT:
         confidencePassed = inter.GetConfidenceAcceptable(BODY_JOINT::LEFT_ANKLE);
@@ -108,26 +111,13 @@ bool CServerDriver::TrackerUpdate(CVirtualBodyTracker &tracker, const CNvSDKInte
     switch (tracker.role)
     {
     case TRACKER_ROLE::HIPS:
-        transform = inter.CastMatrix(
-            glm::mix(
-                inter.GetPosition(
-                    BODY_JOINT::LEFT_HIP,
-                    BODY_JOINT::RIGHT_HIP
-                ),
-                inter.GetPosition(BODY_JOINT::TORSO),
-                props.hipOffset
-            ),
-            inter.GetRotation(
-                BODY_JOINT::LEFT_HIP,
-                BODY_JOINT::RIGHT_HIP
-            )
-        );
+        transform = CNvSDKInterface::MirrorRotationX(inter.GetInterpolatedTransform(BODY_JOINT::PELVIS, BODY_JOINT::TORSO, BODY_JOINT::PELVIS, props.hipOffset));
         break;
     case TRACKER_ROLE::LEFT_FOOT:
-        transform = inter.GetTransform(BODY_JOINT::LEFT_ANKLE, BODY_JOINT::LEFT_HEEL);
+        transform = CNvSDKInterface::MirrorRotationX(inter.GetTransform(BODY_JOINT::LEFT_ANKLE, BODY_JOINT::LEFT_HEEL));
         break;
     case TRACKER_ROLE::RIGHT_FOOT:
-        transform = inter.GetTransform(BODY_JOINT::RIGHT_ANKLE, BODY_JOINT::RIGHT_HEEL);
+        transform = CNvSDKInterface::MirrorRotationX(inter.GetTransform(BODY_JOINT::RIGHT_ANKLE, BODY_JOINT::RIGHT_HEEL));
         break;
     case TRACKER_ROLE::LEFT_ELBOW:
         transform = inter.GetInterpolatedTransformMulti(
@@ -162,17 +152,7 @@ bool CServerDriver::TrackerUpdate(CVirtualBodyTracker &tracker, const CNvSDKInte
         );
         break;
     case TRACKER_ROLE::CHEST:
-        transform = inter.CastMatrix(
-            glm::mix(
-                inter.GetPosition(BODY_JOINT::TORSO),
-                inter.GetPosition(
-                    BODY_JOINT::LEFT_HIP,
-                    BODY_JOINT::RIGHT_HIP
-                ),
-                props.chestOffset
-            ),
-            inter.GetRotation(BODY_JOINT::TORSO)
-        );
+        transform = inter.GetInterpolatedTransform(BODY_JOINT::TORSO, BODY_JOINT::PELVIS, BODY_JOINT::TORSO, props.chestOffset);
         break;
     case TRACKER_ROLE::LEFT_SHOULDER:
         transform = inter.GetTransform(BODY_JOINT::LEFT_SHOULDER);
@@ -196,18 +176,17 @@ bool CServerDriver::TrackerUpdate(CVirtualBodyTracker &tracker, const CNvSDKInte
         transform = inter.GetTransform(BODY_JOINT::RIGHT_WRIST);
         break;
     }
-    transform[3][0] /= 5000.f;
-    transform[3][1] /= 5000.f;
-    transform[3][2] /= 5000.f;
+    transform[3][0] /= -1500.f / tracker.driver->m_scaleFactor;
+    transform[3][1] /= -1500.f / tracker.driver->m_scaleFactor;
+    transform[3][2] /= 1500.f / (tracker.driver->m_scaleFactor * tracker.driver->m_depth);
 
     //vr_log("Tracker %s passed transform check", TrackerRoleName[(int)tracker.role]);
 
-    tracker.SetTransform(inter.GetCameraMatrix());
+    tracker.SetOffsetTransform(inter.GetCameraMatrix());
     tracker.UpdateTransform(transform);
-    tracker.m_curTransform = transform;
 
-    vr_log("Tracker %s updated transform check", TrackerRoleName[(int)tracker.role]);
-    vr_log("transform info: %.3f %.3f %.3f", transform[3][0], transform[3][1], transform[3][2]);
+    //vr_log("Tracker %s updated transform check", TrackerRoleName[(int)tracker.role]);
+    //vr_log("transform info: %.3f %.3f %.3f", transform[3][0], transform[3][1], transform[3][2]);
 
     return true;
 }
@@ -264,6 +243,8 @@ vr::EVRInitError CServerDriver::Init(vr::IVRDriverContext *pDriverContext)
 
     m_trackingMode = m_driverSettings->GetConfigTrackingMode(SECTION_TRACK_MODE);
     m_interpolation = m_driverSettings->GetConfigInterpolationMode(SECTION_TRACKSET, KEY_INTERP);
+    m_scaleFactor = m_driverSettings->GetConfigFloat(SECTION_SDKSET, KEY_TRACK_SCALE, 1.0f);
+    m_depth = m_driverSettings->GetConfigFloat(SECTION_SDKSET, KEY_DEPTH_SCALE, 1.0f);
     m_proportions = new Proportions(m_driverSettings->GetConfigProportions(SECTION_TRACKSET));
 
     vr_log("Loading NVIDIA AR SDK modules...\n");
@@ -271,7 +252,8 @@ vr::EVRInitError CServerDriver::Init(vr::IVRDriverContext *pDriverContext)
     {
         m_nvInterface = new CNvSDKInterface();
         m_nvInterface->driver = this;
-        m_nvInterface->batchSize = m_driverSettings->GetConfigInteger(SECTION_SDKSET, KEY_BATCH_SZ, 1);
+        m_nvInterface->batchSize = 1;
+        m_nvInterface->realBatches = m_driverSettings->GetConfigInteger(SECTION_SDKSET, KEY_BATCH_SZ, 1);
         m_nvInterface->focalLength = m_driverSettings->GetConfigFloat(SECTION_CAMSET, KEY_FOCAL, 800.0f);
         m_nvInterface->stabilization = m_driverSettings->GetConfigBoolean(SECTION_SDKSET, KEY_STABLE, true);
         m_nvInterface->useCudaGraph = m_driverSettings->GetConfigBoolean(SECTION_SDKSET, KEY_USE_CUDA, true);
@@ -297,6 +279,7 @@ vr::EVRInitError CServerDriver::Init(vr::IVRDriverContext *pDriverContext)
         m_cameraDriver->LoadCameras();
         m_cameraDriver->imageChanged += CFunctionFactory(OnImageUpdate, void, const CCameraDriver&, cv::Mat);
         m_cameraDriver->cameraChanged += CFunctionFactory(OnCameraUpdate, void, const CCameraDriver &, int);
+        m_camThread = std::thread(&CCameraDriver::RunAsync, m_cameraDriver);
     }
     catch(std::exception e)
     {
@@ -321,7 +304,7 @@ vr::EVRInitError CServerDriver::Init(vr::IVRDriverContext *pDriverContext)
     SetupTracker(KEY_HEAD_ON, TRACKING_FLAG::HEAD, TRACKER_ROLE::HEAD);
     SetupTracker(KEY_HAND_ON, TRACKING_FLAG::HAND, TRACKER_ROLE::LEFT_HAND, TRACKER_ROLE::RIGHT_HAND);
 
-    m_camThread = std::thread(&CCameraDriver::RunAsync, m_cameraDriver);
+    key = -1;
 
     return vr::VRInitError_None;
 }
@@ -338,13 +321,19 @@ void CServerDriver::Cleanup()
 
     delptr(m_station);
 
+    m_cameraDriver->m_working = false;
+
+    m_cameraDriver->Cleanup();
+
     delptr(m_cameraDriver);
     delptr(m_nvInterface);
     delptr(m_proportions);
 
-    vr_log("Full device cleanup was successful\n");
+    m_cameraDriver->m_working = false;
 
     m_camThread.join();
+
+    vr_log("Full device cleanup was successful\n");
 
     vr::CleanupDriverContext();
 }
@@ -352,6 +341,9 @@ void CServerDriver::Cleanup()
 void CServerDriver::RunFrame()
 {
     static bool was_ready = false;
+    static double last_clock = systime();
+    double cur_clock = systime();
+    double clock_diff = cur_clock - last_clock;
 
     m_frame++;
 
@@ -360,9 +352,83 @@ void CServerDriver::RunFrame()
     ptrsafe(m_station);
 
     LoadRefreshRate();
-    m_refreshRateCache = 120.f;
+    m_refreshRateCache = 1.f/clock_diff;
+    last_clock = cur_clock;
     LoadFPS();
 
+    static int l_key = 0;
+    static float yaw = CNvSDKInterface::ExtractAngleY(m_nvInterface->GetCameraMatrix());
+    static float pitch = CNvSDKInterface::ExtractAngleX(m_nvInterface->GetCameraMatrix());
+
+    if (key >= 0)
+    {
+        if (l_key != key)
+        {
+            l_key = key;
+            vr_log("KEYCODE PRESS %d", key);
+        }
+    }
+
+    switch (key)
+    {
+    case 2490368: // ^
+        m_nvInterface->TranslateCamera(glm::vec3(0.f, 0.f, 0.01f));
+        break;
+    case 2621440: // v
+        m_nvInterface->TranslateCamera(glm::vec3(0.f, 0.f, -0.01f));
+        break;
+    case 2555904: // <
+        m_nvInterface->TranslateCamera(glm::vec3(0.01f, 0.f, 0.f));
+        break;
+    case 2424832: // >
+        m_nvInterface->TranslateCamera(glm::vec3(-0.01f, 0.f, 0.f));
+        break;
+
+    case 101: // e
+        m_nvInterface->TranslateCamera(glm::vec3(0.f, 0.01f, 0.f));
+        break;
+    case 113: // q
+        m_nvInterface->TranslateCamera(glm::vec3(0, -0.01f, 0.f));
+        break;
+
+    case 119: // w
+        pitch += 0.01f;
+        m_nvInterface->SetCameraRotation(glm::quat(glm::vec3(0.f, yaw, 0.f)) * glm::quat(glm::vec3(pitch, 0.f, 0.f)));
+        break;
+    case 115: // s
+        pitch -= 0.01f;
+        m_nvInterface->SetCameraRotation(glm::quat(glm::vec3(0.f, yaw, 0.f)) * glm::quat(glm::vec3(pitch, 0.f, 0.f)));
+        break;
+    case 100: // d
+        yaw += 0.01f;
+        m_nvInterface->SetCameraRotation(glm::quat(glm::vec3(0.f, yaw, 0.f)) * glm::quat(glm::vec3(pitch, 0.f, 0.f)));
+        break;
+    case 97: // a
+        yaw -= 0.01f;
+        m_nvInterface->SetCameraRotation(glm::quat(glm::vec3(0.f, yaw, 0.f)) * glm::quat(glm::vec3(pitch, 0.f, 0.f)));
+        break;
+
+    case 116: // t
+        m_scaleFactor += 0.01f;
+        break;
+    case 114: // r
+        m_scaleFactor -= 0.01f;
+        break;
+
+    case 111: // o
+        m_depth += 0.01f;
+        break;
+    case 105: // i
+        m_depth -= 0.01f;
+        break;
+
+    case 103: // g
+        m_cameraDriver->ChangeCamera(1);
+        break;
+    case 102: // f
+        m_cameraDriver->ChangeCamera(-1);
+        break;
+    }
     //vr_log("Found FPS and Refresh Rates: %.2f %.2f", GetFPS(), GetRefreshRate());
 
     //vr_log("Fully rendered the camera");
@@ -382,6 +448,7 @@ void CServerDriver::RunFrame()
         m_cameraDriver->ChangeCamera(0);
 
     m_station->SetStandby(!m_nvInterface->trackingActive);
+    m_station->SetTransform(m_nvInterface->GetCameraMatrix());
     m_station->RunFrame();
 
     LeaveStandby();

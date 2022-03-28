@@ -37,6 +37,10 @@
 
 //  SDK settings section
 #define SECTION_SDKSET "SDKSettings"
+//  The scale of the Z component
+#define KEY_DEPTH_SCALE "DepthScale"
+//  Proportional scale of the transform information
+#define KEY_TRACK_SCALE "TrackingScale"
 //  Whether or not tracking is enabled (bool)
 #define KEY_TRACKING "TrackingEnabled"
 //  The minimum m_confidence interval (float)

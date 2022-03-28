@@ -18,7 +18,9 @@ CDriverSettings::~CDriverSettings()
 bool CDriverSettings::UpdateConfig(CServerDriver *source)
 {
     return SetConfigVector(SECTION_POS, source->m_nvInterface->GetCameraPos())
-        && SetConfigQuaternion(SECTION_ROT, source->m_nvInterface->GetCameraRot());
+        && SetConfigQuaternion(SECTION_ROT, source->m_nvInterface->GetCameraRot())
+        && SetConfigFloat(SECTION_SDKSET, KEY_TRACK_SCALE, source->m_scaleFactor)
+        && SetConfigFloat(SECTION_SDKSET, KEY_DEPTH_SCALE, source->m_depth);
     return true;
 }
 

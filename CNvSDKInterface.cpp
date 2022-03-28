@@ -32,15 +32,7 @@ void CNvSDKInterface::KeyInfoUpdated(bool override)
 
     vr_log("Key information has been update, reloading data in the NVIDIA AR SDK\n");
 
-    if(batchSize != m_batchSize || override)
-    {
-        if(m_keyPointDetectHandle != nullptr)
-        {
-            //NvAR_Destroy(m_keyPointDetectHandle);
-            //m_keyPointDetectHandle = nullptr;
-        }
-        NvAR_Create(NvAR_Feature_BodyPoseEstimation, &m_keyPointDetectHandle);
-    }
+    NvAR_Create(NvAR_Feature_BodyPoseEstimation, &m_keyPointDetectHandle);
 
     std::string fpath;
     fpath.assign(g_modulePath);
@@ -58,25 +50,23 @@ void CNvSDKInterface::KeyInfoUpdated(bool override)
     NvAR_GetU32(m_keyPointDetectHandle, NvAR_Parameter_Config(NumKeyPoints), &m_numKeyPoints);
 
     vr_log("Number of keypoints: %d\n", m_numKeyPoints);
-    if(batchSize != m_batchSize || m_numKeyPoints != _nkp || override)
-    {
-        m_keypoints.assign(batchSize * m_numKeyPoints, { 0.f, 0.f });
-        m_keypoints3D.assign(batchSize * m_numKeyPoints, { 0.f, 0.f, 0.f });
-        m_jointAngles.assign(batchSize * m_numKeyPoints, { 0.f, 0.f, 0.f, 1.f });
-        m_keypointsConfidence.assign(batchSize * m_numKeyPoints, 0.f);
-        m_referencePose.assign(m_numKeyPoints, { 0.f, 0.f, 0.f });
 
-        m_realKeypoints3D.assign(m_numKeyPoints, { 0.f, 0.f, 0.f });
-        m_realJointAngles.assign(m_numKeyPoints, { 0.f, 0.f, 0.f, 0.f });
-        m_realConfidence.assign(m_numKeyPoints, 0.f);
+    m_keypoints.assign(realBatches * batchSize * m_numKeyPoints, { 0.f, 0.f });
+    m_keypoints3D.assign(realBatches * batchSize * m_numKeyPoints, { 0.f, 0.f, 0.f });
+    m_jointAngles.assign(realBatches * batchSize * m_numKeyPoints, { 0.f, 0.f, 0.f, 1.f });
+    m_keypointsConfidence.assign(realBatches * batchSize * m_numKeyPoints, 0.f);
+    m_referencePose.assign(m_numKeyPoints, { 0.f, 0.f, 0.f });
 
-        EmptyKeypoints();
+    m_realKeypoints3D.assign(m_numKeyPoints, { 0.f, 0.f, 0.f });
+    m_realJointAngles.assign(m_numKeyPoints, { 0.f, 0.f, 0.f, 0.f });
+    m_realConfidence.assign(m_numKeyPoints, 0.f);
 
-        const void *pReferencePose;
-        NvAR_GetObject(m_keyPointDetectHandle, NvAR_Parameter_Config(ReferencePose), &pReferencePose,
-            sizeof(NvAR_Point3f));
-        memcpy(m_referencePose.data(), pReferencePose, sizeof(NvAR_Point3f) * m_numKeyPoints);
-    }
+    EmptyKeypoints();
+
+    const void *pReferencePose;
+    NvAR_GetObject(m_keyPointDetectHandle, NvAR_Parameter_Config(ReferencePose), &pReferencePose,
+        sizeof(NvAR_Point3f));
+    memcpy(m_referencePose.data(), pReferencePose, sizeof(NvAR_Point3f) * m_numKeyPoints);
 
     NvAR_SetObject(m_keyPointDetectHandle, NvAR_Parameter_Output(KeyPoints), m_keypoints.data(),
         sizeof(NvAR_Point2f));
@@ -85,7 +75,7 @@ void CNvSDKInterface::KeyInfoUpdated(bool override)
     NvAR_SetObject(m_keyPointDetectHandle, NvAR_Parameter_Output(JointAngles), m_jointAngles.data(),
         sizeof(NvAR_Quaternion));
     NvAR_SetF32Array(m_keyPointDetectHandle, NvAR_Parameter_Output(KeyPointsConfidence),
-        m_keypointsConfidence.data(), batchSize * m_numKeyPoints);
+        m_keypointsConfidence.data(), realBatches * batchSize * m_numKeyPoints);
 
     NvAR_Load(m_keyPointDetectHandle);
 
@@ -181,14 +171,14 @@ void CNvSDKInterface::FillBatched(const std::vector<float> &from, std::vector<fl
     {
         to[index] = from[index];
     }
-    if (batchSize <= 1) return;
+    if (realBatches * batchSize <= 1) return;
     for (index = 0; index < (int)m_numKeyPoints; index++)
     {
-        for (batch = 1; batch < batchSize; batch++)
+        for (batch = 1; batch < realBatches * batchSize; batch++)
         {
             to[index] += TableIndex(from, index, batch);
         }
-        to[index] /= (float)batchSize;
+        to[index] /= (float)(realBatches * batchSize);
     }
 }
 
@@ -199,15 +189,15 @@ void CNvSDKInterface::FillBatched(const std::vector<NvAR_Quaternion> &from, std:
     {
         to[index] = CastQuaternion(from[index]);
     }
-    if (batchSize <= 1) return;
+    if (realBatches * batchSize <= 1) return;
     for (index = 0; index < (int)m_numKeyPoints; index++)
     {
-        for(batch = 1; batch < batchSize; batch++)
+        for(batch = 1; batch < realBatches * batchSize; batch++)
         {
 
-            to[index] += CastQuaternion(TableIndex(from, index, batch));
+            to[index] = SumQuat(to[index], CastQuaternion(TableIndex(from, index, batch)));
         }
-        to[index] /= (float)batchSize;
+        to[index] = AvgQuat(to[index], realBatches * batchSize);
     }
 }
 
@@ -218,29 +208,45 @@ void CNvSDKInterface::FillBatched(const std::vector<NvAR_Point3f> &from, std::ve
     {
         to[index] = CastPoint(from[index]);
     }
-    if (batchSize <= 1) return;
+    if (realBatches * batchSize <= 1) return;
     for (index = 0; index < (int)m_numKeyPoints; index++)
     {
-        for(batch = 1; batch < batchSize; batch++)
+        for(batch = 1; batch < realBatches * batchSize; batch++)
         {
             to[index] += CastPoint(TableIndex(from, index, batch));
         }
-        to[index] /= (float)batchSize;
+        to[index] /= (float)(realBatches * batchSize);
     }
 }
+
+void CNvSDKInterface::RotateBatched(std::vector<float> &to)
+{
+    std::rotate(to.rbegin(), to.rbegin() + m_numKeyPoints, to.rend());
+}
+
+void CNvSDKInterface::RotateBatched(std::vector<NvAR_Point3f> &to)
+{
+    std::rotate(to.rbegin(), to.rbegin() + m_numKeyPoints, to.rend());
+}
+
+void CNvSDKInterface::RotateBatched(std::vector<NvAR_Quaternion> &to)
+{
+    std::rotate(to.rbegin(), to.rbegin() + m_numKeyPoints, to.rend());
+}
+
 
 void CNvSDKInterface::ComputeAvgConfidence()
 {
     float avg = 0.0;
     int batch, index;
-    for(batch = 0; batch < batchSize; batch++)
+    for(batch = 0; batch < realBatches * batchSize; batch++)
     {
         for(index = 0; index < (int)m_numKeyPoints; index++)
         {
             avg += TableIndex(m_keypointsConfidence, index, batch);
         }
     }
-    m_confidence = avg / (batchSize + m_numKeyPoints);
+    m_confidence = avg / (realBatches * batchSize * m_numKeyPoints);
 }
 
 void CNvSDKInterface::EmptyKeypoints()
@@ -255,7 +261,27 @@ void CNvSDKInterface::DebugSequence(const std::vector<float> conf) const
     uint counter = 0;
     for (auto &val : conf)
     {
-        vr_log("\tJOINT %s CONFIDENCE %.3f", BodyJointName[counter], val);
+        vr_log("\t%d: JOINT %s CONFIDENCE %.3f", counter / m_numKeyPoints, BodyJointName[counter % m_numKeyPoints], val);
+        counter++;
+    }
+    vr_log("");
+}
+void CNvSDKInterface::DebugSequence(const std::vector<NvAR_Point3f> kep) const
+{
+    uint counter = 0;
+    for (auto &val : kep)
+    {
+        vr_log("\t%d: JOINT %s KEYPOINT < %.3f %.3f %.3f >", counter / m_numKeyPoints, BodyJointName[counter % m_numKeyPoints], val.x, val.y, val.z);
+        counter++;
+    }
+    vr_log("");
+}
+void CNvSDKInterface::DebugSequence(const std::vector<NvAR_Quaternion> kep) const
+{
+    uint counter = 0;
+    for (auto &val : kep)
+    {
+        vr_log("\t%d: JOINT %s ANGLES < %.3f %.3f %.3f %.3f >", counter / m_numKeyPoints, BodyJointName[counter % m_numKeyPoints], val.w, val.x, val.y, val.z);
         counter++;
     }
     vr_log("");
@@ -265,7 +291,7 @@ void CNvSDKInterface::DebugSequence(const std::vector<glm::vec3> kep) const
     uint counter = 0;
     for (auto &val : kep)
     {
-        vr_log("\tJOINT %s KEYPOINT < %.3f %.3f %.3f >", BodyJointName[counter], val.x, val.y, val.z);
+        vr_log("\t%d: JOINT %s KEYPOINT < %.3f %.3f %.3f >", counter / m_numKeyPoints, BodyJointName[counter % m_numKeyPoints], val.x, val.y, val.z);
         counter++;
     }
     vr_log("");
@@ -275,7 +301,7 @@ void CNvSDKInterface::DebugSequence(const std::vector<glm::quat> rot) const
     uint counter = 0;
     for (auto &val : rot)
     {
-        vr_log("\tJOINT %s ANGLES < %.3f %.3f %.3f %.3f >", BodyJointName[counter], val.w, val.x, val.y, val.z);
+        vr_log("\t%d: JOINT %s ANGLES < %.3f %.3f %.3f %.3f >", counter / m_numKeyPoints, BodyJointName[counter % m_numKeyPoints], val.w, val.x, val.y, val.z);
         counter++;
     }
     vr_log("");
@@ -285,7 +311,20 @@ void CNvSDKInterface::RunFrame()
 {
     if(trackingActive)
     {
-        NvAR_Run(m_keyPointDetectHandle);
+        //NvAR_Run(m_keyPointDetectHandle);
+        batchSize = 1;
+        int code;
+        for (int i = 0; i < realBatches; i++)
+        {
+            if (i > 0)
+            {
+                RotateBatched(m_keypointsConfidence);
+                RotateBatched(m_keypoints3D);
+                RotateBatched(m_jointAngles);
+            }
+            code = (int)NvAR_Run(m_keyPointDetectHandle);
+            if (code != 0) vr_log("NVIDIA SDK ERR CODE:\t%d", code);
+        }
         ComputeAvgConfidence();
         //vr_log("CONFIDENCE: %.5f", m_confidence);
         if(m_confidence >= confidenceRequirement)
@@ -293,6 +332,7 @@ void CNvSDKInterface::RunFrame()
             FillBatched(m_keypointsConfidence, m_realConfidence);
             FillBatched(m_keypoints3D, m_realKeypoints3D);
             FillBatched(m_jointAngles, m_realJointAngles);
+            //DebugSequence(m_keypoints3D);
         }
         else
             EmptyKeypoints();

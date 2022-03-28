@@ -49,7 +49,7 @@ void CVirtualBodyTracker::SetupProperties()
     vr::VRProperties()->SetInt32Property(m_propertyHandle, vr::Prop_DeviceClass_Int32, vr::TrackedDeviceClass_GenericTracker);
     vr::VRProperties()->SetBoolProperty(m_propertyHandle, vr::Prop_Firmware_ForceUpdateRequired_Bool, false);
     //vr::VRProperties()->SetUint64Property(m_propertyHandle, vr::Prop_ParentDriver_Uint64, 8589934597); // Strange value from dump
-    vr::VRProperties()->SetStringProperty(m_propertyHandle, vr::Prop_ResourceRoot_String, "nvidiaBodyTracking");
+    vr::VRProperties()->SetStringProperty(m_propertyHandle, vr::Prop_ResourceRoot_String, "htc");
 
     std::string l_registeredType("htc/vive_tracker");
     l_registeredType.append(m_serial);
@@ -59,7 +59,6 @@ void CVirtualBodyTracker::SetupProperties()
     vr::VRProperties()->SetBoolProperty(m_propertyHandle, vr::Prop_Identifiable_Bool, false);
     vr::VRProperties()->SetBoolProperty(m_propertyHandle, vr::Prop_Firmware_RemindUpdate_Bool, false);
     vr::VRProperties()->SetInt32Property(m_propertyHandle, vr::Prop_ControllerRoleHint_Int32, vr::TrackedControllerRole_Invalid);
-    vr::VRProperties()->SetStringProperty(m_propertyHandle, vr::Prop_RenderModelName_String, "{nvidiaBodyTracking}/rendermodels/tracker/tracker");
 
     switch(role)
     {
@@ -119,6 +118,7 @@ void CVirtualBodyTracker::SetupProperties()
             break;
     }
 
+    vr::VRProperties()->SetStringProperty(m_propertyHandle, vr::Prop_RenderModelName_String, "{nvidiaBodyTracking}/rendermodels/tracker");
     vr::VRProperties()->SetInt32Property(m_propertyHandle, vr::Prop_ControllerHandSelectionPriority_Int32, -1);
     vr::VRProperties()->SetStringProperty(m_propertyHandle, vr::Prop_NamedIconPathDeviceOff_String, "{nvidiaBodyTracking}/icons/tracker/tracker_status_off.png");
     //vr::VRProperties()->SetStringProperty(m_propertyHandle, vr::Prop_NamedIconPathDeviceSearching_String, "{htc}/icons/tracker_status_searching.gif");
@@ -176,16 +176,9 @@ const glm::mat4x4 CVirtualBodyTracker::InterpolatedTransform() const
 
 void CVirtualBodyTracker::RunFrame()
 {
-    static bool wasActive = false;
-    if (wasActive != IsConnected())
-    {
-        if (IsConnected())
-            Activate(m_index);
-        else
-            Deactivate();
-    }
-    wasActive = IsConnected();
-    SetOffsetTransform(InterpolatedTransform());
-    frame++;
-    CVirtualDevice::RunFrame();
+    SetTransform(InterpolatedTransform());
+    frame++;  
+    //vr_log("TRACKER %s VALID? %s",TrackerRoleName[(int)role], m_trackedDevice != vr::k_unTrackedDeviceIndexInvalid ? "TRUE" : "FALSE");
+    if (m_trackedDevice != vr::k_unTrackedDeviceIndexInvalid)
+        vr::VRServerDriverHost()->TrackedDevicePoseUpdated(m_trackedDevice, GetPose(), sizeof(vr::DriverPose_t));
 }

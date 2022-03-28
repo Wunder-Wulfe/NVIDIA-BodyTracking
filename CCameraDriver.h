@@ -23,7 +23,7 @@ class CCameraDriver
     void Cleanup();
 protected:
     float m_resScale;
-
+    float m_fps;
     friend class CServerDriver;
 public:
     bool show;
@@ -37,7 +37,7 @@ public:
     void ChangeCamera(int up = 1);
 
     inline const cv::Mat GetImage() const { return m_frame; }
-    inline const float GetFps() const { return (float)m_currentCamera.get(CV_CAP_PROP_FPS); }
+    inline const float GetFps() const { return m_cameras.size() > 0 ? m_fps : (float)m_currentCamera.get(CV_CAP_PROP_FPS); }
 
     inline int GetWidth() const { return m_cameras[m_cameraIndex].width; }
     inline int GetHeight() const { return m_cameras[m_cameraIndex].height; }

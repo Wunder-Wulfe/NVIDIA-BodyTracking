@@ -1,5 +1,7 @@
 #pragma once
 
+#define systime() ((double)clock() / CLOCKS_PER_SEC)
+
 //  The maximum size for our log buffer
 #define LOG_BUFFER_SIZE 1000
 

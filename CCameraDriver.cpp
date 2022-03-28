@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "CCameraDriver.h"
+#include "CServerDriver.h"
 #include "CCommon.h"
 
 CameraInfo::CameraInfo(cv::VideoCapture &cam, int c_id)
@@ -51,20 +52,36 @@ CCameraDriver::~CCameraDriver()
 void CCameraDriver::RunAsync()
 {
     m_working = true;
+    char buff[150];
+    static int ccam = m_cameraIndex;
+    static double l_time = systime();
+    double cur_time = systime();
+    double clock_diff;
     vr_log("Initializing main camera loop");
     while (m_working)
     {
-        m_camMutex.lock();
         if (m_currentCamera.read(m_frame) && !m_frame.empty())
         {
-            m_camMutex.unlock();
-            if (show) cv::imshow("Input", m_frame);
+            if (ccam != m_cameraIndex)
+            {
+                ccam = m_cameraIndex;
+                cv::destroyAllWindows();
+            }
+
+            cur_time = systime();
+            clock_diff = cur_time - l_time;
+            l_time = cur_time;
+            m_fps = 1.f / clock_diff;
+            if (show) {
+                sprintf_s(buff, 150, "Live (%d) (%dx%d)@%.1ffps", m_cameraIndex, GetWidth(), GetHeight(), (float)m_currentCamera.get(CV_CAP_PROP_FPS));
+                cv::imshow(buff, m_frame);
+            }
             imageChanged(*this, m_frame);
         }
-        else
-            m_camMutex.unlock();
-        cv::waitKey(1);
-    }
+        driver->key = cv::waitKeyEx(1);
+    }        
+    cv::destroyAllWindows();
+    m_currentCamera.release();
 }
 
 void CCameraDriver::ChangeCamera(int up)
@@ -77,7 +94,7 @@ void CCameraDriver::ChangeCamera(int up)
         m_currentCamera.set(cv::CAP_PROP_FRAME_WIDTH, GetScaledWidth());
         m_currentCamera.set(cv::CAP_PROP_FRAME_HEIGHT, GetScaledHeight());
         
-        vr_log("Switching to camera of index %d (%dx%d) (%.2f fps)\n", m_cameraInfo->id, GetWidth(), GetHeight(), GetFps());
+        vr_log("Switching to camera of index %d (%dx%d) (%.2f fps)\n", m_cameraInfo->id, GetWidth(), GetHeight(), (float)m_currentCamera.get(CV_CAP_PROP_FPS));
         cameraChanged(*this, m_cameraIndex);
     }
     else
@@ -89,8 +106,8 @@ void CCameraDriver::ChangeCamera(int up)
 
 void CCameraDriver::Cleanup()
 {
-    cv::destroyAllWindows();
+    //cv::destroyAllWindows();
     m_working = false;
-    m_currentCamera.release();
+    //m_currentCamera.release();
     m_cameras.clear();
 }

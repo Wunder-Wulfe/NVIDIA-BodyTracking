@@ -2,6 +2,7 @@
 #include "CVirtualDevice.h"
 #include "CServerDriver.h"
 #include "CCommon.h"
+#include "CNvSDKInterface.h"
 
 CVirtualDevice::CVirtualDevice() : driver(nullptr)
 {
@@ -149,7 +150,7 @@ const glm::quat CVirtualDevice::GetRotation() const
 }
 const glm::mat4x4 CVirtualDevice::GetTransform() const
 {
-    return glm::translate(glm::mat4_cast(GetRotation()), GetPosition());
+    return CNvSDKInterface::Slide(glm::mat4_cast(GetRotation()), GetPosition());
 }
 
 const glm::vec3 CVirtualDevice::GetOffsetPosition() const
@@ -171,7 +172,7 @@ const glm::quat CVirtualDevice::GetOffsetRotation() const
 }
 const glm::mat4x4 CVirtualDevice::GetOffsetTransform() const
 {
-    return glm::translate(glm::mat4_cast(GetOffsetRotation()), GetOffsetPosition());
+    return CNvSDKInterface::Slide(glm::mat4_cast(GetOffsetRotation()), GetOffsetPosition());
 }
 
 void CVirtualDevice::SetPosition(const glm::vec3 &pos)
@@ -254,5 +255,5 @@ void CVirtualDevice::SetupProperties()
 void CVirtualDevice::RunFrame()
 {
     if(m_trackedDevice != vr::k_unTrackedDeviceIndexInvalid)
-        vr::VRServerDriverHost()->TrackedDevicePoseUpdated(m_trackedDevice, m_pose, sizeof(vr::DriverPose_t));
+        vr::VRServerDriverHost()->TrackedDevicePoseUpdated(m_trackedDevice, GetPose(), sizeof(vr::DriverPose_t));
 }
