@@ -178,7 +178,7 @@ bool CServerDriver::TrackerUpdate(CVirtualBodyTracker &tracker, const CNvSDKInte
     }
     transform[3][0] /= -1500.f / tracker.driver->m_scaleFactor;
     transform[3][1] /= -1500.f / tracker.driver->m_scaleFactor;
-    transform[3][2] /= 1500.f / (tracker.driver->m_scaleFactor * tracker.driver->m_depth);
+    transform[3][2] /= 1500.f / tracker.driver->m_depth;
 
     //vr_log("Tracker %s passed transform check", TrackerRoleName[(int)tracker.role]);
 
@@ -392,19 +392,19 @@ void CServerDriver::RunFrame()
         break;
 
     case 119: // w
-        pitch += 0.01f;
-        m_nvInterface->SetCameraRotation(glm::quat(glm::vec3(0.f, yaw, 0.f)) * glm::quat(glm::vec3(pitch, 0.f, 0.f)));
-        break;
-    case 115: // s
         pitch -= 0.01f;
         m_nvInterface->SetCameraRotation(glm::quat(glm::vec3(0.f, yaw, 0.f)) * glm::quat(glm::vec3(pitch, 0.f, 0.f)));
         break;
+    case 115: // s
+        pitch += 0.01f;
+        m_nvInterface->SetCameraRotation(glm::quat(glm::vec3(0.f, yaw, 0.f)) * glm::quat(glm::vec3(pitch, 0.f, 0.f)));
+        break;
     case 100: // d
-        yaw += 0.01f;
+        yaw -= 0.01f;
         m_nvInterface->SetCameraRotation(glm::quat(glm::vec3(0.f, yaw, 0.f)) * glm::quat(glm::vec3(pitch, 0.f, 0.f)));
         break;
     case 97: // a
-        yaw -= 0.01f;
+        yaw += 0.01f;
         m_nvInterface->SetCameraRotation(glm::quat(glm::vec3(0.f, yaw, 0.f)) * glm::quat(glm::vec3(pitch, 0.f, 0.f)));
         break;
 
