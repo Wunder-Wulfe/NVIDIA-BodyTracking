@@ -357,8 +357,8 @@ void CServerDriver::RunFrame()
     LoadFPS();
 
     static int l_key = 0;
-    static float yaw = CNvSDKInterface::ExtractAngleY(m_nvInterface->GetCameraMatrix());
-    static float pitch = CNvSDKInterface::ExtractAngleX(m_nvInterface->GetCameraMatrix());
+    static float yaw = 0.f;
+    static float pitch = 0.f;
 
     if (key >= 0)
     {
