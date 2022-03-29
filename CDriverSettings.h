@@ -21,7 +21,7 @@
 
 //  Camera position section (glm::vec3)
 #define SECTION_POS "CameraPosition"
-//  Camera rotation section (glm::quat)
+//  Camera rotation section (glm::vec3)
 #define SECTION_ROT "CameraRotation"
 
 

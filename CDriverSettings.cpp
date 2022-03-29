@@ -30,7 +30,6 @@ bool CDriverSettings::UpdateConfig(CServerDriver *source)
         && SetConfigVector(SECTION_ROT, source->m_camBryan)
         && SetConfigVector(SECTION_TRACK_SCALE, source->m_scaleFactor)
         && SetConfigInteger(SECTION_CAMSET, KEY_CAM_INDEX, source->m_cameraDriver->GetIndex());
-    return true;
 }
 
 bool CDriverSettings::SaveConfig()

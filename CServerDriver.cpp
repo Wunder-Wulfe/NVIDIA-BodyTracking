@@ -411,11 +411,21 @@ void CServerDriver::Cleanup()
 {
     vr_log("Initiating full device cleanup...\n");
 
-    m_trackers.clear();
+    int i;
+    for (i = 0; i < 5; i++)
+    {
+        vr_log("Attempting to save config (#%d)...", i);
+        m_driverSettings->UpdateConfig(this);
+        m_driverSettings->UpdateConfig(this);
+        if (m_driverSettings->SaveConfig()) break;
+    }
+    if (i < 5)
+        vr_log("Configuration saved successfully");
+    else
+        vr_log("Configuration failed to save!");
 
-    m_driverSettings->UpdateConfig(this);
-    m_driverSettings->UpdateConfig(this);
-    m_driverSettings->SaveConfig();
+    m_trackers.clear();
+    
     delptr(m_driverSettings);
 
     delptr(m_station);
@@ -439,7 +449,12 @@ void CServerDriver::Cleanup()
 
 void CServerDriver::ProcessEvent(const vr::VREvent_t &evnt)
 {
-   
+
+}
+
+void CServerDriver::Deactivate()
+{
+    Cleanup();
 }
 
 void CServerDriver::RunFrame()
@@ -471,7 +486,7 @@ void CServerDriver::RunFrame()
     scale_amnt = (float)(scale_speed * clock_diff);
 
     while (vr::VRServerDriverHost()->PollNextEvent(&ev, sizeof(vr::VREvent_t)))
-        ProcessEvent(ev);
+       ProcessEvent(ev);
 
 
 
@@ -576,7 +591,7 @@ void CServerDriver::RunFrame()
         m_cameraDriver->ChangeCamera(0);
 
     m_station->SetStandby(!m_nvInterface->trackingActive);
-    m_station->SetTransform(m_nvInterface->GetCameraMatrix());
+    m_station->SetTransform(m_nvInterface->GetCameraMatrix() * glm::mat4_cast(DoEulerYXZ(0.f, M_PI, 0.f)));
     m_station->RunFrame();
 
     LeaveStandby();

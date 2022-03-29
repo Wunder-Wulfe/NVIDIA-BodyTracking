@@ -117,6 +117,7 @@ protected:
     friend class CNvSDKInterface;
     friend class CCameraDriver;
 public:
+    void Deactivate();
     inline float GetFPS() const { return m_fpsCache; }
     inline float GetRefreshRate() const { return m_refreshRateCache; }
 
