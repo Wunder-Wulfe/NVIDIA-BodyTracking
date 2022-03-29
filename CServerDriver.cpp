@@ -394,6 +394,9 @@ vr::EVRInitError CServerDriver::Init(vr::IVRDriverContext *pDriverContext)
 
     vr_log("\tWASD + SHIFT: Move the HMD offset");
 
+    vr_log("\tZ: Toggle the automatic HMD alignment");
+    MapBinding(BINDING::TOGGLE_ALIGN, 'Z');
+
     vr_log("All inputs bound successfully");
 
     return vr::VRInitError_None;
@@ -536,6 +539,11 @@ void CServerDriver::RunFrame()
         m_cameraDriver->ChangeCamera(1);
     if (BindingPressed(BINDING::PREVIOUS_CAMERA))
         m_cameraDriver->ChangeCamera(-1);
+    if (BindingPressed(BINDING::TOGGLE_ALIGN))
+    {
+        m_nvInterface->m_alignHMD = !m_nvInterface->m_alignHMD;
+        vr_log("HMD Alignment %s", m_nvInterface->m_alignHMD ? "enabled" : "disabled");
+    }
 
 
     UpdateBindings();

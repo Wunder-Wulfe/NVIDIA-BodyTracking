@@ -38,7 +38,9 @@ enum class BINDING : uint
     NEXT_CAMERA = 0b1000000000000000000,
     PREVIOUS_CAMERA = 0b10000000000000000000,
 
-    SHIFT = 0b100000000000000000000
+    TOGGLE_ALIGN = 0b100000000000000000000,
+
+    SHIFT = 0b1000000000000000000000
 };
 
 //  The main class responsible for managing data that is transferred between different classes

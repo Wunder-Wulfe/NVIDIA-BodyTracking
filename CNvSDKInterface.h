@@ -67,6 +67,7 @@ protected:
 
     glm::vec3 m_axisScale;
     glm::vec3 m_offset;
+    bool m_alignHMD;
 
     static inline const glm::vec3 CastPoint(const NvAR_Point3f &point) { return glm::vec3(point.x, point.y, point.z); }
     static inline const glm::quat CastQuaternion(const NvAR_Quaternion &quat) { return glm::quat(quat.w, quat.x, quat.y, quat.z); }

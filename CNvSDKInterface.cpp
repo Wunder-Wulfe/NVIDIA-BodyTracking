@@ -26,6 +26,7 @@ CNvSDKInterface::CNvSDKInterface() : m_tmpImage{}
     confidenceRequirement = 0.0;
     m_axisScale = glm::vec3(1.f, 1.f, 1.f);
     m_offset = glm::vec3(0.f, 0.f, 0.f);
+    m_alignHMD = true;
 }
 
 void CNvSDKInterface::KeyInfoUpdated(bool override)
@@ -205,7 +206,7 @@ void CNvSDKInterface::FillBatched(const std::vector<NvAR_Point3f> &from, std::ve
             to[index] += CastPoint(TableIndex(from, index, batch));
         }
         to[index] /= (float)(realBatches * batchSize);
-        to[index] = CamToWorld(to[index]);
+        //to[index] = CamToWorld(to[index]);
         to[index] *= m_axisScale;
     }
 }
@@ -214,18 +215,20 @@ void CNvSDKInterface::AlignToHMD(const vr::TrackedDevicePose_t &pose)
 {
     if (not pose.bDeviceIsConnected || not pose.bPoseIsValid) return;
     const vr::HmdMatrix34_t &mat = pose.mDeviceToAbsoluteTracking;
-    glm::vec3 hmdPosition = glm::vec3(
-        mat.m[0][3],
-        mat.m[1][3],
-        mat.m[2][3]
+    glm::vec3 hmdPosition = WorldToCam(
+        glm::vec3(
+            mat.m[0][3],
+            mat.m[1][3],
+            mat.m[2][3]
+        )
     );
     glm::vec3 eyes = GetPosition(BODY_JOINT::LEFT_EYE, BODY_JOINT::RIGHT_EYE);
     glm::vec3 offset = hmdPosition - eyes;
-    offset += ObjectToWorldVector(glm::mat4_cast(GetCameraRot()), m_offset);
+    offset += m_offset;
     int index;
     for (index = 0; index < (int)m_numKeyPoints; index++)
     {
-        m_realKeypoints3D[index] = WorldToCam(m_realKeypoints3D[index] + offset);
+        m_realKeypoints3D[index] += offset;
     }
 }
 
@@ -342,7 +345,7 @@ void CNvSDKInterface::RunFrame()
             FillBatched(m_keypointsConfidence, m_realConfidence);
             FillBatched(m_keypoints3D, m_realKeypoints3D);
             //FillBatched(m_jointAngles, m_realJointAngles);
-            AlignToHMD(driver->m_hmd_controller_pose[0]);
+            if (m_alignHMD) AlignToHMD(driver->m_hmd_controller_pose[0]);
             //DebugSequence(m_keypoints3D);
         }
         else
