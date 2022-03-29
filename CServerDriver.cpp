@@ -256,10 +256,15 @@ void CServerDriver::OnCameraUpdate(const CCameraDriver &me, int index)
     vr_log("Successful in loading image to GPU memory\n");
 }
 
+inline const float lua_fmod(const float &a, const float &b)
+{
+    return a - floor(a / b) * b;
+}
+
 template<class T>
 void CServerDriver::DoRotateCam(T &axis, const float &amount)
 {
-    axis = std::fabs(std::fmod(axis + amount + 180.f, 360.f)) - 180.f;
+    axis = lua_fmod(axis + amount + 180.f, 360.f) - 180.f;
     m_nvInterface->SetCameraRotation(DoEulerYXZ(glm::radians(m_camBryan)));
 }
 
