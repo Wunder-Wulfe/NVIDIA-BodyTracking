@@ -10,6 +10,7 @@ enum class TRACKER_ROLE;
 enum class INTERP_MODE;
 struct Proportions;
 
+
 enum class BINDING : uint
 {
     NONE = 0b0,
@@ -56,21 +57,20 @@ class CServerDriver final : public vr::IServerTrackedDeviceProvider
     std::thread m_camThread;
 
     // vr::IServerTrackedDeviceProvider
-    vr::EVRInitError Init(vr::IVRDriverContext *pDriverContext);
-    void Cleanup();
-    const char *const *GetInterfaceVersions();
-    void RunFrame();
-    bool ShouldBlockStandbyMode();
-    void EnterStandby();
-    void LeaveStandby();
+    vr::EVRInitError Init(vr::IVRDriverContext *pDriverContext) override;
+    void Cleanup() override;
+    const char *const *GetInterfaceVersions() override;
+    void RunFrame() override;
+    bool ShouldBlockStandbyMode() override;
+    void EnterStandby() override;
+    void LeaveStandby() override;
 
     CServerDriver(const CServerDriver &that) = delete;
     CServerDriver &operator=(const CServerDriver &that) = delete;
 
+    static bool TrackerUpdate(CVirtualBodyTracker &tracker, const CNvSDKInterface &inter, const Proportions &props);
     void SetupTracker(const char *name, TRACKING_FLAG flag, TRACKER_ROLE role);
     void SetupTracker(const char *name, TRACKING_FLAG flag, TRACKER_ROLE role, TRACKER_ROLE secondary);
-
-    static bool TrackerUpdate(CVirtualBodyTracker &tracker, const CNvSDKInterface &inter, const Proportions &props);
 
     inline void LoadRefreshRate() { m_refreshRateCache = vr::VRSettings()->GetFloat("driver_nvidiaBodyTracking", "displayFrequency"); }
 
