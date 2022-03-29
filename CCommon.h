@@ -1,5 +1,7 @@
 #pragma once
 
+#define M_PI 3.14159265358979323846f
+
 #define systime() ((double)clock() / CLOCKS_PER_SEC)
 
 //  The maximum size for our log buffer
@@ -101,5 +103,21 @@ enum class TRACKING_FLAG
     HEAD = 0b10000000,
     HAND = 0b100000000
 };
+
 inline TRACKING_FLAG operator|(const TRACKING_FLAG &a, const TRACKING_FLAG &b) { return (TRACKING_FLAG)((int)a | (int)b); }
 inline TRACKING_FLAG operator&(const TRACKING_FLAG &a, const TRACKING_FLAG &b) { return (TRACKING_FLAG)((int)a & (int)b); }
+
+template<class T>
+inline const T FLAG_OR(const T &last) { return last; }
+template<class T, class... Args>
+inline const T FLAG_OR(const T &first, const Args&... rest) { return (T)((uint)first | (uint)FLAG_OR(rest...)); }
+
+template<class T>
+inline const T FLAG_AND(const T &last) { return last; }
+template<class T, class... Args>
+inline const T FLAG_AND(const T &first, const Args&... rest) { return (T)((uint)first & (uint)FLAG_AND(rest...)); }
+
+template<class T>
+inline const bool FLAG_ACTIVE(const T &flag, const T &last) { return (uint)FLAG_AND(flag, last) > 0; }
+template<class T, class... Args>
+inline const bool FLAG_ACTIVE(const T &flag, const T &first, const Args&... rest) { return ((uint)FLAG_AND(flag, first) > 0) && FLAG_ACTIVE(flag, rest...); }

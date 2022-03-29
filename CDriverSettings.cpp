@@ -2,8 +2,17 @@
 #include "CDriverSettings.h"
 #include "CServerDriver.h"
 #include "CNvSDKInterface.h"
+#include "CCameraDriver.h"
 
 extern char g_modulePath[];
+
+const char *InterpModeName[] = {
+    INTERP_NONE,
+    INTERP_LIN,
+    INTERP_SINE,
+    INTERP_QUAD,
+    INTERP_CUBE
+};
 
 CDriverSettings::CDriverSettings()
 {
@@ -18,9 +27,9 @@ CDriverSettings::~CDriverSettings()
 bool CDriverSettings::UpdateConfig(CServerDriver *source)
 {
     return SetConfigVector(SECTION_POS, source->m_nvInterface->GetCameraPos())
-        && SetConfigQuaternion(SECTION_ROT, source->m_nvInterface->GetCameraRot())
-        && SetConfigFloat(SECTION_SDKSET, KEY_TRACK_SCALE, source->m_scaleFactor)
-        && SetConfigFloat(SECTION_SDKSET, KEY_DEPTH_SCALE, source->m_depth);
+        && SetConfigVector(SECTION_ROT, source->m_camBryan)
+        && SetConfigVector(SECTION_TRACK_SCALE, source->m_scaleFactor)
+        && SetConfigInteger(SECTION_CAMSET, KEY_CAM_INDEX, source->m_cameraDriver->GetIndex());
     return true;
 }
 
@@ -39,21 +48,21 @@ bool CDriverSettings::LoadConfig()
     return 0 < m_iniFile.LoadFile(m_filePath.c_str());
 }
 
-glm::vec3 CDriverSettings::GetConfigVector(const char *section) const
+glm::vec3 CDriverSettings::GetConfigVector(const char *section, const glm::vec3 &def) const
 {
     return glm::vec3(
-        GetConfigFloat(section, C_X),
-        GetConfigFloat(section, C_Y),
-        GetConfigFloat(section, C_Z)
+        GetConfigFloat(section, C_X, def.x),
+        GetConfigFloat(section, C_Y, def.y),
+        GetConfigFloat(section, C_Z, def.z)
     );
 }
-glm::quat CDriverSettings::GetConfigQuaternion(const char *section) const
+glm::quat CDriverSettings::GetConfigQuaternion(const char *section, const glm::quat &def) const
 {
     return glm::quat(
-        GetConfigFloat(section, C_W),
-        GetConfigFloat(section, C_X),
-        GetConfigFloat(section, C_Y),
-        GetConfigFloat(section, C_Z)
+        GetConfigFloat(section, C_W, def.w),
+        GetConfigFloat(section, C_X, def.x),
+        GetConfigFloat(section, C_Y, def.y),
+        GetConfigFloat(section, C_Z, def.z)
     );
 }
 
@@ -119,7 +128,7 @@ INTERP_MODE CDriverSettings::GetConfigInterpolationMode(const char *section, con
     }
 }
 
-const Proportions &CDriverSettings::GetConfigProportions(const char *section, const Proportions &def) const
+const Proportions CDriverSettings::GetConfigProportions(const char *section, const Proportions &def) const
 {
     Proportions result;
     result.hipOffset    = GetConfigFloat(section, KEY_HIP_POS, def.hipOffset);

@@ -24,6 +24,8 @@ CNvSDKInterface::CNvSDKInterface() : m_tmpImage{}
     driver = nullptr;
     ready = false;
     confidenceRequirement = 0.0;
+    m_axisScale = glm::vec3(1.f, 1.f, 1.f);
+    m_offset = glm::vec3(0.f, 0.f, 0.f);
 }
 
 void CNvSDKInterface::KeyInfoUpdated(bool override)
@@ -34,12 +36,7 @@ void CNvSDKInterface::KeyInfoUpdated(bool override)
 
     NvAR_Create(NvAR_Feature_BodyPoseEstimation, &m_keyPointDetectHandle);
 
-    std::string fpath;
-    fpath.assign(g_modulePath);
-    fpath.erase(fpath.begin() + fpath.rfind('\\'), fpath.end());
-    fpath.append("\\models");
-
-    NvAR_SetString(m_keyPointDetectHandle, NvAR_Parameter_Config(ModelDir), fpath.c_str());
+    NvAR_SetString(m_keyPointDetectHandle, NvAR_Parameter_Config(ModelDir), "C:\\Program Files\\NVIDIA Corporation\\NVIDIA AR SDK\\models");
     NvAR_SetCudaStream(m_keyPointDetectHandle, NvAR_Parameter_Config(CUDAStream), m_stream);
     NvAR_SetU32(m_keyPointDetectHandle, NvAR_Parameter_Config(BatchSize), batchSize);
     NvAR_SetU32(m_keyPointDetectHandle, NvAR_Parameter_Config(Mode), nvARMode);
@@ -169,12 +166,8 @@ void CNvSDKInterface::FillBatched(const std::vector<float> &from, std::vector<fl
     int index, batch;
     for (index = 0; index < (int)m_numKeyPoints; index++)
     {
-        to[index] = from[index];
-    }
-    if (realBatches * batchSize <= 1) return;
-    for (index = 0; index < (int)m_numKeyPoints; index++)
-    {
-        for (batch = 1; batch < realBatches * batchSize; batch++)
+        to[index] = 0.f;
+        for (batch = 0; batch < realBatches * batchSize; batch++)
         {
             to[index] += TableIndex(from, index, batch);
         }
@@ -204,18 +197,35 @@ void CNvSDKInterface::FillBatched(const std::vector<NvAR_Quaternion> &from, std:
 void CNvSDKInterface::FillBatched(const std::vector<NvAR_Point3f> &from, std::vector<glm::vec3> &to)
 {
     int index, batch;
-    for(index = 0; index < (int)m_numKeyPoints; index++)
-    {
-        to[index] = CastPoint(from[index]);
-    }
-    if (realBatches * batchSize <= 1) return;
     for (index = 0; index < (int)m_numKeyPoints; index++)
     {
-        for(batch = 1; batch < realBatches * batchSize; batch++)
+        to[index] = glm::vec3(0.f, 0.f, 0.f);
+        for(batch = 0; batch < realBatches * batchSize; batch++)
         {
             to[index] += CastPoint(TableIndex(from, index, batch));
         }
         to[index] /= (float)(realBatches * batchSize);
+        to[index] = CamToWorld(to[index]);
+        to[index] *= m_axisScale;
+    }
+}
+
+void CNvSDKInterface::AlignToHMD(const vr::TrackedDevicePose_t &pose)
+{
+    if (not pose.bDeviceIsConnected || not pose.bPoseIsValid) return;
+    const vr::HmdMatrix34_t &mat = pose.mDeviceToAbsoluteTracking;
+    glm::vec3 hmdPosition = glm::vec3(
+        mat.m[0][3],
+        mat.m[1][3],
+        mat.m[2][3]
+    );
+    glm::vec3 eyes = GetPosition(BODY_JOINT::LEFT_EYE, BODY_JOINT::RIGHT_EYE);
+    glm::vec3 offset = hmdPosition - eyes;
+    offset += ObjectToWorldVector(glm::mat4_cast(GetCameraRot()), m_offset);
+    int index;
+    for (index = 0; index < (int)m_numKeyPoints; index++)
+    {
+        m_realKeypoints3D[index] = WorldToCam(m_realKeypoints3D[index] + offset);
     }
 }
 
@@ -320,7 +330,7 @@ void CNvSDKInterface::RunFrame()
             {
                 RotateBatched(m_keypointsConfidence);
                 RotateBatched(m_keypoints3D);
-                RotateBatched(m_jointAngles);
+                //RotateBatched(m_jointAngles);
             }
             code = (int)NvAR_Run(m_keyPointDetectHandle);
             if (code != 0) vr_log("NVIDIA SDK ERR CODE:\t%d", code);
@@ -331,7 +341,8 @@ void CNvSDKInterface::RunFrame()
         {
             FillBatched(m_keypointsConfidence, m_realConfidence);
             FillBatched(m_keypoints3D, m_realKeypoints3D);
-            FillBatched(m_jointAngles, m_realJointAngles);
+            //FillBatched(m_jointAngles, m_realJointAngles);
+            AlignToHMD(driver->m_hmd_controller_pose[0]);
             //DebugSequence(m_keypoints3D);
         }
         else

@@ -1,16 +1,17 @@
 #include "pch.h"
 #include "CVirtualBodyTracker.h"
 #include "CCommon.h"
+#include "CNvSDKInterface.h"
 #include "CDriverSettings.h"
 #include "CServerDriver.h"
-
-#define M_PI 3.14159265358979323846f
 
 CVirtualBodyTracker::CVirtualBodyTracker(size_t p_index, TRACKER_ROLE rle) : m_lastTransform{0.f}, m_curTransform{0.f}, frame(0), m_wasSet(false)
 {
     m_serial.assign(TrackerRoleName[(int)rle]);
     m_index = p_index;
     role = rle;
+    m_lCall = systime();
+    m_diff = 1.0;
 }
 
 CVirtualBodyTracker::~CVirtualBodyTracker()
@@ -136,20 +137,22 @@ void CVirtualBodyTracker::SetupProperties()
 
 void CVirtualBodyTracker::UpdateTransform(const glm::mat4x4 &newTransform)
 {
-    m_lastTransform = m_curTransform;
+    m_lastTransform = GetTransform();
     m_curTransform = newTransform;
-    if (!m_wasSet)
-        m_lastTransform = m_curTransform;
-    m_wasSet = true;
-    frame = 0;
+    frame = 0.f;
+    m_diff += systime() - m_lCall;
+    m_diff /= 3.0;
+    m_lCall = systime();
 }
 
 const glm::mat4x4 CVirtualBodyTracker::InterpolatedTransform() const
 {
     //vr_log("DO INTERPOLATION");
-    if (IsConnected() && m_wasSet)
+    if (IsConnected())
     {
-        float t = driver->GetFPS() * frame / driver->GetRefreshRate();
+        float t = (float)((systime() - m_lCall) / m_diff);
+        if (t > 1.5f)
+            t = 1.5f;
         switch (driver->m_interpolation)
         {
         case INTERP_MODE::LINEAR:
@@ -166,7 +169,7 @@ const glm::mat4x4 CVirtualBodyTracker::InterpolatedTransform() const
         default:
             return m_curTransform;
         }
-        return glm::interpolate(m_lastTransform, m_curTransform, t);
+        return CNvSDKInterface::InterpolateMatrix(m_lastTransform, m_curTransform, t);
     }
     else
     {
@@ -177,8 +180,7 @@ const glm::mat4x4 CVirtualBodyTracker::InterpolatedTransform() const
 void CVirtualBodyTracker::RunFrame()
 {
     SetTransform(InterpolatedTransform());
-    frame++;  
-    //vr_log("TRACKER %s VALID? %s",TrackerRoleName[(int)role], m_trackedDevice != vr::k_unTrackedDeviceIndexInvalid ? "TRUE" : "FALSE");
+    //frame += driver->GetFPS() / driver->GetRefreshRate();
     if (m_trackedDevice != vr::k_unTrackedDeviceIndexInvalid)
         vr::VRServerDriverHost()->TrackedDevicePoseUpdated(m_trackedDevice, GetPose(), sizeof(vr::DriverPose_t));
 }

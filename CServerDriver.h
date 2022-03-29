@@ -10,6 +10,37 @@ enum class TRACKER_ROLE;
 enum class INTERP_MODE;
 struct Proportions;
 
+enum class BINDING : uint
+{
+    NONE = 0b0,
+
+    MOVE_FORWARD = 0b1,
+    MOVE_BACKWARD = 0b10,
+    MOVE_LEFT = 0b100,
+    MOVE_RIGHT = 0b1000,
+    MOVE_UP = 0b10000,
+    MOVE_DOWN = 0b100000,
+
+    PITCH_UP = 0b1000000,
+    PITCH_DOWN = 0b10000000,
+    YAW_LEFT = 0b100000000,
+    YAW_RIGHT = 0b1000000000,
+    ROLL_LEFT = 0b10000000000,
+    ROLL_RIGHT = 0b100000000000,
+
+    SCALE_X_UP = 0b1000000000000,
+    SCALE_X_DOWN = 0b10000000000000,
+    SCALE_Y_UP = 0b100000000000000,
+    SCALE_Y_DOWN = 0b1000000000000000,
+    SCALE_Z_UP = 0b10000000000000000,
+    SCALE_Z_DOWN = 0b100000000000000000,
+
+    NEXT_CAMERA = 0b1000000000000000000,
+    PREVIOUS_CAMERA = 0b10000000000000000000,
+
+    SHIFT = 0b100000000000000000000
+};
+
 //  The main class responsible for managing data that is transferred between different classes
 class CServerDriver final : public vr::IServerTrackedDeviceProvider
 {
@@ -40,6 +71,25 @@ class CServerDriver final : public vr::IServerTrackedDeviceProvider
     static bool TrackerUpdate(CVirtualBodyTracker &tracker, const CNvSDKInterface &inter, const Proportions &props);
 
     inline void LoadRefreshRate() { m_refreshRateCache = vr::VRSettings()->GetFloat("driver_nvidiaBodyTracking", "displayFrequency"); }
+
+    void ProcessEvent(const vr::VREvent_t &evnt);
+    static inline const bool GetKeyDown(const int &key) { return GetAsyncKeyState(key) < 0; }
+    void MapBinding(const BINDING &binding, const int &key);
+    bool BindingActive(const BINDING &bind) const;
+    bool BindingPressed(const BINDING &bind) const;
+    void UpdateBindings();
+    BINDING m_activations;
+    std::map<BINDING, int> m_bindings;
+    
+    static inline const glm::quat DoEulerYXZ(const float &x = 0.f, const float &y = 0.f, const float &z = 0.f) {
+        return glm::quat(glm::vec3(0.f, y, 0.f)) * glm::quat(glm::vec3(x, 0.f, z));
+    }
+    static inline const glm::quat DoEulerYXZ(const glm::vec3 &vec) {
+        return DoEulerYXZ(vec.x, vec.y, vec.z);
+    }
+
+    template<class T>
+    void DoRotateCam(T &axis, const float &amount = 0.f);
     
     void LoadFPS();
 protected:
@@ -50,15 +100,15 @@ protected:
     CCameraDriver *m_cameraDriver;
     Proportions *m_proportions;
 
-    int key;
-
     INTERP_MODE m_interpolation;
 
     float m_refreshRateCache;
     float m_fpsCache;
-    float m_scaleFactor;
-    float m_depth;
+    glm::vec3 m_scaleFactor;
+    glm::vec3 m_camBryan;
     uint m_frame;
+
+    vr::TrackedDevicePose_t m_hmd_controller_pose[3]{};
 
     friend class CDriverSettings;
     friend class CVirtualBodyTracker;

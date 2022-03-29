@@ -65,10 +65,15 @@ protected:
         return glm::quat(q1.w / count, q1.x / count, q1.y / count, q1.z / count);
     }
 
+    glm::vec3 m_axisScale;
+    glm::vec3 m_offset;
+
     static inline const glm::vec3 CastPoint(const NvAR_Point3f &point) { return glm::vec3(point.x, point.y, point.z); }
     static inline const glm::quat CastQuaternion(const NvAR_Quaternion &quat) { return glm::quat(quat.w, quat.x, quat.y, quat.z); }
     static inline const glm::mat4x4 CastMatrix(const glm::vec3 &point, const glm::quat &quat) { return Slide(glm::mat4_cast(quat), point); }
     static inline const glm::mat4x4 CastMatrix(const NvAR_Point3f &point, const NvAR_Quaternion &quat) { return CastMatrix(CastPoint(point), CastQuaternion(quat)); }
+
+    void AlignToHMD(const vr::TrackedDevicePose_t &pose);
 
     friend class CServerDriver;
 public:
@@ -185,7 +190,7 @@ public:
     inline const glm::vec3 GetPosition(BODY_JOINT role, BODY_JOINT secondary) const { return glm::mix(GetPosition(role), GetPosition(secondary), .5f); }
     inline const glm::quat GetRotation(BODY_JOINT role) const { return m_realJointAngles[(int)role]; }
     inline const glm::quat GetRotation(BODY_JOINT role, BODY_JOINT secondary) const { return glm::slerp(GetRotation(role), GetRotation(secondary), .5f); }
-    inline const glm::mat4x4 GetAverageTransform(BODY_JOINT from, BODY_JOINT to) const { return glm::interpolate(GetTransform(from), GetTransform(to), .5f); }
+    inline const glm::mat4x4 GetAverageTransform(BODY_JOINT from, BODY_JOINT to) const { return InterpolateMatrix(GetTransform(from), GetTransform(to), .5f); }
     inline const glm::mat4x4 GetInterpolatedTransform(BODY_JOINT from, BODY_JOINT to, BODY_JOINT rotation_owner, float alpha = 0.f) const
     { 
         return CastMatrix(glm::mix(GetPosition(from), GetPosition(to), alpha), GetRotation(rotation_owner));
@@ -196,6 +201,29 @@ public:
             return GetInterpolatedTransform(middle, to, to, alpha);
         else
             return GetInterpolatedTransform(middle, from, middle, -alpha);
+    }
+
+    static inline const glm::vec3 ObjectToWorldVector(const glm::mat4x4 &mat, const glm::vec3 &vec)
+    {
+        return glm::translate(mat, vec)[3];
+    }
+    static inline const glm::vec3 WorldToObjectVector(const glm::mat4x4 &mat, const glm::vec3 &vec)
+    {
+        return glm::translate(glm::inverse(mat), vec)[3];
+    }
+    inline const glm::vec3 CamToWorld(const glm::vec3 &input) const {
+        return ObjectToWorldVector(GetCameraMatrix(), input);
+    }
+
+    inline const glm::vec3 WorldToCam(const glm::vec3 &input) const {
+        return WorldToObjectVector(GetCameraMatrix(), input);
+    }
+
+    static inline const glm::mat4x4 InterpolateMatrix(const glm::mat4x4 &mat1, const glm::mat4x4 &mat2, const float &delta)
+    {
+        glm::mat4x4 output = glm::mat4_cast(glm::slerp(glm::quat_cast(mat1), glm::quat_cast(mat2), delta));
+        output[3] = mat2[3] * delta + mat1[3] * (1.f - delta);
+        return output;
     }
 
     inline int GetImageWidth() const { return m_inputImageWidth; }

@@ -33,14 +33,14 @@
 #define KEY_RES_SCALE "ResolutionScale"
 //  Whether or not to make the camera visible (bool)
 #define KEY_CAM_VIS "Visible"
+//  The index of the camera to use
+#define KEY_CAM_INDEX "Index"
 
+//  Tracking scale on X, Y, and Z axis
+#define SECTION_TRACK_SCALE "TrackingScale"
 
 //  SDK settings section
 #define SECTION_SDKSET "SDKSettings"
-//  The scale of the Z component
-#define KEY_DEPTH_SCALE "DepthScale"
-//  Proportional scale of the transform information
-#define KEY_TRACK_SCALE "TrackingScale"
 //  Whether or not tracking is enabled (bool)
 #define KEY_TRACKING "TrackingEnabled"
 //  The minimum m_confidence interval (float)
@@ -120,6 +120,7 @@ enum class INTERP_MODE
     QUAD,
     CUBIC
 };
+const char *InterpModeName[];
 
 //  Used to store the proportional information from the config file
 struct Proportions
@@ -148,11 +149,11 @@ public:
 
     inline int GetConfigInteger(const char *section, const char *key, int def = 0) const { return atoi(m_iniFile.GetValue(section, key, C_0)); }
     inline float GetConfigFloat(const char *section, const char *key, float def = 0.0f) const { return (float)m_iniFile.GetDoubleValue(section, key, 0.0); }
-    glm::vec3 GetConfigVector(const char *section) const;
-    glm::quat GetConfigQuaternion(const char *section) const;
+    glm::vec3 GetConfigVector(const char *section, const glm::vec3 &def=glm::vec3(0.f, 0.f, 0.f)) const;
+    glm::quat GetConfigQuaternion(const char *section, const glm::quat &def = glm::quat(0.f, 0.f, 0.f, 0.f)) const;
     inline  bool GetConfigBoolean(const char *section, const char *key, bool def = false) const { return m_iniFile.GetBoolValue(section, key, def); }
     inline const char *GetConfigCString(const char *section, const char *key, const char *def = "") const { return m_iniFile.GetValue(section, key, def); }
-    inline const std::string &GetConfigString(const char *section, const char *key, const std::string &def = std::string("")) const { return std::string(m_iniFile.GetValue(section, key, def.c_str())); }
+    inline const std::string GetConfigString(const char *section, const char *key, const std::string &def = std::string("")) const { return std::string(m_iniFile.GetValue(section, key, def.c_str())); }
 
     inline bool SetConfigInteger(const char *section, const char *key, int value) { _itoa_s(value, m_tempBuffer, BUFFER_SIZE); return 0 < m_iniFile.SetValue(section, key, m_tempBuffer); }
     inline  bool SetConfigFloat(const char *section, const char *key, float value) { return 0 < m_iniFile.SetDoubleValue(section, key, (double)value); }
@@ -166,7 +167,7 @@ public:
     TRACKING_FLAG GetConfigTrackingMode(const char *section, TRACKING_FLAG def = TRACKING_FLAG::NONE) const;
 
     INTERP_MODE GetConfigInterpolationMode(const char *section, const char *key, INTERP_MODE def = INTERP_MODE::NONE) const;
-    const Proportions &GetConfigProportions(const char *section, const Proportions &def = Proportions()) const;
+    const Proportions GetConfigProportions(const char *section, const Proportions &def = Proportions()) const;
 
     /// <summary>
     /// Update the configuration data with information from a source <b>CServerDriver</b>

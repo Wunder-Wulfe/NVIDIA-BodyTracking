@@ -15,6 +15,7 @@
 #include <algorithm>
 #include <functional>
 #include <future>
+#include <map>
 
 #include "openvr_driver.h"
 #include "opencv2/opencv.hpp"

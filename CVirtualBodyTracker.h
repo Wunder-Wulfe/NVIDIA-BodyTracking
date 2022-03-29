@@ -21,8 +21,9 @@ class CVirtualBodyTracker : public CVirtualDevice
     bool m_wasSet;
 
     //  The frame number recorded by the tracker (used for interpolation)
-    uint frame;
-
+    float frame;
+    double m_lCall;
+    double m_diff;
     //  Compute the transform based on the currently set values, and interpolate between them using the frame number
     const glm::mat4x4 InterpolatedTransform() const;
 

@@ -36,14 +36,41 @@ CServerDriver::CServerDriver()
     m_refreshRateCache = 60.f;
     m_proportions = nullptr;
     m_frame = 0u;
-    m_scaleFactor = 1.f;
-    m_depth = 1.f;
-    key = -1;
+    m_scaleFactor = glm::vec3(1.f, 1.f, 1.f);
+    m_activations = BINDING::NONE;
+    m_camBryan = glm::vec3(.0f);
 }
 
 CServerDriver::~CServerDriver()
 {
     Cleanup();
+}
+
+
+void CServerDriver::MapBinding(const BINDING &binding, const int &key)
+{ 
+    m_bindings[binding] = key; 
+}
+bool CServerDriver::BindingActive(const BINDING &bind) const
+{
+    return FLAG_ACTIVE(m_activations, bind); 
+}
+bool CServerDriver::BindingPressed(const BINDING &bind) const
+{
+    auto it = m_bindings.find(bind);
+    if (it == m_bindings.end())
+        return false;
+    else
+        return GetKeyDown(it->second) && !BindingActive(bind);
+}
+void CServerDriver::UpdateBindings()
+{
+    m_activations = BINDING::NONE;
+    for (const auto &item : m_bindings)
+    {
+        if (GetKeyDown(item.second))
+            m_activations = FLAG_OR(m_activations, item.first);
+    }
 }
 
 bool CServerDriver::TrackerUpdate(CVirtualBodyTracker &tracker, const CNvSDKInterface &inter, const Proportions &props)
@@ -176,9 +203,6 @@ bool CServerDriver::TrackerUpdate(CVirtualBodyTracker &tracker, const CNvSDKInte
         transform = inter.GetTransform(BODY_JOINT::RIGHT_WRIST);
         break;
     }
-    transform[3][0] /= -1500.f / tracker.driver->m_scaleFactor;
-    transform[3][1] /= -1500.f / tracker.driver->m_scaleFactor;
-    transform[3][2] /= 1500.f / tracker.driver->m_depth;
 
     //vr_log("Tracker %s passed transform check", TrackerRoleName[(int)tracker.role]);
 
@@ -232,6 +256,13 @@ void CServerDriver::OnCameraUpdate(const CCameraDriver &me, int index)
     vr_log("Successful in loading image to GPU memory\n");
 }
 
+template<class T>
+void CServerDriver::DoRotateCam(T &axis, const float &amount)
+{
+    axis = std::fabs(std::fmod(axis + amount + 180.f, 360.f)) - 180.f;
+    m_nvInterface->SetCameraRotation(DoEulerYXZ(glm::radians(m_camBryan)));
+}
+
 vr::EVRInitError CServerDriver::Init(vr::IVRDriverContext *pDriverContext)
 {
     VR_INIT_SERVER_DRIVER_CONTEXT(pDriverContext);
@@ -243,8 +274,8 @@ vr::EVRInitError CServerDriver::Init(vr::IVRDriverContext *pDriverContext)
 
     m_trackingMode = m_driverSettings->GetConfigTrackingMode(SECTION_TRACK_MODE);
     m_interpolation = m_driverSettings->GetConfigInterpolationMode(SECTION_TRACKSET, KEY_INTERP);
-    m_scaleFactor = m_driverSettings->GetConfigFloat(SECTION_SDKSET, KEY_TRACK_SCALE, 1.0f);
-    m_depth = m_driverSettings->GetConfigFloat(SECTION_SDKSET, KEY_DEPTH_SCALE, 1.0f);
+    vr_log("Interpolation mode: %s", InterpModeName[(int)m_interpolation]);
+    m_scaleFactor = m_driverSettings->GetConfigVector(SECTION_TRACK_SCALE, glm::vec3(1.f, 1.f, 1.f));
     m_proportions = new Proportions(m_driverSettings->GetConfigProportions(SECTION_TRACKSET));
 
     vr_log("Loading NVIDIA AR SDK modules...\n");
@@ -260,7 +291,13 @@ vr::EVRInitError CServerDriver::Init(vr::IVRDriverContext *pDriverContext)
         m_nvInterface->nvARMode = m_driverSettings->GetConfigInteger(SECTION_SDKSET, KEY_NVAR, 1);
         m_nvInterface->confidenceRequirement = m_driverSettings->GetConfigFloat(SECTION_SDKSET, KEY_CONF, 0.0);
         m_nvInterface->trackingActive = m_driverSettings->GetConfigBoolean(SECTION_SDKSET, KEY_TRACKING, true);
-        m_nvInterface->SetCamera(m_driverSettings->GetConfigVector(SECTION_POS), m_driverSettings->GetConfigQuaternion(SECTION_ROT));
+        m_camBryan = m_driverSettings->GetConfigVector(SECTION_ROT);
+        m_nvInterface->SetCamera(
+            m_driverSettings->GetConfigVector(SECTION_POS), 
+            DoEulerYXZ(
+                glm::radians(m_camBryan)
+            )
+        );
         m_nvInterface->Initialize();
         m_nvInterface->KeyInfoUpdated(true);
     }
@@ -276,11 +313,15 @@ vr::EVRInitError CServerDriver::Init(vr::IVRDriverContext *pDriverContext)
     {
         m_cameraDriver = new CCameraDriver(this, m_driverSettings->GetConfigFloat(SECTION_CAMSET, KEY_RES_SCALE, 1.f));
         m_cameraDriver->show = m_driverSettings->GetConfigBoolean(SECTION_CAMSET, KEY_CAM_VIS, true);
+        m_cameraDriver->m_cameraIndex = m_driverSettings->GetConfigInteger(SECTION_CAMSET, KEY_CAM_INDEX, 0);
         m_cameraDriver->LoadCameras();
+        vr_log("\tBinding events");
         m_cameraDriver->imageChanged += CFunctionFactory(OnImageUpdate, void, const CCameraDriver&, cv::Mat);
         m_cameraDriver->cameraChanged += CFunctionFactory(OnCameraUpdate, void, const CCameraDriver &, int);
+        vr_log("\tLaunching camera thread");
         m_camThread = std::thread(&CCameraDriver::RunAsync, m_cameraDriver);
         m_camThread.detach();
+        vr_log("\tCamera thread launched asynchronously");
     }
     catch(std::exception e)
     {
@@ -305,7 +346,55 @@ vr::EVRInitError CServerDriver::Init(vr::IVRDriverContext *pDriverContext)
     SetupTracker(KEY_HEAD_ON, TRACKING_FLAG::HEAD, TRACKER_ROLE::HEAD);
     SetupTracker(KEY_HAND_ON, TRACKING_FLAG::HAND, TRACKER_ROLE::LEFT_HAND, TRACKER_ROLE::RIGHT_HAND);
 
-    key = -1;
+    vr_log("Trackers initialized");
+
+    vr_log("Binding inputs...");
+
+
+    MapBinding(BINDING::SHIFT, VK_SHIFT);
+
+    vr_log("\tWASD: Move the base station");
+    MapBinding(BINDING::MOVE_FORWARD, 'W');
+    MapBinding(BINDING::MOVE_LEFT, 'A');
+    MapBinding(BINDING::MOVE_BACKWARD, 'S');
+    MapBinding(BINDING::MOVE_RIGHT, 'D');
+
+    vr_log("\tE/Q: Raise/lower the base station");
+    MapBinding(BINDING::MOVE_UP, 'E');
+    MapBinding(BINDING::MOVE_DOWN, 'Q');
+
+ 
+    vr_log("\tUP/DOWN: Rotate the base station up/down");
+    MapBinding(BINDING::PITCH_UP, VK_UP);
+    MapBinding(BINDING::PITCH_DOWN, VK_DOWN);
+
+    vr_log("\tLEFT/RIGHT: Rotate the base station left/right");
+    MapBinding(BINDING::YAW_LEFT, VK_LEFT);
+    MapBinding(BINDING::YAW_RIGHT, VK_RIGHT);
+
+    vr_log("\t,/.: Tilt the base station left/right");
+    MapBinding(BINDING::ROLL_LEFT, VK_OEM_COMMA);
+    MapBinding(BINDING::ROLL_RIGHT, VK_OEM_PERIOD);
+
+    vr_log("\tT/R: Scale the X axis up/down");
+    MapBinding(BINDING::SCALE_X_UP, 'T');
+    MapBinding(BINDING::SCALE_X_DOWN, 'R');
+
+    vr_log("\tU/Y: Scale the Y axis up/down");
+    MapBinding(BINDING::SCALE_Y_UP, 'U');
+    MapBinding(BINDING::SCALE_Y_DOWN, 'Y');
+
+    vr_log("\tO/I: Scale the Z axis up/down");
+    MapBinding(BINDING::SCALE_Z_UP, 'O');
+    MapBinding(BINDING::SCALE_Z_DOWN, 'I');
+
+    vr_log("\tG/F: Switch to the next/previous camera");
+    MapBinding(BINDING::NEXT_CAMERA, 'G');
+    MapBinding(BINDING::PREVIOUS_CAMERA, 'F');
+
+    vr_log("\tWASD + SHIFT: Move the HMD offset");
+
+    vr_log("All inputs bound successfully");
 
     return vr::VRInitError_None;
 }
@@ -316,6 +405,7 @@ void CServerDriver::Cleanup()
 
     m_trackers.clear();
 
+    m_driverSettings->UpdateConfig(this);
     m_driverSettings->UpdateConfig(this);
     m_driverSettings->SaveConfig();
     delptr(m_driverSettings);
@@ -339,12 +429,23 @@ void CServerDriver::Cleanup()
     vr::CleanupDriverContext();
 }
 
+void CServerDriver::ProcessEvent(const vr::VREvent_t &evnt)
+{
+   
+}
+
 void CServerDriver::RunFrame()
 {
     static bool was_ready = false;
     static double last_clock = systime();
     double cur_clock = systime();
     double clock_diff = cur_clock - last_clock;
+    static float move_speed = .25f, rotate_speed = 45.f, scale_speed = .125f;
+    float move_amnt, rotate_amnt, scale_amnt;
+    static bool camup = false, camdn = false;
+    vr::VREvent_t ev;
+
+    vr::VRServerDriverHost()->GetRawTrackedDevicePoses(0.f, m_hmd_controller_pose, 3);
 
     m_frame++;
 
@@ -353,83 +454,96 @@ void CServerDriver::RunFrame()
     ptrsafe(m_station);
 
     LoadRefreshRate();
-    m_refreshRateCache = 1.f/clock_diff;
+    m_refreshRateCache = (float)(1./clock_diff);
     last_clock = cur_clock;
     LoadFPS();
 
-    static int l_key = 0;
-    static float yaw = 0.f;
-    static float pitch = 0.f;
+    move_amnt = (float)(move_speed * clock_diff);
+    rotate_amnt = (float)(rotate_speed * clock_diff);
+    scale_amnt = (float)(scale_speed * clock_diff);
 
-    if (key >= 0)
+    while (vr::VRServerDriverHost()->PollNextEvent(&ev, sizeof(vr::VREvent_t)))
+        ProcessEvent(ev);
+
+
+
+    if (BindingActive(BINDING::SHIFT))
     {
-        if (l_key != key)
-        {
-            l_key = key;
-            vr_log("KEYCODE PRESS %d", key);
-        }
+        if (BindingActive(BINDING::MOVE_FORWARD))
+            m_nvInterface->m_offset.z -= move_amnt;
+        if (BindingActive(BINDING::MOVE_BACKWARD))
+            m_nvInterface->m_offset.z += move_amnt;
+        if (BindingActive(BINDING::MOVE_LEFT))
+            m_nvInterface->m_offset.x += move_amnt;
+        if (BindingActive(BINDING::MOVE_RIGHT))
+            m_nvInterface->m_offset.x -= move_amnt;
+
+        if (BindingActive(BINDING::MOVE_UP))
+            m_nvInterface->m_offset.y += move_amnt;
+        if (BindingActive(BINDING::MOVE_DOWN))
+            m_nvInterface->m_offset.y -= move_amnt;
+    }
+    else
+    {
+        if (BindingActive(BINDING::MOVE_FORWARD))
+            m_nvInterface->TranslateCamera(glm::vec3(0.f, 0.f, move_amnt));
+        if (BindingActive(BINDING::MOVE_BACKWARD))
+            m_nvInterface->TranslateCamera(glm::vec3(0.f, 0.f, -move_amnt));
+        if (BindingActive(BINDING::MOVE_LEFT))
+            m_nvInterface->TranslateCamera(glm::vec3(-move_amnt, 0.f, 0.f));
+        if (BindingActive(BINDING::MOVE_RIGHT))
+            m_nvInterface->TranslateCamera(glm::vec3(move_amnt, 0.f, 0.f));
+
+        if (BindingActive(BINDING::MOVE_UP))
+            m_nvInterface->TranslateCamera(glm::vec3(0.f, move_amnt, 0.f));
+        if (BindingActive(BINDING::MOVE_DOWN))
+            m_nvInterface->TranslateCamera(glm::vec3(0, -move_amnt, 0.f));
     }
 
-    switch (key)
-    {
-    case 2490368: // ^
-        m_nvInterface->TranslateCamera(glm::vec3(0.f, 0.f, 0.01f));
-        break;
-    case 2621440: // v
-        m_nvInterface->TranslateCamera(glm::vec3(0.f, 0.f, -0.01f));
-        break;
-    case 2555904: // <
-        m_nvInterface->TranslateCamera(glm::vec3(0.01f, 0.f, 0.f));
-        break;
-    case 2424832: // >
-        m_nvInterface->TranslateCamera(glm::vec3(-0.01f, 0.f, 0.f));
-        break;
 
-    case 101: // e
-        m_nvInterface->TranslateCamera(glm::vec3(0.f, 0.01f, 0.f));
-        break;
-    case 113: // q
-        m_nvInterface->TranslateCamera(glm::vec3(0, -0.01f, 0.f));
-        break;
+    if (BindingActive(BINDING::PITCH_UP))
+        DoRotateCam(m_camBryan.x, -rotate_amnt);
+    if (BindingActive(BINDING::PITCH_DOWN))
+        DoRotateCam(m_camBryan.x, rotate_amnt);
 
-    case 119: // w
-        pitch -= 0.01f;
-        m_nvInterface->SetCameraRotation(glm::quat(glm::vec3(0.f, yaw, 0.f)) * glm::quat(glm::vec3(pitch, 0.f, 0.f)));
-        break;
-    case 115: // s
-        pitch += 0.01f;
-        m_nvInterface->SetCameraRotation(glm::quat(glm::vec3(0.f, yaw, 0.f)) * glm::quat(glm::vec3(pitch, 0.f, 0.f)));
-        break;
-    case 100: // d
-        yaw -= 0.01f;
-        m_nvInterface->SetCameraRotation(glm::quat(glm::vec3(0.f, yaw, 0.f)) * glm::quat(glm::vec3(pitch, 0.f, 0.f)));
-        break;
-    case 97: // a
-        yaw += 0.01f;
-        m_nvInterface->SetCameraRotation(glm::quat(glm::vec3(0.f, yaw, 0.f)) * glm::quat(glm::vec3(pitch, 0.f, 0.f)));
-        break;
+    if (BindingActive(BINDING::YAW_LEFT))
+        DoRotateCam(m_camBryan.y, -rotate_amnt);
+    if (BindingActive(BINDING::YAW_RIGHT))
+        DoRotateCam(m_camBryan.y, rotate_amnt);
 
-    case 116: // t
-        m_scaleFactor += 0.01f;
-        break;
-    case 114: // r
-        m_scaleFactor -= 0.01f;
-        break;
+    if (BindingActive(BINDING::ROLL_LEFT))
+        DoRotateCam(m_camBryan.z, rotate_amnt);
+    if (BindingActive(BINDING::ROLL_RIGHT))
+        DoRotateCam(m_camBryan.z, -rotate_amnt);
 
-    case 111: // o
-        m_depth += 0.01f;
-        break;
-    case 105: // i
-        m_depth -= 0.01f;
-        break;
 
-    case 103: // g
+    if (BindingActive(BINDING::SCALE_X_UP))
+        m_scaleFactor.x += scale_amnt;
+    if (BindingActive(BINDING::SCALE_X_DOWN))
+        m_scaleFactor.x -= scale_amnt;
+
+    if (BindingActive(BINDING::SCALE_Y_UP))
+        m_scaleFactor.y += scale_amnt;
+    if (BindingActive(BINDING::SCALE_Y_DOWN))
+        m_scaleFactor.y -= scale_amnt;
+
+    if (BindingActive(BINDING::SCALE_Z_UP))
+        m_scaleFactor.z += scale_amnt;
+    if (BindingActive(BINDING::SCALE_Z_DOWN))
+        m_scaleFactor.z -= scale_amnt;
+
+    if (BindingPressed(BINDING::NEXT_CAMERA))
         m_cameraDriver->ChangeCamera(1);
-        break;
-    case 102: // f
+    if (BindingPressed(BINDING::PREVIOUS_CAMERA))
         m_cameraDriver->ChangeCamera(-1);
-        break;
-    }
+
+
+    UpdateBindings();
+
+    m_nvInterface->m_axisScale.x = 0.001f * m_scaleFactor.x;
+    m_nvInterface->m_axisScale.y = -0.001f * m_scaleFactor.y;
+    m_nvInterface->m_axisScale.z = -0.001f * m_scaleFactor.z;
+
     //vr_log("Found FPS and Refresh Rates: %.2f %.2f", GetFPS(), GetRefreshRate());
 
     //vr_log("Fully rendered the camera");

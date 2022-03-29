@@ -14,11 +14,10 @@ class CCameraDriver
 {
     cv::VideoCapture m_currentCamera;
     CameraInfo *m_cameraInfo;
-    int m_cameraIndex;
+    std::atomic<int> m_cameraIndex;
     cv::Mat m_frame;
     std::vector<CameraInfo> m_cameras;
     std::atomic<bool> m_working;
-    std::mutex m_camMutex;
 
     void Cleanup();
 protected:
@@ -37,13 +36,14 @@ public:
     void ChangeCamera(int up = 1);
 
     inline const cv::Mat GetImage() const { return m_frame; }
-    inline const float GetFps() const { return m_cameras.size() > 0 ? m_fps : (float)m_currentCamera.get(CV_CAP_PROP_FPS); }
+    inline const float GetFps() const { return m_cameras.size() > 0 ? m_fps : 0.f; }
 
     inline int GetWidth() const { return m_cameras[m_cameraIndex].width; }
     inline int GetHeight() const { return m_cameras[m_cameraIndex].height; }
     inline int GetScaledWidth() const { return (int)(GetWidth() * m_resScale); }
     inline int GetScaledHeight() const { return (int)(GetHeight() * m_resScale); }
     inline float GetScale() const { return m_resScale; }
+    inline int GetIndex() const { return m_cameraIndex; }
 
     inline cv::VideoCaptureModes const GetMode() { return (cv::VideoCaptureModes)(int)m_currentCamera.get(CV_CAP_PROP_MODE); }
 
