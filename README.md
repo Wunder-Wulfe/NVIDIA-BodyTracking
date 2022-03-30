@@ -48,6 +48,7 @@ Current keybinds:
 In order to use any of the executables, you are required to download and install the [NVIDIA Broadcast AR SDK](https://www.nvidia.com/en-us/geforce/broadcasting/broadcast-sdk/resources/).
 *(Note: As of right now, it works only on RTX 20 and 30 series cards. Other cards are untested)*
 
+NVIDIA Library used: [MAXINE AR SDK](https://github.com/NVIDIA/MAXINE-AR-SDK)
 
 Additional libraries used:
 
