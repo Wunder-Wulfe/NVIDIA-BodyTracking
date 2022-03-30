@@ -10,40 +10,9 @@ https://user-images.githubusercontent.com/29297318/160537122-21e5f4ce-0a91-44e1-
 [Discord Server](https://discord.gg/XjkyuwRW6Z)
 
 
-Current keybinds:
+Current keybinds can be found in the vrserver.txt log, but here are the current bindings
+![image](https://user-images.githubusercontent.com/29297318/160949112-6ada034d-ef79-4208-ae32-474c637a7785.png)
 
-* Up Arrow
-  * Moves the base station forward
-* Down Arrow
-  * Moves the base station backward
-* Left Arrow
-  * Moves the base station left
-* Right Arrow
-  * Moves the base station right
-
-* W
-  * Rotates the base station upward
-* S
-  * Rotates the base station downward
-* A
-  * Rotates the base station to the left
-* D
-  * Rotates the base station to the right
-
-* T
-  * Increases the X/Y scale 
-* R
-  * Decreases the X/Y scale 
-
-* O
-  * Increases the Z/depth scale
-* I
-  * Decreases the Z/depth scale
-
-* G
-  * Switches to the next available camera
-* F
-  * Switches to the previous available camera
 
 In order to use any of the executables, you are required to download and install the [NVIDIA Broadcast AR SDK](https://www.nvidia.com/en-us/geforce/broadcasting/broadcast-sdk/resources/).
 *(Note: As of right now, it works only on RTX 20 and 30 series cards. Other cards are untested)*
