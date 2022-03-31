@@ -211,6 +211,17 @@ void CNvSDKInterface::FillBatched(const std::vector<NvAR_Point3f> &from, std::ve
     }
 }
 
+void CNvSDKInterface::AlignToMirror()
+{
+    glm::vec3 eyes = GetPosition(BODY_JOINT::LEFT_EYE, BODY_JOINT::RIGHT_EYE);
+    glm::vec3 offset = -eyes;
+    offset += m_offset;
+    int index;
+    for (index = 0; index < (int)m_numKeyPoints; index++)
+    {
+        m_realKeypoints3D[index] += offset;
+    }
+}
 void CNvSDKInterface::AlignToHMD(const vr::TrackedDevicePose_t &pose)
 {
     if (not pose.bDeviceIsConnected || not pose.bPoseIsValid) return;
@@ -345,7 +356,10 @@ void CNvSDKInterface::RunFrame()
             FillBatched(m_keypointsConfidence, m_realConfidence);
             FillBatched(m_keypoints3D, m_realKeypoints3D);
             //FillBatched(m_jointAngles, m_realJointAngles);
-            if (m_alignHMD) AlignToHMD(driver->m_hmd_controller_pose[0]);
+            if (m_alignHMD)
+                AlignToHMD(driver->m_hmd_controller_pose[0]);
+            else
+                AlignToMirror();
             //DebugSequence(m_keypoints3D);
         }
         else

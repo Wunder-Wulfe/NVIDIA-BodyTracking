@@ -38,6 +38,7 @@ class CNvSDKInterface
     void FillBatched(const std::vector<float> &from, std::vector<float> &to);
     void FillBatched(const std::vector<NvAR_Point3f> &from, std::vector<glm::vec3> &to);
     void FillBatched(const std::vector<NvAR_Quaternion> &from, std::vector<glm::quat> &to);
+    void FillBatchedMirror(const std::vector<NvAR_Point3f> &from, std::vector<glm::vec3> &to, const glm::vec3 &hmd);
 
     void RotateBatched(std::vector<float> &to);
     void RotateBatched(std::vector<NvAR_Point3f> &to);
@@ -75,6 +76,7 @@ protected:
     static inline const glm::mat4x4 CastMatrix(const NvAR_Point3f &point, const NvAR_Quaternion &quat) { return CastMatrix(CastPoint(point), CastQuaternion(quat)); }
 
     void AlignToHMD(const vr::TrackedDevicePose_t &pose);
+    void AlignToMirror();
 
     friend class CServerDriver;
 public:
