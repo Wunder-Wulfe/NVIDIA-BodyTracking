@@ -133,81 +133,8 @@ bool CServerDriver::TrackerUpdate(CVirtualBodyTracker &tracker, const CNvSDKInte
 
     //vr_log("Tracker %s passed confidence check", TrackerRoleName[(int)tracker.role]);
 
-    glm::mat4x4 transform;
-
-    switch (tracker.role)
-    {
-    case TRACKER_ROLE::HIPS:
-        transform = CNvSDKInterface::MirrorRotationX(inter.GetInterpolatedTransform(BODY_JOINT::PELVIS, BODY_JOINT::TORSO, BODY_JOINT::PELVIS, props.hipOffset));
-        break;
-    case TRACKER_ROLE::LEFT_FOOT:
-        transform = CNvSDKInterface::MirrorRotationX(inter.GetTransform(BODY_JOINT::LEFT_ANKLE, BODY_JOINT::LEFT_HEEL));
-        break;
-    case TRACKER_ROLE::RIGHT_FOOT:
-        transform = CNvSDKInterface::MirrorRotationX(inter.GetTransform(BODY_JOINT::RIGHT_ANKLE, BODY_JOINT::RIGHT_HEEL));
-        break;
-    case TRACKER_ROLE::LEFT_ELBOW:
-        transform = inter.GetInterpolatedTransformMulti(
-            BODY_JOINT::LEFT_WRIST,
-            BODY_JOINT::LEFT_ELBOW,
-            BODY_JOINT::LEFT_SHOULDER,
-            props.elbowOffset
-        );
-        break;
-    case TRACKER_ROLE::RIGHT_ELBOW:
-        transform = inter.GetInterpolatedTransformMulti(
-            BODY_JOINT::RIGHT_WRIST,
-            BODY_JOINT::RIGHT_ELBOW,
-            BODY_JOINT::RIGHT_SHOULDER,
-            props.elbowOffset
-        );
-        break;
-    case TRACKER_ROLE::LEFT_KNEE:
-        transform = inter.GetInterpolatedTransformMulti(
-            BODY_JOINT::LEFT_ANKLE,
-            BODY_JOINT::LEFT_KNEE,
-            BODY_JOINT::LEFT_HIP,
-            props.kneeOffset
-        );
-        break;
-    case TRACKER_ROLE::RIGHT_KNEE:
-        transform = inter.GetInterpolatedTransformMulti(
-            BODY_JOINT::RIGHT_ANKLE,
-            BODY_JOINT::RIGHT_KNEE,
-            BODY_JOINT::RIGHT_HIP,
-            props.kneeOffset
-        );
-        break;
-    case TRACKER_ROLE::CHEST:
-        transform = inter.GetInterpolatedTransform(BODY_JOINT::TORSO, BODY_JOINT::PELVIS, BODY_JOINT::TORSO, props.chestOffset);
-        break;
-    case TRACKER_ROLE::LEFT_SHOULDER:
-        transform = inter.GetTransform(BODY_JOINT::LEFT_SHOULDER);
-        break;
-    case TRACKER_ROLE::RIGHT_SHOULDER:
-        transform = inter.GetTransform(BODY_JOINT::RIGHT_SHOULDER);
-        break;
-    case TRACKER_ROLE::LEFT_TOE:
-        transform = inter.GetAverageTransform(BODY_JOINT::LEFT_BIG_TOE, BODY_JOINT::LEFT_SMALL_TOE);
-        break;
-    case TRACKER_ROLE::RIGHT_TOE:
-        transform = inter.GetAverageTransform(BODY_JOINT::RIGHT_BIG_TOE, BODY_JOINT::RIGHT_SMALL_TOE);
-        break;
-    case TRACKER_ROLE::HEAD:
-        transform = inter.GetTransform(BODY_JOINT::NECK, BODY_JOINT::NOSE);
-        break;
-    case TRACKER_ROLE::LEFT_HAND:
-        transform = inter.GetTransform(BODY_JOINT::LEFT_WRIST);
-        break;
-    case TRACKER_ROLE::RIGHT_HAND:
-        transform = inter.GetTransform(BODY_JOINT::RIGHT_WRIST);
-        break;
-    }
-
-    //vr_log("Tracker %s passed transform check", TrackerRoleName[(int)tracker.role]);
-
     tracker.SetOffsetTransform(inter.GetCameraMatrix());
-    tracker.UpdateTransform(transform);
+    tracker.UpdateTransform(inter.GetTransformFromRole(tracker.role));
 
     //vr_log("Tracker %s updated transform check", TrackerRoleName[(int)tracker.role]);
     //vr_log("transform info: %.3f %.3f %.3f", transform[3][0], transform[3][1], transform[3][2]);
@@ -283,6 +210,15 @@ vr::EVRInitError CServerDriver::Init(vr::IVRDriverContext *pDriverContext)
     m_scaleFactor = m_driverSettings->GetConfigVector(SECTION_TRACK_SCALE, glm::vec3(1.f, 1.f, 1.f));
     m_proportions = new Proportions(m_driverSettings->GetConfigProportions(SECTION_TRACKSET));
 
+    vr_log("Body proportions:");
+
+    vr_log("\tHip offset: %.2f", m_proportions->hipOffset);
+    vr_log("\tChest offset: %.2f", m_proportions->chestOffset);
+    vr_log("\tElbow offset: %.2f", m_proportions->elbowOffset);
+    vr_log("\tKnee offset: %.2f", m_proportions->kneeOffset);
+    vr_log("\tFoot offset: %.2f", m_proportions->footOffset);
+    vr_log("\tHip offset: %.2f", m_proportions->hipOffset);
+
     vr_log("Loading NVIDIA AR SDK modules...\n");
     try
     {
@@ -325,7 +261,7 @@ vr::EVRInitError CServerDriver::Init(vr::IVRDriverContext *pDriverContext)
         m_cameraDriver->cameraChanged += CFunctionFactory(OnCameraUpdate, void, const CCameraDriver &, int);
         vr_log("\tLaunching camera thread");
         m_camThread = std::thread(&CCameraDriver::RunAsync, m_cameraDriver);
-        m_camThread.detach();
+        //m_camThread.detach();
         vr_log("\tCamera thread launched asynchronously");
     }
     catch(std::exception e)

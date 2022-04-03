@@ -3,10 +3,15 @@
 #include "CCommon.h"
 #include "CServerDriver.h"
 #include "CCameraDriver.h"
+#include "CDriverSettings.h"
 
 extern char g_modulePath[];
 
 char *g_nvARSDKPath = nullptr;
+
+const glm::vec3 CNvSDKInterface::c_x = glm::vec3(1.f, 0.f, 0.f);
+const glm::vec3 CNvSDKInterface::c_y = glm::vec3(0.f, 1.f, 0.f);
+const glm::vec3 CNvSDKInterface::c_z = glm::vec3(0.f, 0.f, 1.f);
 
 CNvSDKInterface::CNvSDKInterface() : m_tmpImage{}
 {
@@ -259,6 +264,152 @@ void CNvSDKInterface::RotateBatched(std::vector<NvAR_Quaternion> &to)
 }
 
 
+inline const glm::vec3 pointOnLine(const glm::vec3 &a, const glm::vec3 &b, const glm::vec3 &p)
+{
+    glm::vec3 ap = p - a;
+    glm::vec3 ab = b - a;
+    return a + glm::dot(ap,ab) / glm::dot(ab,ab) * ab;
+}
+
+void CNvSDKInterface::ComputeRotations()
+{
+    glm::vec3 projDir;
+    //  Hips
+    UpdateRotation(
+        BODY_JOINT::PELVIS,
+        glm::quatLookAt(
+            GetDirection(BODY_JOINT::LEFT_HIP, BODY_JOINT::RIGHT_HIP),
+            GetDirection(BODY_JOINT::PELVIS, BODY_JOINT::TORSO)
+        ) * YRotation(M_PI / 2.f)
+    );
+
+    //  Chest
+    UpdateRotation(
+        BODY_JOINT::TORSO,
+        glm::quatLookAt(
+            GetDirection(BODY_JOINT::LEFT_SHOULDER, BODY_JOINT::RIGHT_SHOULDER),
+            GetDirection(BODY_JOINT::TORSO, BODY_JOINT::PELVIS)
+        ) * YRotation(M_PI / 2.f)
+    );
+
+    //  Left Legs
+    projDir = GetDirection(
+        pointOnLine(
+            GetPosition(BODY_JOINT::LEFT_HIP),
+            GetPosition(BODY_JOINT::LEFT_ANKLE),
+            GetPosition(BODY_JOINT::LEFT_KNEE)
+        ),
+        GetPosition(BODY_JOINT::LEFT_KNEE)
+    );
+    UpdateRotation(
+        BODY_JOINT::LEFT_HIP,
+        glm::quatLookAt(
+            GetDirection(BODY_JOINT::LEFT_KNEE, BODY_JOINT::LEFT_HIP),
+            projDir
+        ) * XRotation(M_PI / 2.f)
+    );
+    //  Left Knee
+    UpdateRotation(
+        BODY_JOINT::LEFT_KNEE,
+        glm::quatLookAt(
+            GetDirection(BODY_JOINT::LEFT_ANKLE, BODY_JOINT::LEFT_KNEE),
+            projDir
+        ) * XRotation(M_PI / 2.f)
+    );
+    //  Left Foot
+    UpdateRotation(
+        BODY_JOINT::LEFT_ANKLE,
+        glm::quatLookAt(
+            GetDirection(BODY_JOINT::LEFT_ANKLE, BODY_JOINT::LEFT_KNEE),
+            projDir
+        ) * XRotation(M_PI / 2.f)
+    );
+
+    //  Right Legs
+    projDir = GetDirection(
+        pointOnLine(
+            GetPosition(BODY_JOINT::RIGHT_HIP),
+            GetPosition(BODY_JOINT::RIGHT_ANKLE),
+            GetPosition(BODY_JOINT::RIGHT_KNEE)
+        ),
+        GetPosition(BODY_JOINT::RIGHT_KNEE)
+    );
+    UpdateRotation(
+        BODY_JOINT::RIGHT_HIP,
+        glm::quatLookAt(
+            GetDirection(BODY_JOINT::RIGHT_KNEE, BODY_JOINT::RIGHT_HIP),
+            projDir
+        ) * XRotation(M_PI / 2.f)
+    );
+    //  Right Knee
+    UpdateRotation(
+        BODY_JOINT::RIGHT_KNEE,
+        glm::quatLookAt(
+            GetDirection(BODY_JOINT::RIGHT_ANKLE, BODY_JOINT::RIGHT_KNEE),
+            projDir
+        ) * XRotation(M_PI / 2.f)
+    );
+    //  Right Foot
+    UpdateRotation(
+        BODY_JOINT::RIGHT_ANKLE,
+        glm::quatLookAt(
+            GetDirection(BODY_JOINT::RIGHT_ANKLE, BODY_JOINT::RIGHT_KNEE),
+            projDir
+        ) * XRotation(M_PI / 2.f)
+    );
+}
+
+const glm::mat4x4 CNvSDKInterface::GetTransformFromRole(const TRACKER_ROLE &role) const
+{
+    switch (role)
+    {
+    case TRACKER_ROLE::HIPS:
+        return GetInterpolatedTransform(
+            BODY_JOINT::PELVIS,
+            BODY_JOINT::TORSO,
+            BODY_JOINT::PELVIS,
+            driver->m_proportions->hipOffset
+        );
+    case TRACKER_ROLE::CHEST:
+        return GetInterpolatedTransform(
+            BODY_JOINT::TORSO,
+            BODY_JOINT::PELVIS,
+            BODY_JOINT::TORSO,
+            driver->m_proportions->chestOffset
+        );
+    case TRACKER_ROLE::LEFT_KNEE:
+        return GetInterpolatedTransformMulti(
+            BODY_JOINT::LEFT_HIP,
+            BODY_JOINT::LEFT_KNEE,
+            BODY_JOINT::LEFT_ANKLE,
+            driver->m_proportions->kneeOffset
+        );
+    case TRACKER_ROLE::LEFT_FOOT:
+        return TransformSlide(
+            GetPosition(BODY_JOINT::LEFT_ANKLE),
+            GetPosition(BODY_JOINT::LEFT_BIG_TOE, BODY_JOINT::LEFT_SMALL_TOE),
+            GetRotation(BODY_JOINT::LEFT_ANKLE),
+            driver->m_proportions->footOffset
+        );
+    case TRACKER_ROLE::RIGHT_KNEE:
+        return GetInterpolatedTransformMulti(
+            BODY_JOINT::RIGHT_HIP,
+            BODY_JOINT::RIGHT_KNEE,
+            BODY_JOINT::RIGHT_ANKLE,
+            driver->m_proportions->kneeOffset
+        );
+    case TRACKER_ROLE::RIGHT_FOOT:
+        return TransformSlide(
+            GetPosition(BODY_JOINT::RIGHT_ANKLE),
+            GetPosition(BODY_JOINT::RIGHT_BIG_TOE, BODY_JOINT::RIGHT_SMALL_TOE),
+            GetRotation(BODY_JOINT::RIGHT_ANKLE),
+            driver->m_proportions->footOffset
+        );
+    default:
+        return GetTransform(BODY_JOINT::PELVIS);
+    }
+}
+
 void CNvSDKInterface::ComputeAvgConfidence()
 {
     float avg = 0.0;
@@ -360,6 +511,7 @@ void CNvSDKInterface::RunFrame()
                 AlignToHMD(driver->m_hmd_controller_pose[0]);
             else
                 AlignToMirror();
+            ComputeRotations();
             //DebugSequence(m_keypoints3D);
         }
         else

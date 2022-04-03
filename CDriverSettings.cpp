@@ -134,5 +134,6 @@ const Proportions CDriverSettings::GetConfigProportions(const char *section, con
     result.elbowOffset  = GetConfigFloat(section, KEY_ELBOW_POS, def.elbowOffset);
     result.kneeOffset   = GetConfigFloat(section, KEY_KNEE_POS, def.kneeOffset);
     result.chestOffset  = GetConfigFloat(section, KEY_CHEST_POS, def.chestOffset);
+    result.footOffset   = GetConfigFloat(section, KEY_FOOT_POS, def.footOffset);
     return result;
 }

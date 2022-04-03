@@ -101,6 +101,8 @@
 #define KEY_HIP_POS "HipTrackerPosition"
 //  The offset of the chest trackers
 #define KEY_CHEST_POS "ChestTrackerPosition"
+//  The offset of the foot trackers
+#define KEY_FOOT_POS "FootTrackerPosition"
 
 
 //  Zero
@@ -129,10 +131,14 @@ struct Proportions
         elbowOffset,
         kneeOffset,
         hipOffset,
-        chestOffset;
+        chestOffset,
+        footOffset;
 
-    Proportions(float hip = 0.0f, float elbow = 0.0f, float knee = 0.0f, float chest = 0.0f) 
-        : hipOffset(hip), elbowOffset(elbow), kneeOffset(knee), chestOffset(chest) {}
+    Proportions(float hip = 0.f, float elbow = 0.f, float knee = 0.f, float chest = 0.f, float foot = 0.f) 
+        : hipOffset(hip), elbowOffset(elbow), kneeOffset(knee), chestOffset(chest), footOffset(foot) {}
+
+    Proportions(const Proportions &prop)
+        : hipOffset(prop.hipOffset), elbowOffset(prop.elbowOffset), kneeOffset(prop.kneeOffset), chestOffset(prop.chestOffset), footOffset(prop.footOffset) {}
 };
 
 /// <summary>
@@ -167,7 +173,7 @@ public:
     TRACKING_FLAG GetConfigTrackingMode(const char *section, TRACKING_FLAG def = TRACKING_FLAG::NONE) const;
 
     INTERP_MODE GetConfigInterpolationMode(const char *section, const char *key, INTERP_MODE def = INTERP_MODE::NONE) const;
-    const Proportions GetConfigProportions(const char *section, const Proportions &def = Proportions()) const;
+    const Proportions GetConfigProportions(const char *section, const Proportions &def = Proportions(0.1f,0.2f,0.3f,0.4f,0.5f)) const;
 
     /// <summary>
     /// Update the configuration data with information from a source <b>CServerDriver</b>

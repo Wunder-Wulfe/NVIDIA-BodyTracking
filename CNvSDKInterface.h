@@ -2,6 +2,7 @@
 
 enum class TRACKING_FLAG;
 enum class BODY_JOINT;
+enum class TRACKER_ROLE;
 class CServerDriver;
 
 //  NVIDIA AR SDK Interface, designed to simplify and handle the interpretation of data from the SDK
@@ -38,7 +39,7 @@ class CNvSDKInterface
     void FillBatched(const std::vector<float> &from, std::vector<float> &to);
     void FillBatched(const std::vector<NvAR_Point3f> &from, std::vector<glm::vec3> &to);
     void FillBatched(const std::vector<NvAR_Quaternion> &from, std::vector<glm::quat> &to);
-    void FillBatchedMirror(const std::vector<NvAR_Point3f> &from, std::vector<glm::vec3> &to, const glm::vec3 &hmd);
+    void ComputeRotations();
 
     void RotateBatched(std::vector<float> &to);
     void RotateBatched(std::vector<NvAR_Point3f> &to);
@@ -74,6 +75,8 @@ protected:
     static inline const glm::quat CastQuaternion(const NvAR_Quaternion &quat) { return glm::quat(quat.w, quat.x, quat.y, quat.z); }
     static inline const glm::mat4x4 CastMatrix(const glm::vec3 &point, const glm::quat &quat) { return Slide(glm::mat4_cast(quat), point); }
     static inline const glm::mat4x4 CastMatrix(const NvAR_Point3f &point, const NvAR_Quaternion &quat) { return CastMatrix(CastPoint(point), CastQuaternion(quat)); }
+    inline const glm::vec3 GetDirection(const glm::vec3 &from, const glm::vec3 &to) { return glm::normalize(to - from); }
+    inline const glm::vec3 GetDirection(const BODY_JOINT &from, const BODY_JOINT &to) { return GetDirection(GetPosition(from), GetPosition(to)); }
 
     void AlignToHMD(const vr::TrackedDevicePose_t &pose);
     void AlignToMirror();
@@ -175,6 +178,24 @@ public:
         return CastMatrix(glm::vec3(ref[3]), MirrorQuaternionZ(glm::quat_cast(ref)));
     }
 
+    static const glm::vec3 c_x;
+    static const glm::vec3 c_y;
+    static const glm::vec3 c_z;
+    static inline const glm::quat AxisAngle(const glm::vec3 &axis, const float &angle = 0.f) { return glm::angleAxis(angle, axis); }
+    static inline const glm::quat XRotation(const float &angle = 0.f) { return AxisAngle(c_x, angle); }
+    static inline const glm::quat YRotation(const float &angle = 0.f) { return AxisAngle(c_y, angle); }
+    static inline const glm::quat ZRotation(const float &angle = 0.f) { return AxisAngle(c_z, angle); }
+    static inline const glm::quat EulerAngles(const float &x = 0.f, const float &y = 0.f, const float &z = 0.f) 
+    {
+        return ZRotation(z) * YRotation(y) * XRotation(x);
+    }
+    static inline const glm::quat EulerAngles(const glm::vec3 &angles) { return EulerAngles(angles.x, angles.y, angles.z); }
+    static inline const glm::quat BryanAngles(const float &pitch = 0.f, const float &yaw = 0.f, const float &roll = 0.f)
+    {
+        return YRotation(yaw) * XRotation(pitch) * ZRotation(roll);
+    }
+    static inline const glm::quat BryanAngles(const glm::vec3 &angles) { return BryanAngles(angles.x, angles.y, angles.z); }
+
     void DebugSequence(const std::vector<float> conf) const;
     void DebugSequence(const std::vector<NvAR_Point3f> kep) const;
     void DebugSequence(const std::vector<NvAR_Quaternion> kep) const;
@@ -187,6 +208,9 @@ public:
     inline bool GetConfidenceAcceptable(BODY_JOINT role) const { return GetConfidence(role) >= confidenceRequirement; }
     inline bool GetConfidenceAcceptable(BODY_JOINT role, BODY_JOINT secondary) const { return (GetConfidence(role) + GetConfidence(secondary)) / 2.f >= confidenceRequirement; }
 
+    inline void UpdatePosition(const BODY_JOINT &role, const glm::vec3 &vec) { m_realKeypoints3D[(int)role] = vec; }
+    inline void UpdateRotation(const BODY_JOINT &role, const glm::quat &rot) { m_realJointAngles[(int)role] = rot; }
+
     inline const glm::mat4x4 GetTransform(BODY_JOINT role) const { return CastMatrix(GetPosition(role), GetRotation(role)); }
     inline const glm::mat4x4 GetTransform(BODY_JOINT role, BODY_JOINT rotation_owner) const { return CastMatrix(GetPosition(role), GetRotation(rotation_owner)); }
     inline const glm::vec3 GetPosition(BODY_JOINT role) const { return m_realKeypoints3D[(int)role]; }
@@ -194,9 +218,16 @@ public:
     inline const glm::quat GetRotation(BODY_JOINT role) const { return m_realJointAngles[(int)role]; }
     inline const glm::quat GetRotation(BODY_JOINT role, BODY_JOINT secondary) const { return glm::slerp(GetRotation(role), GetRotation(secondary), .5f); }
     inline const glm::mat4x4 GetAverageTransform(BODY_JOINT from, BODY_JOINT to) const { return InterpolateMatrix(GetTransform(from), GetTransform(to), .5f); }
+    static inline const glm::mat4x4 TransformSlide(const glm::vec3 &from, const glm::vec3 &to, const glm::quat &rotation_owner, const float &alpha = 0.f)
+    {
+        return CastMatrix(
+            glm::mix(from, to, alpha), 
+            rotation_owner
+        );
+    }
     inline const glm::mat4x4 GetInterpolatedTransform(BODY_JOINT from, BODY_JOINT to, BODY_JOINT rotation_owner, float alpha = 0.f) const
     { 
-        return CastMatrix(glm::mix(GetPosition(from), GetPosition(to), alpha), GetRotation(rotation_owner));
+        return TransformSlide(GetPosition(from), GetPosition(to), GetRotation(rotation_owner), alpha);
     }
     inline const glm::mat4x4 GetInterpolatedTransformMulti(BODY_JOINT from, BODY_JOINT middle, BODY_JOINT to, float alpha = 0.f) const
     {
@@ -205,6 +236,8 @@ public:
         else
             return GetInterpolatedTransform(middle, from, middle, -alpha);
     }
+    
+    const glm::mat4x4 GetTransformFromRole(const TRACKER_ROLE &role) const;
 
     static inline const glm::vec3 ObjectToWorldVector(const glm::mat4x4 &mat, const glm::vec3 &vec)
     {
