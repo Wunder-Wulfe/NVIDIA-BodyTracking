@@ -16,8 +16,6 @@
 This is a **WIP** driver designed to use the NVIDIA AR SDK for camera-based body tracking.
 For now, most of the code is based on the [AR SDK examples](https://github.com/NVIDIA/MAXINE-AR-SDK), [Mediapipe-VR-Fullbody-Tracking](https://github.com/ju1ce/Mediapipe-VR-Fullbody-Tracking), and [driver_kinectV2](https://github.com/SDraw/driver_kinectV2/blob/master/driver_kinectV2).
 
-https://user-images.githubusercontent.com/29297318/160537122-21e5f4ce-0a91-44e1-828c-0a6ca8b94717.mp4
-
 [Discord Server](https://discord.gg/XjkyuwRW6Z)
 
 
@@ -88,6 +86,12 @@ If your file path contains ``..\nvidiaBodyTracking\nvidiaBodyTracking\..``, redu
     * Join the [Discord Server](https://discord.gg/XjkyuwRW6Z) and create a thread within the [#issues](https://discord.com/channels/956633023011520593/956910830627213402) channel, or use the [Issues](https://github.com/Wunder-Wulfe/NVIDIA-BodyTracking/issues) tab on this project to do it on GitHub. I would prefer reports to go through Discord where I can more readily / easily see it.
 18. **What is this strange camera object in SteamVR and why is my tracking really janky?**
     * That object represents the camera you are using to capture yourself. Use the keybinds explained above in order to align the camera so that it matches the location and orientation of your real camera as closely as possible. This will allow for the tracking system to map more accurately with your real body.
+
+----
+
+## Video Demonstration
+
+https://user-images.githubusercontent.com/29297318/160537122-21e5f4ce-0a91-44e1-828c-0a6ca8b94717.mp4
 
 ----
 
