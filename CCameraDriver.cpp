@@ -26,7 +26,13 @@ void CCameraDriver::LoadCameras()
 
         m_cameras.push_back(CameraInfo(camera, device_counts));
 
-        vr_log("\tFound camera at index %d (%dx%d)\n", device_counts, m_cameras[device_counts].width, m_cameras[device_counts].height);
+        vr_log(
+            "\tFound camera at index %d (%dx%d) (%.2f fps)\n", 
+            device_counts, 
+            m_cameras[device_counts].width, 
+            m_cameras[device_counts].height, 
+            camera.get(CV_CAP_PROP_FPS)
+        );
 
         device_counts++;
     }
