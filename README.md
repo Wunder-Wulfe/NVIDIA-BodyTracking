@@ -72,6 +72,8 @@ If your file path contains ``..\nvidiaBodyTracking\nvidiaBodyTracking\..``, redu
     * My recommended settings will always be the [default settings file](https://github.com/Wunder-Wulfe/NVIDIA-BodyTracking/blob/main/settings.ini) that I update as I make changes to the program. All of the settings are well documented so it should be no mystery what a majority of them do.
 16. **Where can I report bugs or issues with the program?**
     * Join the [Discord Server](https://discord.gg/XjkyuwRW6Z) and create a thread within the [#issues](https://discord.com/channels/956633023011520593/956910830627213402) channel, or use the [Issues](https://github.com/Wunder-Wulfe/NVIDIA-BodyTracking/issues) tab on this project to do it on GitHub. I would prefer reports to go through Discord where I can more readily / easily see it.
+17. **What is this strange camera object in SteamVR and why is my tracking really janky?**
+    * That object represents the camera you are using to capture yourself. Use the keybinds explained above in order to align the camera so that it matches the location and orientation of your real camera as closely as possible. This will allow for the tracking system to map more accurately with your real body.
 
 ----
 
