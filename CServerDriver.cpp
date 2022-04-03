@@ -40,6 +40,7 @@ CServerDriver::CServerDriver()
     m_activations = BINDING::NONE;
     m_camBryan = glm::vec3(.0f);
     m_camThread = nullptr;
+    mirrored = false;
 }
 
 CServerDriver::~CServerDriver()
@@ -210,6 +211,7 @@ vr::EVRInitError CServerDriver::Init(vr::IVRDriverContext *pDriverContext)
     vr_log("Interpolation mode: %s", InterpModeName[(int)m_interpolation]);
     m_scaleFactor = m_driverSettings->GetConfigVector(SECTION_TRACK_SCALE, glm::vec3(1.f, 1.f, 1.f));
     m_proportions = new Proportions(m_driverSettings->GetConfigProportions(SECTION_TRACKSET));
+    mirrored = m_driverSettings->GetConfigBoolean(SECTION_CAMSET, KEY_CAM_MIRROR, false);
 
     vr_log("Body proportions:");
 
@@ -337,6 +339,9 @@ vr::EVRInitError CServerDriver::Init(vr::IVRDriverContext *pDriverContext)
 
     vr_log("\tZ: Toggle the automatic HMD alignment");
     MapBinding(BINDING::TOGGLE_ALIGN, 'Z');
+
+    vr_log("\tX: Toggle wheter or not to mirror the camera image");
+    MapBinding(BINDING::TOGGLE_MIRROR, 'X');
 
     vr_log("All inputs bound successfully");
 
@@ -503,13 +508,21 @@ void CServerDriver::RunFrame()
         m_nvInterface->m_alignHMD = !m_nvInterface->m_alignHMD;
         vr_log("HMD Alignment %s", m_nvInterface->m_alignHMD ? "enabled" : "disabled");
     }
+    if (BindingPressed(BINDING::TOGGLE_MIRROR))
+    {
+        mirrored = !mirrored;
+        vr_log("Camera %s mirrored", mirrored ? "is" : "is not");
+    }
 
     if (first_time)
+    {
         vr_log("HMD Alignment %s", m_nvInterface->m_alignHMD ? "enabled" : "disabled");
+        vr_log("Camera %s mirrored", mirrored ? "is" : "is not");
+    }
 
     UpdateBindings();
 
-    m_nvInterface->m_axisScale.x = 0.001f * m_scaleFactor.x;
+    m_nvInterface->m_axisScale.x = 0.001f * m_scaleFactor.x * (mirrored ? -1.f : 1.f);
     m_nvInterface->m_axisScale.y = -0.001f * m_scaleFactor.y;
     m_nvInterface->m_axisScale.z = -0.001f * m_scaleFactor.z;
 
@@ -535,7 +548,7 @@ void CServerDriver::RunFrame()
     m_station->SetTransform(m_nvInterface->GetCameraMatrix() * glm::mat4_cast(DoEulerYXZ(0.f, M_PI, 0.f)));
     m_station->RunFrame();
 
-    LeaveStandby();
+    //LeaveStandby(); 
 
     first_time = false;
 }

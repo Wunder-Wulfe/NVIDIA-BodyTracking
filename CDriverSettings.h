@@ -35,6 +35,8 @@
 #define KEY_CAM_VIS "Visible"
 //  The index of the camera to use
 #define KEY_CAM_INDEX "Index"
+//  Whether or not the camera should be mirrored
+#define KEY_CAM_MIRROR "Mirrored"
 
 //  Tracking scale on X, Y, and Z axis
 #define SECTION_TRACK_SCALE "TrackingScale"

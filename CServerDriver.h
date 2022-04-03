@@ -40,8 +40,9 @@ enum class BINDING : uint
     PREVIOUS_CAMERA = 0b10000000000000000000,
 
     TOGGLE_ALIGN = 0b100000000000000000000,
+    TOGGLE_MIRROR = 0b1000000000000000000000,
 
-    SHIFT = 0b1000000000000000000000
+    SHIFT = 0b10000000000000000000000
 };
 
 //  The main class responsible for managing data that is transferred between different classes
@@ -109,6 +110,7 @@ protected:
     glm::vec3 m_scaleFactor;
     glm::vec3 m_camBryan;
     uint m_frame;
+    bool mirrored;
 
     vr::TrackedDevicePose_t m_hmd_controller_pose[3]{};
 
