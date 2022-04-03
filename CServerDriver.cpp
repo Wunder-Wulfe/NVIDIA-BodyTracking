@@ -434,9 +434,9 @@ void CServerDriver::RunFrame()
         if (BindingActive(BINDING::MOVE_BACKWARD))
             m_nvInterface->m_offset.z -= move_amnt;
         if (BindingActive(BINDING::MOVE_LEFT))
-            m_nvInterface->m_offset.x -= move_amnt;
-        if (BindingActive(BINDING::MOVE_RIGHT))
             m_nvInterface->m_offset.x += move_amnt;
+        if (BindingActive(BINDING::MOVE_RIGHT))
+            m_nvInterface->m_offset.x -= move_amnt;
 
         if (BindingActive(BINDING::MOVE_UP))
             m_nvInterface->m_offset.y += move_amnt;
@@ -450,9 +450,9 @@ void CServerDriver::RunFrame()
         if (BindingActive(BINDING::MOVE_BACKWARD))
             m_nvInterface->TranslateCamera(glm::vec3(0.f, 0.f, -move_amnt));
         if (BindingActive(BINDING::MOVE_LEFT))
-            m_nvInterface->TranslateCamera(glm::vec3(-move_amnt, 0.f, 0.f));
-        if (BindingActive(BINDING::MOVE_RIGHT))
             m_nvInterface->TranslateCamera(glm::vec3(move_amnt, 0.f, 0.f));
+        if (BindingActive(BINDING::MOVE_RIGHT))
+            m_nvInterface->TranslateCamera(glm::vec3(-move_amnt, 0.f, 0.f));
 
         if (BindingActive(BINDING::MOVE_UP))
             m_nvInterface->TranslateCamera(glm::vec3(0.f, move_amnt, 0.f));
