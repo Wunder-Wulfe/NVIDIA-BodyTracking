@@ -22,7 +22,7 @@ For now, most of the code is based on the [AR SDK examples](https://github.com/N
 Current keybinds can be found in the vrserver.txt log, but here are the current bindings
 ![image](https://user-images.githubusercontent.com/29297318/160949112-6ada034d-ef79-4208-ae32-474c637a7785.png)
 
-This is a **SteamVR Driver**, and as such will need to grab the [latest release](https://github.com/Wunder-Wulfe/NVIDIA-BodyTracking/releases) and install it within a directory under your SteamVR application with this file path: 
+This is a **SteamVR Driver**, and as such, you will need to grab the [latest release](https://github.com/Wunder-Wulfe/NVIDIA-BodyTracking/releases), extract it, and install it within a directory under your SteamVR application with this file path: 
 
 ``Steam\steamapps\common\SteamVR\drivers\``
 
