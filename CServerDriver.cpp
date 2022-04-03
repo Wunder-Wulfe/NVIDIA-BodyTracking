@@ -430,13 +430,13 @@ void CServerDriver::RunFrame()
     if (BindingActive(BINDING::SHIFT))
     {
         if (BindingActive(BINDING::MOVE_FORWARD))
-            m_nvInterface->m_offset.z -= move_amnt;
-        if (BindingActive(BINDING::MOVE_BACKWARD))
             m_nvInterface->m_offset.z += move_amnt;
+        if (BindingActive(BINDING::MOVE_BACKWARD))
+            m_nvInterface->m_offset.z -= move_amnt;
         if (BindingActive(BINDING::MOVE_LEFT))
-            m_nvInterface->m_offset.x += move_amnt;
-        if (BindingActive(BINDING::MOVE_RIGHT))
             m_nvInterface->m_offset.x -= move_amnt;
+        if (BindingActive(BINDING::MOVE_RIGHT))
+            m_nvInterface->m_offset.x += move_amnt;
 
         if (BindingActive(BINDING::MOVE_UP))
             m_nvInterface->m_offset.y += move_amnt;
@@ -462,9 +462,9 @@ void CServerDriver::RunFrame()
 
 
     if (BindingActive(BINDING::PITCH_UP))
-        DoRotateCam(m_camBryan.x, -rotate_amnt);
-    if (BindingActive(BINDING::PITCH_DOWN))
         DoRotateCam(m_camBryan.x, rotate_amnt);
+    if (BindingActive(BINDING::PITCH_DOWN))
+        DoRotateCam(m_camBryan.x, -rotate_amnt);
 
     if (BindingActive(BINDING::YAW_LEFT))
         DoRotateCam(m_camBryan.y, -rotate_amnt);
