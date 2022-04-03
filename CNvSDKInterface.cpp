@@ -238,7 +238,11 @@ void CNvSDKInterface::AlignToHMD(const vr::TrackedDevicePose_t &pose)
             mat.m[2][3]
         )
     );
-    glm::vec3 eyes = GetPosition(BODY_JOINT::LEFT_EYE, BODY_JOINT::RIGHT_EYE);
+    glm::vec3 eyes = glm::mix(
+        GetPosition(BODY_JOINT::LEFT_EAR, BODY_JOINT::RIGHT_EAR),
+        GetPosition(BODY_JOINT::NOSE),
+        .1f
+    );
     glm::vec3 offset = hmdPosition - eyes;
     offset += m_offset;
     int index;
@@ -363,6 +367,55 @@ void CNvSDKInterface::ComputeRotations()
             )
         ) * XRotation(M_PI)
     );
+
+    //  Left Shoulder
+    projDir = GetDirection(
+        pointOnLine(
+            GetPosition(BODY_JOINT::LEFT_SHOULDER),
+            GetPosition(BODY_JOINT::LEFT_WRIST),
+            GetPosition(BODY_JOINT::LEFT_ELBOW)
+        ),
+        GetPosition(BODY_JOINT::LEFT_ELBOW)
+    );
+    UpdateRotation(
+        BODY_JOINT::LEFT_SHOULDER,
+        glm::quatLookAt(
+            GetDirection(BODY_JOINT::LEFT_ELBOW, BODY_JOINT::LEFT_SHOULDER),
+            projDir
+        ) * XRotation(M_PI / 2.f)
+    );
+    //  Left Elbow
+    UpdateRotation(
+        BODY_JOINT::LEFT_ELBOW,
+        glm::quatLookAt(
+            GetDirection(BODY_JOINT::LEFT_WRIST, BODY_JOINT::LEFT_ELBOW),
+            projDir
+        ) * XRotation(M_PI / 2.f)
+    );
+    //  Right Shoulder
+    projDir = GetDirection(
+        pointOnLine(
+            GetPosition(BODY_JOINT::RIGHT_SHOULDER),
+            GetPosition(BODY_JOINT::RIGHT_WRIST),
+            GetPosition(BODY_JOINT::RIGHT_ELBOW)
+        ),
+        GetPosition(BODY_JOINT::RIGHT_ELBOW)
+    );
+    UpdateRotation(
+        BODY_JOINT::RIGHT_SHOULDER,
+        glm::quatLookAt(
+            GetDirection(BODY_JOINT::RIGHT_ELBOW, BODY_JOINT::RIGHT_SHOULDER),
+            projDir
+        ) * XRotation(M_PI / 2.f)
+    );
+    //  Right Elbow
+    UpdateRotation(
+        BODY_JOINT::RIGHT_ELBOW,
+        glm::quatLookAt(
+            GetDirection(BODY_JOINT::RIGHT_WRIST, BODY_JOINT::RIGHT_ELBOW),
+            projDir
+        ) * XRotation(M_PI / 2.f)
+    );
 }
 
 const glm::mat4x4 CNvSDKInterface::GetTransformFromRole(const TRACKER_ROLE &role) const
@@ -410,6 +463,24 @@ const glm::mat4x4 CNvSDKInterface::GetTransformFromRole(const TRACKER_ROLE &role
             GetPosition(BODY_JOINT::RIGHT_BIG_TOE, BODY_JOINT::RIGHT_SMALL_TOE),
             GetRotation(BODY_JOINT::RIGHT_ANKLE),
             driver->m_proportions->footOffset
+        );
+    case TRACKER_ROLE::LEFT_SHOULDER:
+        return GetTransform(BODY_JOINT::LEFT_SHOULDER);
+    case TRACKER_ROLE::LEFT_ELBOW:
+        return GetInterpolatedTransformMulti(
+            BODY_JOINT::LEFT_SHOULDER,
+            BODY_JOINT::LEFT_ELBOW,
+            BODY_JOINT::LEFT_WRIST,
+            driver->m_proportions->elbowOffset
+        );
+    case TRACKER_ROLE::RIGHT_SHOULDER:
+        return GetTransform(BODY_JOINT::RIGHT_SHOULDER);
+    case TRACKER_ROLE::RIGHT_ELBOW:
+        return GetInterpolatedTransformMulti(
+            BODY_JOINT::RIGHT_SHOULDER,
+            BODY_JOINT::RIGHT_ELBOW,
+            BODY_JOINT::RIGHT_WRIST,
+            driver->m_proportions->elbowOffset
         );
     default:
         return GetTransform(BODY_JOINT::PELVIS);
