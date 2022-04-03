@@ -173,7 +173,7 @@ public:
     TRACKING_FLAG GetConfigTrackingMode(const char *section, TRACKING_FLAG def = TRACKING_FLAG::NONE) const;
 
     INTERP_MODE GetConfigInterpolationMode(const char *section, const char *key, INTERP_MODE def = INTERP_MODE::NONE) const;
-    const Proportions GetConfigProportions(const char *section, const Proportions &def = Proportions(0.1f,0.2f,0.3f,0.4f,0.5f)) const;
+    const Proportions GetConfigProportions(const char *section, const Proportions &def = Proportions()) const;
 
     /// <summary>
     /// Update the configuration data with information from a source <b>CServerDriver</b>

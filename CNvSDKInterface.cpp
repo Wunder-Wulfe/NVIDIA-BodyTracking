@@ -289,7 +289,7 @@ void CNvSDKInterface::ComputeRotations()
         glm::quatLookAt(
             GetDirection(BODY_JOINT::LEFT_SHOULDER, BODY_JOINT::RIGHT_SHOULDER),
             GetDirection(BODY_JOINT::TORSO, BODY_JOINT::PELVIS)
-        ) * YRotation(M_PI / 2.f)
+        ) * YRotation(-M_PI / 2.f) * ZRotation(M_PI)
     );
 
     //  Left Legs
@@ -320,9 +320,12 @@ void CNvSDKInterface::ComputeRotations()
     UpdateRotation(
         BODY_JOINT::LEFT_ANKLE,
         glm::quatLookAt(
-            GetDirection(BODY_JOINT::LEFT_ANKLE, BODY_JOINT::LEFT_KNEE),
-            projDir
-        ) * XRotation(M_PI / 2.f)
+            GetDirection(BODY_JOINT::LEFT_ANKLE, BODY_JOINT::LEFT_HEEL),
+            GetDirection(
+                GetPosition(BODY_JOINT::LEFT_HEEL),
+                GetPosition(BODY_JOINT::LEFT_BIG_TOE, BODY_JOINT::LEFT_SMALL_TOE)
+            )
+        ) * XRotation(M_PI)
     );
 
     //  Right Legs
@@ -353,9 +356,12 @@ void CNvSDKInterface::ComputeRotations()
     UpdateRotation(
         BODY_JOINT::RIGHT_ANKLE,
         glm::quatLookAt(
-            GetDirection(BODY_JOINT::RIGHT_ANKLE, BODY_JOINT::RIGHT_KNEE),
-            projDir
-        ) * XRotation(M_PI / 2.f)
+            GetDirection(BODY_JOINT::RIGHT_ANKLE, BODY_JOINT::RIGHT_HEEL),
+            GetDirection(
+                GetPosition(BODY_JOINT::RIGHT_HEEL), 
+                GetPosition(BODY_JOINT::RIGHT_BIG_TOE, BODY_JOINT::RIGHT_SMALL_TOE)
+            )
+        ) * XRotation(M_PI)
     );
 }
 

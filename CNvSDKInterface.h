@@ -232,9 +232,9 @@ public:
     inline const glm::mat4x4 GetInterpolatedTransformMulti(BODY_JOINT from, BODY_JOINT middle, BODY_JOINT to, float alpha = 0.f) const
     {
         if (alpha > 0.f)
-            return GetInterpolatedTransform(middle, to, to, alpha);
+            return GetInterpolatedTransform(middle, to, middle, alpha);
         else
-            return GetInterpolatedTransform(middle, from, middle, -alpha);
+            return GetInterpolatedTransform(middle, from, from, -alpha);
     }
     
     const glm::mat4x4 GetTransformFromRole(const TRACKER_ROLE &role) const;

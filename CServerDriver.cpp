@@ -217,7 +217,6 @@ vr::EVRInitError CServerDriver::Init(vr::IVRDriverContext *pDriverContext)
     vr_log("\tElbow offset: %.2f", m_proportions->elbowOffset);
     vr_log("\tKnee offset: %.2f", m_proportions->kneeOffset);
     vr_log("\tFoot offset: %.2f", m_proportions->footOffset);
-    vr_log("\tHip offset: %.2f", m_proportions->hipOffset);
 
     vr_log("Loading NVIDIA AR SDK modules...\n");
     try
@@ -370,13 +369,14 @@ void CServerDriver::Cleanup()
 
     m_cameraDriver->Cleanup();
 
-    delptr(m_cameraDriver);
     delptr(m_nvInterface);
     delptr(m_proportions);
 
     m_cameraDriver->m_working = false;
 
     m_camThread.join();
+
+    delptr(m_cameraDriver);
 
     vr_log("Full device cleanup was successful\n");
 
@@ -402,6 +402,7 @@ void CServerDriver::RunFrame()
     static float move_speed = .25f, rotate_speed = 45.f, scale_speed = .125f;
     float move_amnt, rotate_amnt, scale_amnt;
     static bool camup = false, camdn = false;
+    static bool first_time = true;
     vr::VREvent_t ev;
 
     vr::VRServerDriverHost()->GetRawTrackedDevicePoses(0.f, m_hmd_controller_pose, 3);
@@ -501,6 +502,8 @@ void CServerDriver::RunFrame()
         vr_log("HMD Alignment %s", m_nvInterface->m_alignHMD ? "enabled" : "disabled");
     }
 
+    if (first_time)
+        vr_log("HMD Alignment %s", m_nvInterface->m_alignHMD ? "enabled" : "disabled");
 
     UpdateBindings();
 
@@ -531,6 +534,8 @@ void CServerDriver::RunFrame()
     m_station->RunFrame();
 
     LeaveStandby();
+
+    first_time = false;
 }
 
 void CServerDriver::EnterStandby()
