@@ -39,6 +39,7 @@ CServerDriver::CServerDriver()
     m_scaleFactor = glm::vec3(1.f, 1.f, 1.f);
     m_activations = BINDING::NONE;
     m_camBryan = glm::vec3(.0f);
+    m_camThread = nullptr;
 }
 
 CServerDriver::~CServerDriver()
@@ -259,8 +260,8 @@ vr::EVRInitError CServerDriver::Init(vr::IVRDriverContext *pDriverContext)
         m_cameraDriver->imageChanged += CFunctionFactory(OnImageUpdate, void, const CCameraDriver&, cv::Mat);
         m_cameraDriver->cameraChanged += CFunctionFactory(OnCameraUpdate, void, const CCameraDriver &, int);
         vr_log("\tLaunching camera thread");
-        m_camThread = std::thread(&CCameraDriver::RunAsync, m_cameraDriver);
-        //m_camThread.detach();
+        m_camThread = new std::thread(&CCameraDriver::RunAsync, m_cameraDriver);
+        m_camThread->detach();
         vr_log("\tCamera thread launched asynchronously");
     }
     catch(std::exception e)
@@ -374,9 +375,10 @@ void CServerDriver::Cleanup()
 
     m_cameraDriver->m_working = false;
 
-    m_camThread.join();
+    m_camThread->join();
 
     delptr(m_cameraDriver);
+    delptr(m_camThread);
 
     vr_log("Full device cleanup was successful\n");
 
