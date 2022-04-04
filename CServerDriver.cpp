@@ -342,15 +342,17 @@ vr::EVRInitError CServerDriver::Init(vr::IVRDriverContext *pDriverContext)
     vr_log("\tX: Toggle wheter or not to mirror the camera image");
     MapBinding(BINDING::TOGGLE_MIRROR, 'X');
 
+    vr_log("\tCtrl + S: Attempt to save the configuration file");
+    MapBinding(BINDING::SAVE_KEY, 'S');
+    MapBinding(BINDING::CTRL, VK_CONTROL);
+
     vr_log("All inputs bound successfully");
 
     return vr::VRInitError_None;
 }
 
-void CServerDriver::Cleanup()
+bool CServerDriver::TrySaveConfig() const
 {
-    vr_log("Initiating full device cleanup...\n");
-
     int i;
     for (i = 0; i < 5; i++)
     {
@@ -360,9 +362,22 @@ void CServerDriver::Cleanup()
         if (m_driverSettings->SaveConfig()) break;
     }
     if (i < 5)
+    {
         vr_log("Configuration saved successfully");
+        return true;
+    }
     else
+    {
         vr_log("Configuration failed to save!");
+        return false;
+    }
+}
+
+void CServerDriver::Cleanup()
+{
+    vr_log("Initiating full device cleanup...\n");
+
+    TrySaveConfig();
 
     m_trackers.clear();
     
@@ -517,6 +532,12 @@ void CServerDriver::RunFrame()
     {
         mirrored = !mirrored;
         vr_log("Camera %s mirrored", mirrored ? "is" : "is not");
+    }
+
+    if (BindingActive(BINDING::CTRL))
+    {
+        if (BindingPressed(BINDING::SAVE_KEY))
+            TrySaveConfig();
     }
 
     UpdateBindings();

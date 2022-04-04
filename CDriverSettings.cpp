@@ -24,7 +24,7 @@ CDriverSettings::~CDriverSettings()
 {
 }
 
-bool CDriverSettings::UpdateConfig(CServerDriver *source)
+bool CDriverSettings::UpdateConfig(const CServerDriver *source)
 {
     return SetConfigVector(SECTION_POS, source->m_nvInterface->GetCameraPos())
         && SetConfigVector(SECTION_ROT, source->m_camBryan)

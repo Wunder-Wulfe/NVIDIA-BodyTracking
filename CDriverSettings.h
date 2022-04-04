@@ -180,7 +180,7 @@ public:
     /// <summary>
     /// Update the configuration data with information from a source <b>CServerDriver</b>
     /// </summary>
-    bool UpdateConfig(CServerDriver *source);
+    bool UpdateConfig(const CServerDriver *source);
     bool SaveConfig();
     bool SaveConfig(const char *alt);
     bool LoadConfig();

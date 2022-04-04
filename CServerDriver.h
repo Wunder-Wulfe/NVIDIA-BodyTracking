@@ -41,8 +41,10 @@ enum class BINDING : uint
 
     TOGGLE_ALIGN = 0b100000000000000000000,
     TOGGLE_MIRROR = 0b1000000000000000000000,
+    SAVE_KEY = 0b10000000000000000000000,
 
-    SHIFT = 0b10000000000000000000000
+    SHIFT = 0b100000000000000000000000,
+    CTRL = 0b1000000000000000000000000
 };
 
 //  The main class responsible for managing data that is transferred between different classes
@@ -93,6 +95,8 @@ class CServerDriver final : public vr::IServerTrackedDeviceProvider
 
     template<class T>
     void DoRotateCam(T &axis, const float &amount = 0.f);
+
+    bool TrySaveConfig() const;
     
     void LoadFPS();
 protected:
