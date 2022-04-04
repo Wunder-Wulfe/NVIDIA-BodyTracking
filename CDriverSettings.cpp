@@ -17,7 +17,7 @@ const char *InterpModeName[] = {
 CDriverSettings::CDriverSettings()
 {
     m_filePath.assign(g_modulePath);
-    m_filePath.erase(m_filePath.begin() + m_filePath.rfind('\\'), m_filePath.end());
+    m_filePath.erase(m_filePath.begin() + m_filePath.rfind("\\bin"), m_filePath.end());
     m_filePath.append(C_SETTINGS);
 }
 CDriverSettings::~CDriverSettings()
