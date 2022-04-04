@@ -133,6 +133,8 @@ void CVirtualBodyTracker::SetupProperties()
     vr::VRProperties()->SetBoolProperty(m_propertyHandle, vr::Prop_HasCameraComponent_Bool, false);
     vr::VRProperties()->SetBoolProperty(m_propertyHandle, vr::Prop_HasDriverDirectModeComponent_Bool, false);
     vr::VRProperties()->SetBoolProperty(m_propertyHandle, vr::Prop_HasVirtualDisplayComponent_Bool, false);
+    vr::VRProperties()->SetBoolProperty(m_propertyHandle, vr::Prop_HasControllerComponent_Bool, false);
+    vr::VRProperties()->SetBoolProperty(m_propertyHandle, vr::Prop_BlockServerShutdown_Bool, false);
 }
 
 void CVirtualBodyTracker::UpdateTransform(const glm::mat4x4 &newTransform)

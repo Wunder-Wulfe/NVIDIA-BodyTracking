@@ -57,7 +57,7 @@ CCameraDriver::~CCameraDriver()
     Cleanup();
 }
 
-void CCameraDriver::RunFrame()
+void CCameraDriver::DoRunFrame()
 {
     static char buff[150];
     static int ccam = -1;
@@ -115,7 +115,7 @@ void CCameraDriver::RunAsync()
     vr_log("Initializing main camera loop");
     while (m_working)
     {
-        RunFrame();
+        DoRunFrame();
         cv::waitKey(1);
     }     
 

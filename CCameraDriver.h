@@ -32,7 +32,7 @@ public:
 
     void LoadCameras();
     void RunAsync();
-    void RunFrame();
+    void DoRunFrame();
 
     void ChangeCamera(int up = 1);
 

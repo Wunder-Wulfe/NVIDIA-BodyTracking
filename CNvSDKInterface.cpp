@@ -240,7 +240,7 @@ void CNvSDKInterface::AlignToHMD(const vr::TrackedDevicePose_t &pose)
     );
     glm::vec3 head = GetPosition(BODY_JOINT::LEFT_EAR, BODY_JOINT::RIGHT_EAR);
     glm::vec3 eyes = GetPosition(BODY_JOINT::LEFT_EYE, BODY_JOINT::RIGHT_EYE);
-    glm::vec3 offset = hmdPosition - (head + (eyes - head) * 1.1f);
+    glm::vec3 offset = hmdPosition - (head + (eyes - head) * 0.32f);
     offset += m_offset;
     int index;
     for (index = 0; index < (int)m_numKeyPoints; index++)

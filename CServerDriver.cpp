@@ -263,7 +263,6 @@ vr::EVRInitError CServerDriver::Init(vr::IVRDriverContext *pDriverContext)
         m_cameraDriver->cameraChanged += CFunctionFactory(OnCameraUpdate, void, const CCameraDriver &, int);
         vr_log("\tLaunching camera thread");
         m_camThread = new std::thread(&CCameraDriver::RunAsync, m_cameraDriver);
-        m_camThread->detach();
         vr_log("\tCamera thread launched asynchronously");
     }
     catch(std::exception e)
@@ -420,6 +419,14 @@ void CServerDriver::RunFrame()
     ptrsafe(m_cameraDriver);
     ptrsafe(m_station);
 
+    if (first_time)
+    {
+        vr_log("HMD Alignment %s", m_nvInterface->m_alignHMD ? "enabled" : "disabled");
+        vr_log("Camera %s mirrored", mirrored ? "is" : "is not");
+    }
+
+    ptrsafe(m_camThread);
+
     LoadRefreshRate();
     m_refreshRateCache = (float)(1./clock_diff);
     last_clock = cur_clock;
@@ -431,8 +438,6 @@ void CServerDriver::RunFrame()
 
     while (vr::VRServerDriverHost()->PollNextEvent(&ev, sizeof(vr::VREvent_t)))
        ProcessEvent(ev);
-
-
 
     if (BindingActive(BINDING::SHIFT))
     {
@@ -511,12 +516,6 @@ void CServerDriver::RunFrame()
     if (BindingPressed(BINDING::TOGGLE_MIRROR))
     {
         mirrored = !mirrored;
-        vr_log("Camera %s mirrored", mirrored ? "is" : "is not");
-    }
-
-    if (first_time)
-    {
-        vr_log("HMD Alignment %s", m_nvInterface->m_alignHMD ? "enabled" : "disabled");
         vr_log("Camera %s mirrored", mirrored ? "is" : "is not");
     }
 

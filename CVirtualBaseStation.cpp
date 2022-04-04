@@ -48,6 +48,7 @@ void CVirtualBaseStation::SetupProperties()
     vr::VRProperties()->SetBoolProperty(m_propertyHandle, vr::Prop_HasCameraComponent_Bool, false);
     vr::VRProperties()->SetBoolProperty(m_propertyHandle, vr::Prop_HasDriverDirectModeComponent_Bool, false);
     vr::VRProperties()->SetBoolProperty(m_propertyHandle, vr::Prop_HasVirtualDisplayComponent_Bool, false);
+    vr::VRProperties()->SetBoolProperty(m_propertyHandle, vr::Prop_BlockServerShutdown_Bool, false);
 
     vr::VRProperties()->SetUint64Property(m_propertyHandle, vr::Prop_VendorSpecific_Reserved_Start, 0x525458547261636B); // "RTXTrack"
 }
