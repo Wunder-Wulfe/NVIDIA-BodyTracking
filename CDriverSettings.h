@@ -148,9 +148,12 @@ struct Proportions
 /// </summary>
 class CDriverSettings
 {
-    std::string m_filePath;
     CSimpleIniA m_iniFile;
     char m_tempBuffer[BUFFER_SIZE] = { NULL };
+protected:
+    std::string m_filePath;
+
+    friend class CServerDriver;
 public:
     CDriverSettings();
     ~CDriverSettings();
@@ -163,13 +166,13 @@ public:
     inline const char *GetConfigCString(const char *section, const char *key, const char *def = "") const { return m_iniFile.GetValue(section, key, def); }
     inline const std::string GetConfigString(const char *section, const char *key, const std::string &def = std::string("")) const { return std::string(m_iniFile.GetValue(section, key, def.c_str())); }
 
-    inline bool SetConfigInteger(const char *section, const char *key, int value) { _itoa_s(value, m_tempBuffer, BUFFER_SIZE); return 0 < m_iniFile.SetValue(section, key, m_tempBuffer); }
-    inline  bool SetConfigFloat(const char *section, const char *key, float value) { return 0 < m_iniFile.SetDoubleValue(section, key, (double)value); }
+    inline bool SetConfigInteger(const char *section, const char *key, int value) { _itoa_s(value, m_tempBuffer, BUFFER_SIZE); return 0 == m_iniFile.SetValue(section, key, m_tempBuffer); }
+    inline  bool SetConfigFloat(const char *section, const char *key, float value) { return 0 == m_iniFile.SetDoubleValue(section, key, (double)value); }
     bool SetConfigVector(const char *section, const glm::vec3 value);
     bool SetConfigQuaternion(const char *section, const glm::quat value);
-    inline bool SetConfigBoolean(const char *section, const char *key, bool value) { return 0 < m_iniFile.SetBoolValue(section, key, value); }
-    inline bool SetConfigCString(const char *section, const char *key, const char *value) { return 0 < m_iniFile.SetValue(section, key, value); }
-    inline bool SetConfigString(const char *section, const char *key, const std::string &value) { return 0 < m_iniFile.SetValue(section, key, value.c_str()); }
+    inline bool SetConfigBoolean(const char *section, const char *key, bool value) { return 0 == m_iniFile.SetBoolValue(section, key, value); }
+    inline bool SetConfigCString(const char *section, const char *key, const char *value) { return 0 == m_iniFile.SetValue(section, key, value); }
+    inline bool SetConfigString(const char *section, const char *key, const std::string &value) { return 0 == m_iniFile.SetValue(section, key, value.c_str()); }
 
     TRACKING_FLAG GetConfigTrackingFlag(const char *section, const char *key, TRACKING_FLAG expected, TRACKING_FLAG def = TRACKING_FLAG::NONE) const;
     TRACKING_FLAG GetConfigTrackingMode(const char *section, TRACKING_FLAG def = TRACKING_FLAG::NONE) const;

@@ -82,7 +82,7 @@ void CCameraDriver::DoRunFrame()
         //m_currentCamera.set(cv::CAP_PROP_FOURCC, cv::VideoWriter::fourcc('K', 'M', 'V', 'C'));
         m_currentCamera.set(cv::CAP_PROP_FOURCC, cv::VideoWriter::fourcc('M', 'J', 'P', 'G'));
 
-        sprintf_s(buff, 150, "Live (%d) (%dx%d)@%.1ffps", (int)m_cameraIndex, GetWidth(), GetHeight(), (float)m_currentCamera.get(CV_CAP_PROP_FPS));
+        sprintf_s(buff, 150, "Live (Camera %d) (%dx%d)@%.1ffps", (int)m_cameraIndex, GetWidth(), GetHeight(), (float)m_currentCamera.get(CV_CAP_PROP_FPS));
 
         vr_log("Switching to camera of index %d (%dx%d) (%.2f fps)\n", m_cameraInfo->id, GetWidth(), GetHeight(), (float)m_currentCamera.get(CV_CAP_PROP_FPS));
 
@@ -112,7 +112,7 @@ void CCameraDriver::DoRunFrame()
 void CCameraDriver::RunAsync()
 {
     m_working = true;
-    vr_log("Initializing main camera loop");
+    //vr_log("Initializing main camera loop");
     while (m_working)
     {
         DoRunFrame();

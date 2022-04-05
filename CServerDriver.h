@@ -82,6 +82,7 @@ class CServerDriver final : public vr::IServerTrackedDeviceProvider
     void MapBinding(const BINDING &binding, const int &key);
     bool BindingActive(const BINDING &bind) const;
     bool BindingPressed(const BINDING &bind) const;
+    void Startup();
     void UpdateBindings();
     BINDING m_activations;
     std::map<BINDING, int> m_bindings;

@@ -28,23 +28,23 @@ bool CDriverSettings::UpdateConfig(const CServerDriver *source)
 {
     return SetConfigVector(SECTION_POS, source->m_nvInterface->GetCameraPos())
         && SetConfigVector(SECTION_ROT, source->m_camBryan)
-        && SetConfigVector(SECTION_TRACK_SCALE, source->m_scaleFactor)
-        && SetConfigInteger(SECTION_CAMSET, KEY_CAM_INDEX, source->m_cameraDriver->GetIndex());
+        && SetConfigVector(SECTION_TRACK_SCALE, source->m_scaleFactor);
+        //&& SetConfigInteger(SECTION_CAMSET, KEY_CAM_INDEX, source->m_cameraDriver->GetIndex());
 }
 
 bool CDriverSettings::SaveConfig()
 {
-    return 0 < m_iniFile.SaveFile(m_filePath.c_str());
+    return 0 == m_iniFile.SaveFile(m_filePath.c_str());
 }
 
 bool CDriverSettings::SaveConfig(const char *alt)
 {
-    return 0 < m_iniFile.SaveFile(alt);
+    return 0 == m_iniFile.SaveFile(alt);
 }
 
 bool CDriverSettings::LoadConfig()
 {
-    return 0 < m_iniFile.LoadFile(m_filePath.c_str());
+    return 0 == m_iniFile.LoadFile(m_filePath.c_str());
 }
 
 glm::vec3 CDriverSettings::GetConfigVector(const char *section, const glm::vec3 &def) const

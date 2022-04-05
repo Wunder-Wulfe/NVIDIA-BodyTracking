@@ -166,7 +166,7 @@ void CServerDriver::OnImageUpdate(const CCameraDriver &me, cv::Mat image)
     }
     else
     {
-        vr_log("Trackers are not ready to be connected (frame %d)\n", driv->m_frame);
+        //vr_log("Trackers are not ready to be connected (frame %d)\n", driv->m_frame);
         for (auto tracker : driv->m_trackers)
         {
             tracker->SetStandby(true);
@@ -197,10 +197,8 @@ void CServerDriver::DoRotateCam(T &axis, const float &amount)
     m_nvInterface->SetCameraRotation(DoEulerYXZ(glm::radians(m_camBryan)));
 }
 
-vr::EVRInitError CServerDriver::Init(vr::IVRDriverContext *pDriverContext)
+void CServerDriver::Startup()
 {
-    VR_INIT_SERVER_DRIVER_CONTEXT(pDriverContext);
-
     vr_log("Loading settings.ini config file...\n");
     m_driverSettings = new CDriverSettings();
     m_driverSettings->LoadConfig();
@@ -236,7 +234,7 @@ vr::EVRInitError CServerDriver::Init(vr::IVRDriverContext *pDriverContext)
         m_nvInterface->trackingActive = m_driverSettings->GetConfigBoolean(SECTION_SDKSET, KEY_TRACKING, true);
         m_camBryan = m_driverSettings->GetConfigVector(SECTION_ROT);
         m_nvInterface->SetCamera(
-            m_driverSettings->GetConfigVector(SECTION_POS), 
+            m_driverSettings->GetConfigVector(SECTION_POS),
             DoEulerYXZ(
                 glm::radians(m_camBryan)
             )
@@ -244,10 +242,10 @@ vr::EVRInitError CServerDriver::Init(vr::IVRDriverContext *pDriverContext)
         m_nvInterface->Initialize();
         m_nvInterface->KeyInfoUpdated(true);
     }
-    catch(std::exception e)
+    catch (std::exception e)
     {
         vr_log("Unable to use NVIDIA AR SDK: %s\n", e.what());
-        return vr::EVRInitError::VRInitError_Driver_NotLoaded;
+        return;
     }
     vr_log("NVIDIA AR SDK modules loaded successfully\n");
 
@@ -259,16 +257,17 @@ vr::EVRInitError CServerDriver::Init(vr::IVRDriverContext *pDriverContext)
         m_cameraDriver->m_cameraIndex = m_driverSettings->GetConfigInteger(SECTION_CAMSET, KEY_CAM_INDEX, 0);
         m_cameraDriver->LoadCameras();
         vr_log("\tBinding events");
-        m_cameraDriver->imageChanged += CFunctionFactory(OnImageUpdate, void, const CCameraDriver&, cv::Mat);
+        m_cameraDriver->imageChanged += CFunctionFactory(OnImageUpdate, void, const CCameraDriver &, cv::Mat);
         m_cameraDriver->cameraChanged += CFunctionFactory(OnCameraUpdate, void, const CCameraDriver &, int);
         vr_log("\tLaunching camera thread");
         m_camThread = new std::thread(&CCameraDriver::RunAsync, m_cameraDriver);
+        SetThreadAffinityMask(m_camThread->native_handle(), 1u);
         vr_log("\tCamera thread launched asynchronously");
     }
-    catch(std::exception e)
+    catch (std::exception e)
     {
         vr_log("Unable to use OpenCV: %s\n", e.what());
-        return vr::EVRInitError::VRInitError_Driver_NotLoaded;
+        return;
     }
     vr_log("OpenCV modules loaded successfully\n");
 
@@ -305,7 +304,7 @@ vr::EVRInitError CServerDriver::Init(vr::IVRDriverContext *pDriverContext)
     MapBinding(BINDING::MOVE_UP, 'E');
     MapBinding(BINDING::MOVE_DOWN, 'Q');
 
- 
+
     vr_log("\tUP/DOWN: Rotate the base station up/down");
     MapBinding(BINDING::PITCH_UP, VK_UP);
     MapBinding(BINDING::PITCH_DOWN, VK_DOWN);
@@ -347,17 +346,24 @@ vr::EVRInitError CServerDriver::Init(vr::IVRDriverContext *pDriverContext)
     MapBinding(BINDING::CTRL, VK_CONTROL);
 
     vr_log("All inputs bound successfully");
+}
+
+vr::EVRInitError CServerDriver::Init(vr::IVRDriverContext *pDriverContext)
+{
+    VR_INIT_SERVER_DRIVER_CONTEXT(pDriverContext);
+
+    Startup();
 
     return vr::VRInitError_None;
 }
 
 bool CServerDriver::TrySaveConfig() const
 {
+    vr_log("Config save called");
     int i;
     for (i = 0; i < 5; i++)
     {
         vr_log("Attempting to save config (#%d)...", i);
-        m_driverSettings->UpdateConfig(this);
         m_driverSettings->UpdateConfig(this);
         if (m_driverSettings->SaveConfig()) break;
     }
@@ -411,7 +417,7 @@ void CServerDriver::ProcessEvent(const vr::VREvent_t &evnt)
 
 void CServerDriver::Deactivate()
 {
-    Cleanup();
+    //Cleanup();
 }
 
 void CServerDriver::RunFrame()
@@ -426,6 +432,12 @@ void CServerDriver::RunFrame()
     static bool first_time = true;
     vr::VREvent_t ev;
 
+    if (first_time)
+    {
+        vr_log("HMD Alignment %s", m_nvInterface->m_alignHMD ? "enabled" : "disabled");
+        vr_log("Camera %s mirrored", mirrored ? "is" : "is not");
+    }
+
     vr::VRServerDriverHost()->GetRawTrackedDevicePoses(0.f, m_hmd_controller_pose, 3);
 
     m_frame++;
@@ -433,12 +445,7 @@ void CServerDriver::RunFrame()
     ptrsafe(m_nvInterface);
     ptrsafe(m_cameraDriver);
     ptrsafe(m_station);
-
-    if (first_time)
-    {
-        vr_log("HMD Alignment %s", m_nvInterface->m_alignHMD ? "enabled" : "disabled");
-        vr_log("Camera %s mirrored", mirrored ? "is" : "is not");
-    }
+    ptrsafe(m_driverSettings);
 
     ptrsafe(m_camThread);
 
@@ -454,7 +461,17 @@ void CServerDriver::RunFrame()
     while (vr::VRServerDriverHost()->PollNextEvent(&ev, sizeof(vr::VREvent_t)))
        ProcessEvent(ev);
 
-    if (BindingActive(BINDING::SHIFT))
+    if (BindingActive(BINDING::CTRL))
+    {
+        if (BindingPressed(BINDING::SAVE_KEY))
+        {
+            vr_log("Save key pressed");
+            vr_log(m_driverSettings->m_filePath.substr(0, 10000).c_str());
+            //vr_log(m_driverSettings->m_filePath.c_str());
+            TrySaveConfig();
+        }
+    }
+    else if (BindingActive(BINDING::SHIFT))
     {
         if (BindingActive(BINDING::MOVE_FORWARD))
             m_nvInterface->m_offset.z += move_amnt;
@@ -532,12 +549,6 @@ void CServerDriver::RunFrame()
     {
         mirrored = !mirrored;
         vr_log("Camera %s mirrored", mirrored ? "is" : "is not");
-    }
-
-    if (BindingActive(BINDING::CTRL))
-    {
-        if (BindingPressed(BINDING::SAVE_KEY))
-            TrySaveConfig();
     }
 
     UpdateBindings();
