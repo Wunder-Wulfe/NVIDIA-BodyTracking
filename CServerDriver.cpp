@@ -263,7 +263,7 @@ void CServerDriver::Startup()
         m_cameraDriver->cameraChanged += CFunctionFactory(OnCameraUpdate, void, const CCameraDriver &, int);
         vr_log("\tLaunching camera thread");
         m_camThread = new std::thread(&CCameraDriver::RunAsync, m_cameraDriver);
-        SetThreadAffinityMask(m_camThread->native_handle(), 1u);
+        SetThreadAffinityMask(m_camThread->native_handle(), 0b10u);
         vr_log("\tCamera thread launched asynchronously");
     }
     catch (std::exception e)
@@ -441,6 +441,7 @@ void CServerDriver::RunFrame()
         vr_log("HMD Alignment %s", m_nvInterface->m_alignHMD ? "enabled" : "disabled");
         vr_log("Camera %s mirrored", mirrored ? "is" : "is not");
         m_camThread->detach();
+        SetThreadAffinityMask(m_camThread->native_handle(), 0b10u);
     }
 
     vr::VRServerDriverHost()->GetRawTrackedDevicePoses(0.f, m_hmd_controller_pose, 3);
