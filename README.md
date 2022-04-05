@@ -29,7 +29,7 @@ This is a **SteamVR Driver**, and as such, you will need to grab the [latest rel
 
 The settings file for configuring the driver can be located under 
 
-``Steam\steamapps\common\SteamVR\drivers\nvidiaBodyTracking\bin\win64\settings.ini``
+``Steam\steamapps\common\SteamVR\drivers\nvidiaBodyTracking\settings.ini``
 
 If your file path contains ``..\nvidiaBodyTracking\nvidiaBodyTracking\..``, reduce it to one folder only.
 
