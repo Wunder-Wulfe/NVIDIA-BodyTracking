@@ -434,10 +434,13 @@ void CServerDriver::RunFrame()
     static bool first_time = true;
     vr::VREvent_t ev;
 
+    ptrsafe(m_camThread);
+
     if (first_time)
     {
         vr_log("HMD Alignment %s", m_nvInterface->m_alignHMD ? "enabled" : "disabled");
         vr_log("Camera %s mirrored", mirrored ? "is" : "is not");
+        m_camThread->detach();
     }
 
     vr::VRServerDriverHost()->GetRawTrackedDevicePoses(0.f, m_hmd_controller_pose, 3);
@@ -449,7 +452,7 @@ void CServerDriver::RunFrame()
     ptrsafe(m_station);
     ptrsafe(m_driverSettings);
 
-    ptrsafe(m_camThread);
+    //ptrsafe(m_camThread);
 
     LoadRefreshRate();
     m_refreshRateCache = (float)(1./clock_diff);
