@@ -179,6 +179,8 @@ void CServerDriver::OnCameraUpdate(const CCameraDriver &me, int index)
     ptrsafe(me.driver);
     ptrsafe(me.driver->m_nvInterface);
 
+    me.driver->camIndex = index;
+
     me.driver->m_nvInterface->SetFPS(me.GetFps());
     vr_log("Attempting to load the image from the camera onto GPU memory\n");
     me.driver->m_nvInterface->LoadImageFromCam(me.m_currentCamera);
@@ -400,7 +402,7 @@ void CServerDriver::Cleanup()
 
     m_cameraDriver->m_working = false;
 
-    m_camThread->join();
+    //m_camThread->join();
 
     delptr(m_cameraDriver);
     delptr(m_camThread);

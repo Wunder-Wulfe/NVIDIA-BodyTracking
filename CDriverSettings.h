@@ -166,7 +166,7 @@ public:
     inline const char *GetConfigCString(const char *section, const char *key, const char *def = "") const { return m_iniFile.GetValue(section, key, def); }
     inline const std::string GetConfigString(const char *section, const char *key, const std::string &def = std::string("")) const { return std::string(m_iniFile.GetValue(section, key, def.c_str())); }
 
-    inline bool SetConfigInteger(const char *section, const char *key, int value) { _itoa_s(value, m_tempBuffer, BUFFER_SIZE); return 0 == m_iniFile.SetValue(section, key, m_tempBuffer); }
+    inline bool SetConfigInteger(const char *section, const char *key, int value) { _itoa_s(value, m_tempBuffer, 10); return 0 == m_iniFile.SetValue(section, key, m_tempBuffer); }
     inline  bool SetConfigFloat(const char *section, const char *key, float value) { return 0 == m_iniFile.SetDoubleValue(section, key, (double)value); }
     bool SetConfigVector(const char *section, const glm::vec3 value);
     bool SetConfigQuaternion(const char *section, const glm::quat value);

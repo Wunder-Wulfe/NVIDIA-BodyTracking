@@ -116,6 +116,7 @@ protected:
     glm::vec3 m_camBryan;
     uint m_frame;
     bool mirrored;
+    int camIndex;
 
     vr::TrackedDevicePose_t m_hmd_controller_pose[3]{};
 

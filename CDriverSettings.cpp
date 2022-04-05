@@ -28,8 +28,8 @@ bool CDriverSettings::UpdateConfig(const CServerDriver *source)
 {
     return SetConfigVector(SECTION_POS, source->m_nvInterface->GetCameraPos())
         && SetConfigVector(SECTION_ROT, source->m_camBryan)
-        && SetConfigVector(SECTION_TRACK_SCALE, source->m_scaleFactor);
-        //&& SetConfigInteger(SECTION_CAMSET, KEY_CAM_INDEX, source->m_cameraDriver->GetIndex());
+        && SetConfigVector(SECTION_TRACK_SCALE, source->m_scaleFactor)
+        && SetConfigInteger(SECTION_CAMSET, KEY_CAM_INDEX, source->camIndex);
 }
 
 bool CDriverSettings::SaveConfig()
