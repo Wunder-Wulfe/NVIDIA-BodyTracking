@@ -38,6 +38,7 @@ public:
 
     inline const cv::Mat GetImage() const { return m_frame; }
     inline const float GetFps() const { return m_cameras.size() > 0 ? m_fps : 0.f; }
+    inline void SetFps(float mult = 1.0) { m_currentCamera.set(CV_CAP_PROP_FPS, m_currentCamera.get(CV_CAP_PROP_FPS) * mult); }
 
     inline int GetWidth() const { return m_cameras[m_cameraIndex].width; }
     inline int GetHeight() const { return m_cameras[m_cameraIndex].height; }

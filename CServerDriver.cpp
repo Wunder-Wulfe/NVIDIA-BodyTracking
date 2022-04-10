@@ -492,6 +492,11 @@ void CServerDriver::RunFrame()
             m_nvInterface->m_offset.y += move_amnt;
         if (BindingActive(BINDING::MOVE_DOWN))
             m_nvInterface->m_offset.y -= move_amnt;
+
+        if (BindingPressed(BINDING::NEXT_CAMERA))
+            m_cameraDriver->SetFps(2.f);
+        if (BindingPressed(BINDING::PREVIOUS_CAMERA))
+            m_cameraDriver->SetFps(.5f);
     }
     else
     {
@@ -508,6 +513,11 @@ void CServerDriver::RunFrame()
             m_nvInterface->TranslateCamera(glm::vec3(0.f, move_amnt, 0.f));
         if (BindingActive(BINDING::MOVE_DOWN))
             m_nvInterface->TranslateCamera(glm::vec3(0, -move_amnt, 0.f));
+
+        if (BindingPressed(BINDING::NEXT_CAMERA))
+            m_cameraDriver->ChangeCamera(1);
+        if (BindingPressed(BINDING::PREVIOUS_CAMERA))
+            m_cameraDriver->ChangeCamera(-1);
     }
 
 
@@ -542,10 +552,6 @@ void CServerDriver::RunFrame()
     if (BindingActive(BINDING::SCALE_Z_DOWN))
         m_scaleFactor.z -= scale_amnt;
 
-    if (BindingPressed(BINDING::NEXT_CAMERA))
-        m_cameraDriver->ChangeCamera(1);
-    if (BindingPressed(BINDING::PREVIOUS_CAMERA))
-        m_cameraDriver->ChangeCamera(-1);
     if (BindingPressed(BINDING::TOGGLE_ALIGN))
     {
         m_nvInterface->m_alignHMD = !m_nvInterface->m_alignHMD;
