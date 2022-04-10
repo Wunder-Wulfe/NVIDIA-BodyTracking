@@ -112,7 +112,7 @@ void CCameraDriver::DoRunFrame()
 void CCameraDriver::RunAsync()
 {
     m_working = true;
-    //vr_log("Initializing main camera loop");
+    vr_log("Initializing main camera loop");
     while (m_working)
     {
         DoRunFrame();

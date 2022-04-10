@@ -1,8 +1,8 @@
-# Blender 3.1.0 MTL File: 'tracker.blend'
-# www.blender.org
+# Blender MTL File: 'tracker.blend'
+# Material Count: 1
 
 newmtl Bake
-Ns 167.548141
+Ns 167.548130
 Ka 1.000000 1.000000 1.000000
 Kd 0.800000 0.800000 0.800000
 Ks 0.500000 0.500000 0.500000
@@ -10,4 +10,4 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 2
-map_Kd  bake_base.png
+map_Kd bake_base.png

@@ -34,7 +34,7 @@ void CVirtualBaseStation::SetupProperties()
     vr::VRProperties()->SetFloatProperty(m_propertyHandle, vr::Prop_TrackingRangeMaximumMeters_Float, 4.5f);
 
     vr::VRProperties()->SetStringProperty(m_propertyHandle, vr::Prop_ResourceRoot_String, "nvidiaBodyTracking");
-    //vr::VRProperties()->SetStringProperty(m_propertyHandle, vr::Prop_RenderModelName_String, "{nvidiaBodyTracking}/rendermodels/base/nvidiaStation");
+    vr::VRProperties()->SetStringProperty(m_propertyHandle, vr::Prop_RenderModelName_String, "{nvidiaBodyTracking}/rendermodels/base");
 
     vr::VRProperties()->SetStringProperty(m_propertyHandle, vr::Prop_NamedIconPathDeviceOff_String, "{nvidiaBodyTracking}/icons/base/base_status_off.png");
     //vr::VRProperties()->SetStringProperty(m_propertyHandle, vr::Prop_NamedIconPathDeviceSearching_String, "{nvidiaBodyTracking}/icons/base_status_searching.gif");
