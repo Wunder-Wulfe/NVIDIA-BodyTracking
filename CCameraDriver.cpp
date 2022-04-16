@@ -79,7 +79,6 @@ void CCameraDriver::DoRunFrame()
 
         m_currentCamera.set(cv::CAP_PROP_FRAME_WIDTH, GetScaledWidth());
         m_currentCamera.set(cv::CAP_PROP_FRAME_HEIGHT, GetScaledHeight());
-        //m_currentCamera.set(cv::CAP_PROP_FOURCC, cv::VideoWriter::fourcc('K', 'M', 'V', 'C'));
         m_currentCamera.set(cv::CAP_PROP_FOURCC, cv::VideoWriter::fourcc('M', 'J', 'P', 'G'));
 
         sprintf_s(buff, 150, "Live (Camera %d) (%dx%d)@%.1ffps", (int)m_cameraIndex, GetWidth(), GetHeight(), (float)m_currentCamera.get(CV_CAP_PROP_FPS));
