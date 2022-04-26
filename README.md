@@ -55,6 +55,7 @@ If your file path contains ``..\nvidiaBodyTracking\nvidiaBodyTracking\..``, redu
             * AI model computes information based on the image.
             * CPU *"improves"* this data and converts it into information useable by SteamVR.
             * Interpolation is done every time the headset renders a frame before the next camera frame.
+
 2. **How do I install this program?**
     * See [Installation](#installation).
 3. **Can I use this with an AMD GPU, or a non-RTX NVIDIA GPU?**
