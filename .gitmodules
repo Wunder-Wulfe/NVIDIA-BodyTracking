@@ -10,3 +10,9 @@
 [submodule "vendor/openvr"]
 	path = vendor/openvr
 	url = https://github.com/ValveSoftware/openvr.git
+[submodule "vendor/imgui"]
+	path = vendor/imgui
+	url = ../../ocornut/imgui.git
+[submodule "vendor/imgui-sfml"]
+	path = vendor/imgui-sfml
+	url = ../../eliasdaler/imgui-sfml.git
