@@ -55,9 +55,10 @@ If your file path contains ``..\nvidiaBodyTracking\nvidiaBodyTracking\..``, redu
             * AI model computes information based on the image.
             * CPU *"improves"* this data and converts it into information useable by SteamVR.
             * Interpolation is done every time the headset renders a frame before the next camera frame.
+
 2. **How do I install this program?**
     * See [Installation](#installation).
-3. **Can I use this with an AMD GPU, or an RTX 1660?**
+3. **Can I use this with an AMD GPU, or a non-RTX NVIDIA GPU?**
     * No. This SDK only works with 20-series and 30-series NVIDIA RTX cards.
 4. **I only have a Kinect camera / crappy laptop camera. Will this still work?**
     * This solution works on any and all cameras, provided they can record in realtime. The quality of the tracking will reflect the quality of the camera. Generally a higher refresh rate will result in smoother tracking.
