@@ -9,7 +9,7 @@
 * Windows OS
 * NVIDIA RTX GPU, 20-series or 30-series
 * Any camera that can be linked to your computer for realtime capture, *i.e.* a webcam, mobile device, or go-pro
-* Installation of the [NVIDIA Broadcast AR SDK](https://www.nvidia.com/en-us/geforce/broadcasting/broadcast-sdk/resources/) ([20-series](https://international.download.nvidia.com/Windows/broadcast/sdk/v0.7.6/nvidia_ar_sdk_installer_turing.exe) | [30-series](https://international.download.nvidia.com/Windows/broadcast/sdk/0.7.6/nvidia_ar_sdk_installer_ampere.exe))
+* Installation of the [NVIDIA Broadcast AR SDK](https://www.nvidia.com/en-us/geforce/broadcasting/broadcast-sdk/resources/) ([20-series](https://international.download.nvidia.com/Windows/broadcast/sdk/v0.7.6/nvidia_ar_sdk_installer_turing.exe) | [30-series](https://international.download.nvidia.com/Windows/broadcast/sdk/0.7.6/nvidia_ar_sdk_installer_ampere.exe)) and [OpenCV](https://opencv.org/releases/)
 
 ---
 
