@@ -26,15 +26,6 @@
 #include "glm/gtx/matrix_interpolation.hpp"
 #include "SimpleIni.h"
 
-#include "SFML/Main.hpp"
-#include "SFML/System.hpp"
-#include "SFML/Window.hpp"
-#include "SFML/Graphics.hpp"
-#include "SFML/GpuPreference.hpp"
-
-#include "imgui.h"
-#include "imgui-SFML.h"
-
 #include "nvAR.h"
 #include "nvAR_defs.h"
 #include "nvCVImage.h"

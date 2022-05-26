@@ -58,7 +58,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>./;./vendor/MAXINE-AR-SDK/samples/utils;./vendor/MAXINE-AR-SDK/samples/external/opencv/include;./vendor/openvr/headers;./vendor/MAXINE-AR-SDK/nvar/include;./vendor/opencv/include/opencv;./vendor/opencv/include/opencv2;./vendor/glm;./vendor/imgui-sfml;./vendor/imgui;./vendor/SFML/include;./vendor/simpleini;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./;./vendor/MAXINE-AR-SDK/samples/utils;./vendor/MAXINE-AR-SDK/samples/external/opencv/include;./vendor/openvr/headers;./vendor/MAXINE-AR-SDK/nvar/include;./vendor/opencv/include/opencv;./vendor/opencv/include/opencv2;./vendor/glm;./vendor/simpleini;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ModuleOutputFile>$(IntDir)</ModuleOutputFile>
     </ClCompile>
     <Link>
@@ -79,7 +79,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>./;./vendor/MAXINE-AR-SDK/samples/utils;./vendor/MAXINE-AR-SDK/samples/external/opencv/include;./vendor/openvr/headers;./vendor/MAXINE-AR-SDK/nvar/include;./vendor/opencv/include/opencv;./vendor/opencv/include/opencv2;./vendor/glm;./vendor/imgui-sfml;./vendor/imgui;./vendor/SFML/include;./vendor/simpleini;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./;./vendor/MAXINE-AR-SDK/samples/utils;./vendor/MAXINE-AR-SDK/samples/external/opencv/include;./vendor/openvr/headers;./vendor/MAXINE-AR-SDK/nvar/include;./vendor/opencv/include/opencv;./vendor/opencv/include/opencv2;./vendor/glm;./vendor/simpleini;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
