@@ -63,11 +63,20 @@ void COverlayManager::Pulse()
         {
         case vr::VREvent_MouseMove:
         {
-            m_core->GetGuiManager()->ReceiveMouseMove(m_event.data.mouse.x, m_event.data.mouse.y);
+            sf::Event l_event;
+            l_event.type = sf::Event::EventType::MouseMoved;
+            l_event.mouseMove.x = m_event.data.mouse.x;
+            l_event.mouseMove.y = m_event.data.mouse.y;
+            ImGui::SFML::ProcessEvent(l_event);
         } break;
         case vr::VREvent_MouseButtonDown: case vr::VREvent_MouseButtonUp:
         {
-            m_core->GetGuiManager()->ReceiveMouseClick(m_event.data.mouse.button == vr::VRMouseButton_Left, m_event.eventType == vr::VREvent_MouseButtonDown);
+            sf::Event l_event;
+            l_event.type = (m_event.eventType == vr::VREvent_MouseButtonDown ? sf::Event::EventType::MouseButtonPressed : sf::Event::EventType::MouseButtonReleased);
+            l_event.mouseButton.button = m_event.data.mouse.button == vr::VRMouseButton_Left ? sf::Mouse::Button::Left : sf::Mouse::Button::Right;
+            l_event.mouseButton.x = m_event.data.mouse.x;
+            l_event.mouseButton.y = m_event.data.mouse.y;
+            ImGui::SFML::ProcessEvent(l_event);
         } break;
         }
     }
