@@ -16,3 +16,6 @@
 [submodule "vendor/imgui-sfml"]
 	path = vendor/imgui-sfml
 	url = ../../eliasdaler/imgui-sfml.git
+[submodule "vendor/SFML"]
+	path = vendor/SFML
+	url = ../../SFML/SFML.git
