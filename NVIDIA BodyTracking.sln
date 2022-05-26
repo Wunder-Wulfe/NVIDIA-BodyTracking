@@ -5,7 +5,7 @@ VisualStudioVersion = 17.1.32210.238
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NVIDIA BodyTracking", "NVIDIA BodyTracking.vcxproj", "{368DC3DC-6C9B-4575-800B-DDFFF7DB92B3}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Overlay", "..\Overlay\Overlay.vcxproj", "{327A9534-7242-4331-8665-32DF98A8E681}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Overlay", "Overlay\Overlay.vcxproj", "{327A9534-7242-4331-8665-32DF98A8E681}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

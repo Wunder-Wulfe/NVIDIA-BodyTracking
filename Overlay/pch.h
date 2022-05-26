@@ -17,14 +17,11 @@
 #include <future>
 #include <map>
 
-#include "openvr_driver.h"
-#include "opencv2/opencv.hpp"
-#include "opencv2/highgui.hpp"
+#include "openvr.h"
 #include "glm/gtc/quaternion.hpp"
 #include "glm/gtx/transform.hpp"
 #include "glm/gtx/euler_angles.hpp"
 #include "glm/gtx/matrix_interpolation.hpp"
-#include "SimpleIni.h"
 
 #include "SFML/Main.hpp"
 #include "SFML/System.hpp"
@@ -34,8 +31,3 @@
 
 #include "imgui.h"
 #include "imgui-SFML.h"
-
-#include "nvAR.h"
-#include "nvAR_defs.h"
-#include "nvCVImage.h"
-#include "nvCVOpenCV.h"
