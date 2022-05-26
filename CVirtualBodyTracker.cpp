@@ -183,6 +183,7 @@ void CVirtualBodyTracker::RunFrame()
 {
     SetTransform(InterpolatedTransform());
     //frame += driver->GetFPS() / driver->GetRefreshRate();
+    
     if (m_trackedDevice != vr::k_unTrackedDeviceIndexInvalid)
         vr::VRServerDriverHost()->TrackedDevicePoseUpdated(m_trackedDevice, GetPose(), sizeof(vr::DriverPose_t));
 }
