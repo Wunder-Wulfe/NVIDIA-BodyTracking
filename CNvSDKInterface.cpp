@@ -34,6 +34,22 @@ CNvSDKInterface::CNvSDKInterface() : m_tmpImage{}
     m_alignHMD = true;
 }
 
+void CNvSDKInterface::AlignWithOffset()
+{
+    for (int index = 0; index < (int)m_numKeyPoints; index++)
+    {
+        m_realKeypoints3D[index] += m_offset;
+    }
+}
+
+void CNvSDKInterface::AlignWithOffset(glm::vec3 offset)
+{
+    for (int index = 0; index < (int)m_numKeyPoints; index++)
+    {
+        m_realKeypoints3D[index] += offset;
+    }
+}
+
 void CNvSDKInterface::KeyInfoUpdated(bool override)
 {
     int _nkp = m_numKeyPoints;
@@ -220,11 +236,7 @@ void CNvSDKInterface::AlignToMirror()
 {
     glm::vec3 eyes = GetPosition(BODY_JOINT::LEFT_EYE, BODY_JOINT::RIGHT_EYE);
     glm::vec3 offset = -eyes;
-    int index;
-    for (index = 0; index < (int)m_numKeyPoints; index++)
-    {
-        m_realKeypoints3D[index] += offset;
-    }
+    AlignWithOffset(offset);
 }
 void CNvSDKInterface::AlignToHMD(const vr::TrackedDevicePose_t &pose)
 {
@@ -242,11 +254,7 @@ void CNvSDKInterface::AlignToHMD(const vr::TrackedDevicePose_t &pose)
     glm::vec3 eyes = GetPosition(BODY_JOINT::NOSE);
     float noseDist = glm::distance(head, eyes);
     glm::vec3 offset = hmdPosition - (head + eyeDirection * noseDist * .5f);
-    int index;
-    for (index = 0; index < (int)m_numKeyPoints; index++)
-    {
-        m_realKeypoints3D[index] += offset;
-    }
+    AlignWithOffset(offset);
 }
 void CNvSDKInterface::AlignToControllers(const vr::TrackedDevicePose_t &pose1, const vr::TrackedDevicePose_t &pose2)
 {
@@ -280,19 +288,7 @@ void CNvSDKInterface::AlignToControllers(const vr::TrackedDevicePose_t &pose1, c
     }
     if (divisor > 0.0f)
         offset /= divisor;
-    int index;
-    for (index = 0; index < (int)m_numKeyPoints; index++)
-    {
-        m_realKeypoints3D[index] += offset;
-    }
-}
-
-void CNvSDKInterface::AlignWithOffset()
-{
-    for (int index = 0; index < (int)m_numKeyPoints; index++)
-    {
-        m_realKeypoints3D[index] += m_offset;
-    }
+    AlignWithOffset(offset);
 }
 
 void CNvSDKInterface::RotateBatched(std::vector<float> &to)
