@@ -220,7 +220,6 @@ void CNvSDKInterface::AlignToMirror()
 {
     glm::vec3 eyes = GetPosition(BODY_JOINT::LEFT_EYE, BODY_JOINT::RIGHT_EYE);
     glm::vec3 offset = -eyes;
-    offset += m_offset;
     int index;
     for (index = 0; index < (int)m_numKeyPoints; index++)
     {
@@ -243,11 +242,56 @@ void CNvSDKInterface::AlignToHMD(const vr::TrackedDevicePose_t &pose)
     glm::vec3 eyes = GetPosition(BODY_JOINT::NOSE);
     float noseDist = glm::distance(head, eyes);
     glm::vec3 offset = hmdPosition - (head + eyeDirection * noseDist * .5f);
-    offset += m_offset;
     int index;
     for (index = 0; index < (int)m_numKeyPoints; index++)
     {
         m_realKeypoints3D[index] += offset;
+    }
+}
+void CNvSDKInterface::AlignToControllers(const vr::TrackedDevicePose_t &pose1, const vr::TrackedDevicePose_t &pose2)
+{
+    glm::vec3 offset = glm::vec3(0.0f, 0.0f, 0.0f);
+    float divisor = 0.f;
+    if (pose1.bPoseIsValid)
+    {
+        const vr::HmdMatrix34_t &mat = pose1.mDeviceToAbsoluteTracking;
+        glm::vec3 pos = WorldToCam(
+            glm::vec3(
+                mat.m[0][3],
+                mat.m[1][3],
+                mat.m[2][3]
+            )
+        );
+        offset += pos - GetPosition(BODY_JOINT::LEFT_WRIST);
+        divisor++;
+    }
+    if (pose2.bPoseIsValid)
+    {
+        const vr::HmdMatrix34_t &mat = pose2.mDeviceToAbsoluteTracking;
+        glm::vec3 pos = WorldToCam(
+            glm::vec3(
+                mat.m[0][3],
+                mat.m[1][3],
+                mat.m[2][3]
+            )
+        );
+        offset += pos - GetPosition(BODY_JOINT::RIGHT_WRIST);
+        divisor++;
+    }
+    if (divisor > 0.0f)
+        offset /= divisor;
+    int index;
+    for (index = 0; index < (int)m_numKeyPoints; index++)
+    {
+        m_realKeypoints3D[index] += offset;
+    }
+}
+
+void CNvSDKInterface::AlignWithOffset()
+{
+    for (int index = 0; index < (int)m_numKeyPoints; index++)
+    {
+        m_realKeypoints3D[index] += m_offset;
     }
 }
 
@@ -584,9 +628,13 @@ void CNvSDKInterface::RunFrame()
             FillBatched(m_keypoints3D, m_realKeypoints3D);
             //FillBatched(m_jointAngles, m_realJointAngles);
             if (m_alignHMD)
+            {
                 AlignToHMD(driver->m_hmd_controller_pose[0]);
+                AlignToControllers(driver->m_hmd_controller_pose[1], driver->m_hmd_controller_pose[2]);
+            }
             else
                 AlignToMirror();
+            AlignWithOffset();
             ComputeRotations();
             //DebugSequence(m_keypoints3D);
         }

@@ -79,6 +79,8 @@ protected:
     inline const glm::vec3 GetDirection(const BODY_JOINT &from, const BODY_JOINT &to) { return GetDirection(GetPosition(from), GetPosition(to)); }
 
     void AlignToHMD(const vr::TrackedDevicePose_t &pose);
+    void AlignToControllers(const vr::TrackedDevicePose_t &pose1, const vr::TrackedDevicePose_t &pose2);
+    void AlignWithOffset();
     void AlignToMirror();
 
     friend class CServerDriver;

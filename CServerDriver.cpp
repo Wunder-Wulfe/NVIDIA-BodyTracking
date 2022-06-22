@@ -443,8 +443,12 @@ void CServerDriver::RunFrame()
         vr_log("Camera %s mirrored", mirrored ? "is" : "is not");
         SetThreadAffinityMask(m_camThread->native_handle(), 0b10u);
     }
+    
 
     vr::VRServerDriverHost()->GetRawTrackedDevicePoses(0.f, m_hmd_controller_pose, 3);
+    //  hmd 0
+    //  lc  1
+    //  rc  2
 
     m_frame++;
 
