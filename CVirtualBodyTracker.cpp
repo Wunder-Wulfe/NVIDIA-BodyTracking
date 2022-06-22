@@ -5,7 +5,7 @@
 #include "CDriverSettings.h"
 #include "CServerDriver.h"
 
-CVirtualBodyTracker::CVirtualBodyTracker(size_t p_index, TRACKER_ROLE rle, size_t frameSize) : m_transformCache(frameSize), m_curTransform{0.f}, frame(0), m_wasSet(false)
+CVirtualBodyTracker::CVirtualBodyTracker(size_t p_index, TRACKER_ROLE rle, size_t frameSize, bool cachefast) : m_transformCache(frameSize), m_curTransform{0.f}, frame(0), m_wasSet(false)
 {
     m_transformCache.assign(frameSize, glm::mat4x4());
     m_serial.assign(TrackerRoleName[(int)rle]);
@@ -13,6 +13,7 @@ CVirtualBodyTracker::CVirtualBodyTracker(size_t p_index, TRACKER_ROLE rle, size_
     role = rle;
     m_lCall = systime();
     m_diff = 1.0;
+    cacheImmediate = cachefast;
 }
 
 CVirtualBodyTracker::~CVirtualBodyTracker()
@@ -143,7 +144,7 @@ void CVirtualBodyTracker::UpdateTransform(const glm::mat4x4 &newTransform)
     if (m_transformCache.size() > 0)
     {
         m_transformCache.pop_front();
-        m_transformCache.push_back(GetTransform());
+        m_transformCache.push_back(cacheImmediate ? newTransform : GetTransform());
     }
     m_curTransform = newTransform;
     frame = 0.f;
@@ -152,7 +153,6 @@ void CVirtualBodyTracker::UpdateTransform(const glm::mat4x4 &newTransform)
     m_lCall = systime();
 }
 
-// CNvSDKInterface::InterpolateMatrix(m_lastTransform, m_curTransform, t);
 const glm::mat4x4 InterpolateOverAll(float t, std::deque<glm::mat4x4> mats)
 {
     InterpolateInPlace(t, mats, mats.size());

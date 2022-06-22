@@ -214,6 +214,7 @@ void CServerDriver::Startup()
     mirrored = m_driverSettings->GetConfigBoolean(SECTION_CAMSET, KEY_CAM_MIRROR, false);
 
     frameCacheSize = m_driverSettings->GetConfigInteger(SECTION_TRACKSET, KEY_FRAME_CACHE, 1);
+    cacheImmediate = m_driverSettings->GetConfigBoolean(SECTION_TRACKSET, KEY_CACHE_IMMEDIATE, false);
 
     vr_log("Body proportions:");
 
@@ -630,7 +631,7 @@ void CServerDriver::SetupTracker(const char *name, TRACKING_FLAG flag, TRACKER_R
     
     if(enabled)
     {
-        tracker = new CVirtualBodyTracker(m_trackers.size(), role, frameCacheSize);
+        tracker = new CVirtualBodyTracker(m_trackers.size(), role, frameCacheSize, cacheImmediate);
         m_trackers.push_back(tracker);
         vr::VRServerDriverHost()->TrackedDeviceAdded(tracker->GetSerial().c_str(), vr::ETrackedDeviceClass::TrackedDeviceClass_GenericTracker, tracker);
         tracker->driver = this;
@@ -644,12 +645,12 @@ void CServerDriver::SetupTracker(const char *name, TRACKING_FLAG flag, TRACKER_R
     //vr_log("\tTracking for %s %s\n", name, enabled ? "enabled" : "disabled");
     if(enabled)
     {
-        tracker = new CVirtualBodyTracker(m_trackers.size(), role, frameCacheSize);
+        tracker = new CVirtualBodyTracker(m_trackers.size(), role, frameCacheSize, cacheImmediate);
         m_trackers.push_back(tracker);
         vr::VRServerDriverHost()->TrackedDeviceAdded(tracker->GetSerial().c_str(), vr::ETrackedDeviceClass::TrackedDeviceClass_GenericTracker, tracker);
         tracker->driver = this;
 
-        tracker = new CVirtualBodyTracker(m_trackers.size(), secondary, frameCacheSize);
+        tracker = new CVirtualBodyTracker(m_trackers.size(), secondary, frameCacheSize, cacheImmediate);
         m_trackers.push_back(tracker);
         vr::VRServerDriverHost()->TrackedDeviceAdded(tracker->GetSerial().c_str(), vr::ETrackedDeviceClass::TrackedDeviceClass_GenericTracker, tracker);
         tracker->driver = this;

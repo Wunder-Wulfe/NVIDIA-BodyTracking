@@ -98,6 +98,9 @@
 //  Size of the frame cache
 #define KEY_FRAME_CACHE "FrameCache"
 
+//  Immediate frame caching
+#define KEY_CACHE_IMMEDIATE "ImmediateCache"
+
 //  The offset of the elbow trackers
 #define KEY_ELBOW_POS "ElbowTrackerPosition"
 //  The offset of the knee trackers
