@@ -190,7 +190,7 @@ const glm::mat4x4 CVirtualBodyTracker::InterpolatedTransform() const
         default:
             return m_curTransform;
         }
-        return InterpolateOverAll(t, m_transformCache);
+        return CNvSDKInterface::InterpolateMatrix(GetTransform(), InterpolateOverAll(t, m_transformCache), t * 0.5f);
     }
     else
     {
