@@ -80,6 +80,7 @@ protected:
 
     void AlignToHMD(const vr::TrackedDevicePose_t &pose);
     void AlignToControllers(const vr::TrackedDevicePose_t &pose1, const vr::TrackedDevicePose_t &pose2);
+    void AlignWithOffset(glm::vec3 offset);
     void AlignWithOffset();
     void AlignToMirror();
 
