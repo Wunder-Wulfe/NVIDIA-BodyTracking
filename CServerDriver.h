@@ -117,6 +117,7 @@ protected:
     uint m_frame;
     bool mirrored;
     int camIndex;
+    int frameCacheSize;
 
     vr::TrackedDevicePose_t m_hmd_controller_pose[3]{};
 

@@ -5,8 +5,9 @@
 #include "CDriverSettings.h"
 #include "CServerDriver.h"
 
-CVirtualBodyTracker::CVirtualBodyTracker(size_t p_index, TRACKER_ROLE rle) : m_lastTransform{0.f}, m_curTransform{0.f}, frame(0), m_wasSet(false)
+CVirtualBodyTracker::CVirtualBodyTracker(size_t p_index, TRACKER_ROLE rle, size_t frameSize) : m_transformCache(frameSize), m_curTransform{0.f}, frame(0), m_wasSet(false)
 {
+    m_transformCache.assign(frameSize, glm::mat4x4());
     m_serial.assign(TrackerRoleName[(int)rle]);
     m_index = p_index;
     role = rle;
@@ -139,7 +140,11 @@ void CVirtualBodyTracker::SetupProperties()
 
 void CVirtualBodyTracker::UpdateTransform(const glm::mat4x4 &newTransform)
 {
-    m_lastTransform = GetTransform();
+    if (m_transformCache.size() > 0)
+    {
+        m_transformCache.pop_front();
+        m_transformCache.push_back(GetTransform());
+    }
     m_curTransform = newTransform;
     frame = 0.f;
     m_diff += systime() - m_lCall;
@@ -147,10 +152,24 @@ void CVirtualBodyTracker::UpdateTransform(const glm::mat4x4 &newTransform)
     m_lCall = systime();
 }
 
+// CNvSDKInterface::InterpolateMatrix(m_lastTransform, m_curTransform, t);
+const glm::mat4x4 InterpolateOverAll(float t, std::deque<glm::mat4x4> mats)
+{
+    InterpolateInPlace(t, mats, mats.size());
+    return mats[0];
+}
+void InterpolateInPlace(float t, std::deque<glm::mat4x4> &mats, size_t amount)
+{
+    if (amount < 2) return;
+    for (int index = 0; index < amount - 1; index++)
+        mats[index] = CNvSDKInterface::InterpolateMatrix(mats[index], mats[index + 1], t);
+    InterpolateInPlace(t, mats, amount - 1);
+}
+
 const glm::mat4x4 CVirtualBodyTracker::InterpolatedTransform() const
 {
     //vr_log("DO INTERPOLATION");
-    if (IsConnected())
+    if (IsConnected() && m_transformCache.size() > 1)
     {
         float t = (float)((systime() - m_lCall) / m_diff);
         if (t > 1.5f)
@@ -171,7 +190,7 @@ const glm::mat4x4 CVirtualBodyTracker::InterpolatedTransform() const
         default:
             return m_curTransform;
         }
-        return CNvSDKInterface::InterpolateMatrix(m_lastTransform, m_curTransform, t);
+        return InterpolateOverAll(t, m_transformCache);
     }
     else
     {

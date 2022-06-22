@@ -95,6 +95,9 @@
 //  Cubic interpolation applied
 #define INTERP_CUBE "Cubic"
 
+//  Size of the frame cache
+#define KEY_FRAME_CACHE "FrameCache"
+
 //  The offset of the elbow trackers
 #define KEY_ELBOW_POS "ElbowTrackerPosition"
 //  The offset of the knee trackers

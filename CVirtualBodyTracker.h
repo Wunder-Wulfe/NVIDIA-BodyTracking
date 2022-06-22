@@ -13,8 +13,9 @@ class CVirtualBodyTracker : public CVirtualDevice
     CVirtualBodyTracker(const CVirtualBodyTracker &that) = delete;
     CVirtualBodyTracker &operator=(const CVirtualBodyTracker &that) = delete;
 
-    //  The last transform that was set (used for interpolation)
-    glm::mat4x4 m_lastTransform;
+    //  The last set of transforms that was set (used for interpolation)
+    std::deque<glm::mat4x4> m_transformCache;
+
     //  The current transform set (used for interpolation)
     glm::mat4x4 m_curTransform;
 
@@ -39,6 +40,6 @@ public:
     //  Update the tracker with data from the body tracking service
     void UpdateTransform(const glm::mat4x4 &newTransform);
 
-    explicit CVirtualBodyTracker(size_t p_index, TRACKER_ROLE rle);
+    explicit CVirtualBodyTracker(size_t p_index, TRACKER_ROLE rle, size_t frameSize);
     ~CVirtualBodyTracker();
 };
